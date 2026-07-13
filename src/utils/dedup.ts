@@ -78,21 +78,37 @@ export function calculateSimilarity(a: Transaction, b: Transaction, matchFields:
 }
 
 // 检测疑似重复对（纯逻辑，不写库）
+// 优化：当 amount 参与匹配时，按 amount 升序排列并提前剪枝——
+// 即使其余字段全满分也达不到阈值即终止内层循环，把 O(n²) 降到接近 O(n·桶)。
 export function detectDuplicates(
   transactions: Transaction[],
   strategy: DedupStrategy = DEFAULT_DEDUP_STRATEGY,
 ): Omit<DedupRecord, 'id'>[] {
   const pairs: Omit<DedupRecord, 'id'>[] = []
   const detectTime = Date.now()
+  const fields = strategy.matchFields
+  const n = fields.length || 1
+  const useAmountPrune = fields.includes('amount')
 
-  for (let i = 0; i < transactions.length; i++) {
-    for (let j = i + 1; j < transactions.length; j++) {
-      const a = transactions[i]
-      const b = transactions[j]
+  const sorted = useAmountPrune
+    ? [...transactions].sort((a, b) => a.amount - b.amount)
+    : transactions
+
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      const a = sorted[i]
+      const b = sorted[j]
       if (a.id === undefined || b.id === undefined) continue
+
+      if (useAmountPrune) {
+        const amountSim = fieldSimilarity(a, b, 'amount')
+        // 即使其余字段全取 1 也达不到阈值 -> 跳过；amount 升序，后续差距更大，可提前终止
+        if ((amountSim + (n - 1)) / n < strategy.similarityThreshold) break
+      }
+
       if (!isInSameTimeWindow(a.date, b.date, strategy.timeWindow)) continue
 
-      const similarity = calculateSimilarity(a, b, strategy.matchFields)
+      const similarity = calculateSimilarity(a, b, fields)
       if (similarity >= strategy.similarityThreshold) {
         pairs.push({
           entryAId: a.id,

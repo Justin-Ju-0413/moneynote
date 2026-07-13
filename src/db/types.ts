@@ -160,6 +160,16 @@ export interface BackupRecord {
   payload: string // 序列化的各表快照 JSON
 }
 
+// ── AI 审计结果缓存（按 task + 流水签名命中，避免重复调 API）──
+export interface AuditCache {
+  id?: number
+  cacheKey: string
+  task: string
+  suggestions: string // 序列化的 AiSuggestion[]
+  txCount: number
+  createdAt: number
+}
+
 export interface AppDBSchema {
   transactions: EntityTable<Transaction, 'id'>
   categories: EntityTable<Category, 'id'>
@@ -172,6 +182,7 @@ export interface AppDBSchema {
   dedupStrategies: EntityTable<DedupStrategy, 'id'>
   dedupRecords: EntityTable<DedupRecord, 'id'>
   backups: EntityTable<BackupRecord, 'id'>
+  auditCache: EntityTable<AuditCache, 'cacheKey'>
 }
 
 // NLP 解析结果

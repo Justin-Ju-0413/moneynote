@@ -40,16 +40,18 @@ export function useDedup() {
     return records.length
   }, [ensureDefaultStrategy])
 
-  // 处理一个重复对：按动作删除/合并对应交易，并更新记录状态
-  const handleDuplicate = useCallback(async (record: DedupRecord, action: DedupAction) => {
-    if (record.id === undefined) return
+  // 处理一个重复对：按动作删除/合并对应交易，并更新记录状态。返回被删除的交易以便撤销。
+  const handleDuplicate = useCallback(async (record: DedupRecord, action: DedupAction): Promise<Transaction | null> => {
+    if (record.id === undefined) return null
 
     const deleteId =
       action === 'DELETE_A' || action === 'MERGE_KEEP_B' ? record.entryAId
         : action === 'DELETE_B' || action === 'MERGE_KEEP_A' ? record.entryBId
           : null
 
+    let deleted: Transaction | null = null
     if (deleteId !== null) {
+      deleted = (await db.transactions.get(deleteId)) ?? null
       await db.transactions.delete(deleteId)
     }
 
@@ -59,6 +61,7 @@ export function useDedup() {
       action,
       handleTime: Date.now(),
     })
+    return deleted
   }, [])
 
   const clearPending = useCallback(async () => {

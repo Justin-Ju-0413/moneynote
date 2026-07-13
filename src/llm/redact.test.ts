@@ -19,6 +19,11 @@ describe('redactSensitive', () => {
     expect(redactSensitive('星巴克拿铁 28 元')).toBe('星巴克拿铁 28 元')
   })
 
+  it('带称呼的姓名脱敏，商户名不受影响', () => {
+    expect(redactSensitive('张三先生办理退款')).toBe('[姓名]办理退款')
+    expect(redactSensitive('星巴克')).toBe('星巴克')
+  })
+
   it('空值安全', () => {
     expect(redactSensitive('')).toBe('')
   })

@@ -8,6 +8,7 @@ import { EditDialog } from '@/components/transaction/EditDialog'
 import { useNLPInput } from '@/hooks/useNLPInput'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useToast } from '@/components/ui/Toast'
+import { db } from '@/db'
 import type { Transaction } from '@/db/types'
 
 export function HomePage() {
@@ -45,8 +46,9 @@ export function HomePage() {
   }
 
   const handleDelete = async (id: number) => {
+    const tx = editTransaction
     await deleteTransaction(id)
-    showToast('已删除')
+    showToast('已删除', 'success', tx ? { label: '撤销', onClick: () => db.transactions.put(tx) } : undefined)
   }
 
   return (

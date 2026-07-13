@@ -30,8 +30,12 @@ export function HistoryPage() {
   }
 
   const handleDedupAction = async (record: DedupRecord, action: 'MERGE_KEEP_A' | 'MERGE_KEEP_B' | 'IGNORE') => {
-    await handleDuplicate(record, action)
-    showToast(action === 'IGNORE' ? '已忽略' : '已合并', 'success')
+    const deleted = await handleDuplicate(record, action)
+    showToast(
+      action === 'IGNORE' ? '已忽略' : '已合并',
+      'success',
+      deleted ? { label: '撤销', onClick: () => db.transactions.put(deleted) } : undefined,
+    )
   }
 
   const transactions = useLiveQuery(
@@ -62,8 +66,9 @@ export function HistoryPage() {
   }
 
   const handleDelete = async (id: number) => {
+    const tx = editTransaction
     await deleteTransaction(id)
-    showToast('已删除')
+    showToast('已删除', 'success', tx ? { label: '撤销', onClick: () => db.transactions.put(tx) } : undefined)
     setEditTransaction(null)
   }
 

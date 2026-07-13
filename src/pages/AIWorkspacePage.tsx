@@ -39,10 +39,17 @@ export function AIWorkspacePage() {
     running,
     error,
     lastCount,
+    cachedHit,
+    progress,
+    forceRefresh,
+    setForceRefresh,
+    selectedMonth,
+    setSelectedMonth,
     runTask,
     applySuggestion,
     dismissSuggestion,
     clearAll,
+    cleanupProcessed,
     hasApiKey,
     privacyMode,
   } = useAIWorkspace()
@@ -60,8 +67,18 @@ export function AIWorkspacePage() {
   }
 
   const handleApply = async (s: AiSuggestion) => {
+    let oldCategory: string | undefined
+    if (s.type === 'category' && s.transactionIds.length > 0) {
+      oldCategory = (await db.transactions.get(s.transactionIds[0]))?.category
+    }
     await applySuggestion(s)
-    showToast('已应用建议', 'success')
+    showToast(
+      '已应用建议',
+      'success',
+      s.type === 'category' && oldCategory
+        ? { label: '撤销', onClick: () => db.transactions.update(s.transactionIds[0], { category: oldCategory, updatedAt: Date.now() }) }
+        : undefined,
+    )
   }
 
   const handleDismiss = async (id: number) => {
@@ -72,6 +89,11 @@ export function AIWorkspacePage() {
     if (!confirm('确定清空所有建议记录吗？')) return
     await clearAll()
     showToast('已清空')
+  }
+
+  const handleCleanupProcessed = async () => {
+    await cleanupProcessed()
+    showToast('已清除已处理建议')
   }
 
   const handlePrivacyToggle = async () => {
@@ -120,15 +142,42 @@ export function AIWorkspacePage() {
             ))}
           </div>
 
+          {/* 月度摘要的月份选择 */}
+          <div className="flex items-center gap-2 mt-3">
+            <label className="text-[10px] tracking-widest uppercase text-text-muted">摘要月份</label>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-2 py-1 border border-primary-300/50 text-xs bg-transparent text-text outline-none"
+            />
+            <span className="text-[10px] text-text-muted">用于「月度摘要」任务</span>
+          </div>
+
           {running && (
-            <p className="text-[10px] text-primary-600 mt-3 animate-pulse">AI 分析中…</p>
+            <p className="text-[10px] text-primary-600 mt-3 animate-pulse">
+              AI 分析中…{progress ? ` (${progress.current}/${progress.total})` : ''}
+            </p>
           )}
           {error && (
             <p className="text-[10px] text-[#c94040] mt-3">提示：{error}</p>
           )}
           {!running && lastCount > 0 && (
-            <p className="text-[10px] text-green-600 mt-3">新增 {lastCount} 条建议，请在下方审核。</p>
+            <p className={`text-[10px] mt-3 ${cachedHit ? 'text-primary-500' : 'text-green-600'}`}>
+              {cachedHit ? `命中缓存，新增 ${lastCount} 条建议（未消耗 API）` : `新增 ${lastCount} 条建议，请在下方审核。`}
+            </p>
           )}
+
+          {/* 强制刷新开关 */}
+          <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={forceRefresh}
+              onChange={(e) => setForceRefresh(e.target.checked)}
+              className="accent-primary-600"
+            />
+            <span className="text-[10px] text-text-muted">强制刷新（忽略缓存，重新调用 AI）</span>
+          </label>
         </Card>
 
         {/* 待审核建议 */}
@@ -138,9 +187,14 @@ export function AIWorkspacePage() {
               待审核建议 · {pendingSuggestions.length}
             </h3>
             {pendingSuggestions.length > 0 && (
-              <button className="text-[10px] text-text-muted hover:text-[#c94040]" onClick={handleClear}>
-                清空
-              </button>
+              <div className="flex gap-3">
+                <button className="text-[10px] text-text-muted hover:text-primary-600" onClick={handleCleanupProcessed}>
+                  清除已处理
+                </button>
+                <button className="text-[10px] text-text-muted hover:text-[#c94040]" onClick={handleClear}>
+                  清空
+                </button>
+              </div>
             )}
           </div>
 

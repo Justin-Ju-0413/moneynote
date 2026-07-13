@@ -13,6 +13,7 @@ export class AppDB extends Dexie {
   dedupStrategies!: AppDBSchema['dedupStrategies']
   dedupRecords!: AppDBSchema['dedupRecords']
   backups!: AppDBSchema['backups']
+  auditCache!: AppDBSchema['auditCache']
 
   constructor() {
     super('MoneyNoteDB')
@@ -58,6 +59,11 @@ export class AppDB extends Dexie {
     // v8: 数据备份表（自动/手动快照，防 IndexedDB 意外丢失）
     this.version(8).stores({
       backups: '++id, createdAt, kind',
+    })
+
+    // v9: AI 审计结果缓存表
+    this.version(9).stores({
+      auditCache: 'cacheKey, task, createdAt',
     })
   }
 }
