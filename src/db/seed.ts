@@ -1,0 +1,104 @@
+import type { Category, Setting } from './types'
+import { BUILTIN_TEMPLATES } from '@/bill-analyzer/builtinTemplates'
+import type { BillTemplate } from './types'
+
+export { BUILTIN_TEMPLATES }
+export const defaultBuiltInTemplates: BillTemplate[] = BUILTIN_TEMPLATES
+
+export const defaultCategories: Category[] = [
+  {
+    id: 'food',
+    name: '餐饮',
+    icon: '🍜',
+    color: '#f97316',
+    keywords: ['早餐', '午餐', '午饭', '晚餐', '晚饭', '吃饭', '外卖', '咖啡', 'coffee', '奶茶', '火锅', '烧烤', '快餐', '水果', '零食', '饮料', '茶', '买菜', '做饭', '麦当劳', '肯德基', '星巴克', 'starbucks', 'kfc', '早餐', '宵夜', '火锅', '面条', '米饭', '汉堡', '披萨'],
+    sortOrder: 1,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'transport',
+    name: '交通',
+    icon: '🚗',
+    color: '#3b82f6',
+    keywords: ['打车', '地铁', '公交', '加油', '停车', '滴滴', 'taxi', 'uber', '高铁', '火车', '机票', '飞机', '自行车', '共享单车', '过路费', '充电', '高速', '油费', '出行'],
+    sortOrder: 2,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'shopping',
+    name: '购物',
+    icon: '🛍️',
+    color: '#ec4899',
+    keywords: ['衣服', '裤子', '鞋', '包', '淘宝', '京东', '拼多多', '超市', '购物', '数码', '手机', '电脑', '护肤', '化妆', '日用', '洗护'],
+    sortOrder: 3,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'entertainment',
+    name: '娱乐',
+    icon: '🎮',
+    color: '#8b5cf6',
+    keywords: ['电影', '游戏', 'ktv', '唱歌', '演出', '门票', '游乐', '旅游', '景点', '酒店', '民宿', '健身', '游泳', 'spa', '足浴', '按摩'],
+    sortOrder: 4,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'housing',
+    name: '住房',
+    icon: '🏠',
+    color: '#14b8a6',
+    keywords: ['房租', '租金', '水费', '电费', '水电气', '物业', '物业费', '装修', '家具', '家电', '维修', '宽带', '网费'],
+    sortOrder: 5,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'medical',
+    name: '医疗',
+    icon: '💊',
+    color: '#ef4444',
+    keywords: ['看病', '医院', '药', '药店', '体检', '牙科', '眼科', '门诊', '住院', '挂号', '检查'],
+    sortOrder: 6,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'education',
+    name: '教育',
+    icon: '📚',
+    color: '#f59e0b',
+    keywords: ['书', '书籍', '课程', '培训', '学费', '文具', '考试', '报名', '学习', '网课'],
+    sortOrder: 7,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+  {
+    id: 'other',
+    name: '其他',
+    icon: '📦',
+    color: '#6b7280',
+    keywords: [],
+    sortOrder: 8,
+    isBuiltIn: true,
+    type: 'expense',
+  },
+]
+
+export const defaultSettings: Setting[] = [
+  { key: 'currency', value: 'CNY' },
+  { key: 'theme', value: 'light' },
+  { key: 'monthlyBudget', value: 0 },
+  { key: 'firstDayOfWeek', value: 1 },
+  { key: 'onboardingDone', value: false },
+  { key: 'llm.enabled', value: false },
+  { key: 'llm.endpoint', value: '' },
+  { key: 'llm.apiKey', value: '' },
+  { key: 'llm.model', value: '' },
+  { key: 'llm.maxTokens', value: 300 },
+  { key: 'llm.temperature', value: 0.1 },
+  { key: 'llm.timeout', value: 8000 },
+]

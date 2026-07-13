@@ -1,0 +1,28 @@
+schema_version: 1
+module_path: ""
+title: MoneyNote 前端应用脚手架
+scope:
+    - .gitignore
+    - README.md
+    - eslint.config.js
+    - index.html
+    - package-lock.json
+    - package.json
+    - tsconfig.app.json
+    - tsconfig.json
+    - tsconfig.node.json
+    - vite.config.ts
+    - features-section-1.png
+    - features-section-2.png
+    - footer-section.png
+    - full-page.png
+    - hero-section.png
+    - installation-section.png
+    - mobile-features.png
+    - mobile-footer.png
+    - mobile-full-page.png
+    - mobile-hero.png
+    - mobile-install.png
+source_files: []
+depends_on: []
+related_to: []
