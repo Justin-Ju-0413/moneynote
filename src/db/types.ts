@@ -152,6 +152,14 @@ export interface DedupRecord {
   handleTime?: number
 }
 
+// ── 数据备份（防 IndexedDB 意外丢失）──
+export interface BackupRecord {
+  id?: number
+  createdAt: number
+  kind: 'auto' | 'manual'
+  payload: string // 序列化的各表快照 JSON
+}
+
 export interface AppDBSchema {
   transactions: EntityTable<Transaction, 'id'>
   categories: EntityTable<Category, 'id'>
@@ -163,6 +171,7 @@ export interface AppDBSchema {
   aiSuggestions: EntityTable<AiSuggestion, 'id'>
   dedupStrategies: EntityTable<DedupStrategy, 'id'>
   dedupRecords: EntityTable<DedupRecord, 'id'>
+  backups: EntityTable<BackupRecord, 'id'>
 }
 
 // NLP 解析结果

@@ -11,7 +11,7 @@ import { ColumnMappingDialog } from '@/components/input/ColumnMappingDialog'
 import { TemplateDetailDialog } from '@/components/input/TemplateDetailDialog'
 import { LLM_PRESETS } from '@/llm/types'
 import { db, bulkImportTransactions } from '@/db'
-import type { BillTemplate, ColumnMapping } from '@/db/types'
+import type { BillTemplate, ColumnMapping, BackupRecord } from '@/db/types'
 import { exportToCSV, exportToJSON, downloadFile } from '@/utils/export'
 import { parseBillFile, SOURCE_LABELS } from '@/utils/import'
 import type { ParseResult } from '@/utils/import'
@@ -19,6 +19,7 @@ import { classifyBillRows } from '@/utils/billClassifier'
 import type { ClassifyResult } from '@/utils/billClassifier'
 import { CATEGORY_MAP } from '@/utils/constants'
 import { getAllTemplates, deleteTemplate } from '@/bill-analyzer/templateMatcher'
+import { createBackup, listBackups, restoreBackup, deleteBackup, setAutoBackupEnabled } from '@/utils/backup'
 
 interface ImportResultDetail {
   sourceName: string
@@ -67,6 +68,44 @@ export function SettingsPage() {
   const parseCacheCount = useLiveQuery(() => db.parseCache.count()) ?? 0
   const templates = useLiveQuery(() => getAllTemplates()) ?? []
   const templateCount = templates.length
+
+  // 数据备份
+  const backups = (useLiveQuery(() => listBackups()) ?? []) as BackupRecord[]
+  const autoBackupOn = useLiveQuery(() => db.settings.get('backup.auto'))?.value !== false
+  const [backupBusy, setBackupBusy] = useState(false)
+
+  const handleBackupNow = async () => {
+    setBackupBusy(true)
+    try {
+      await createBackup('manual')
+      showToast('已创建备份', 'success')
+    } catch {
+      showToast('备份失败', 'error')
+    }
+    setBackupBusy(false)
+  }
+
+  const handleToggleAuto = async () => {
+    const next = !autoBackupOn
+    await db.settings.put({ key: 'backup.auto', value: next })
+    setAutoBackupEnabled(next)
+    showToast(next ? '已开启自动备份' : '已关闭自动备份', 'info')
+  }
+
+  const handleRestore = async (b: BackupRecord) => {
+    if (!confirm(`确认恢复到 ${new Date(b.createdAt).toLocaleString()} 的备份？当前数据将被覆盖。`)) return
+    try {
+      await restoreBackup(b.id as number)
+      showToast('已恢复，刷新页面以生效', 'success')
+    } catch {
+      showToast('恢复失败', 'error')
+    }
+  }
+
+  const handleDeleteBackup = async (id: number) => {
+    await deleteBackup(id)
+    showToast('已删除备份')
+  }
 
   // 当前选中的服务商
   const currentPreset = useMemo(() => {
@@ -496,6 +535,49 @@ export function SettingsPage() {
                 API Key 仅存储在本地浏览器中，不会上传至任何服务器。
               </p>
             </div>
+          )}
+        </Card>
+
+        {/* 数据备份 */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">数据备份</h3>
+              <p className="text-[10px] text-text-muted mt-1">自动快照防止数据意外丢失，保留最近 10 份自动备份</p>
+            </div>
+            <button
+              className={`w-10 h-5 rounded-full transition-colors relative ${autoBackupOn ? 'bg-primary-600' : 'bg-primary-200/50'}`}
+              onClick={handleToggleAuto}
+              title="数据变更 60 秒后自动备份"
+            >
+              <span className={`absolute top-0.5 w-4 h-4 bg-bg rounded-full transition-transform ${autoBackupOn ? 'left-5.5' : 'left-0.5'}`} />
+            </button>
+          </div>
+
+          <div className="flex gap-2 mb-4">
+            <Button onClick={handleBackupNow} variant="secondary" className="flex-1" disabled={backupBusy}>
+              {backupBusy ? '备份中...' : '立即备份'}
+            </Button>
+          </div>
+
+          {backups.length > 0 ? (
+            <div className="space-y-1.5">
+              {backups.slice(0, 12).map((b) => (
+                <div key={b.id} className="flex items-center justify-between px-3 py-2 border border-primary-200/30">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`w-1.5 h-1.5 rounded-full ${b.kind === 'auto' ? 'bg-primary-400' : 'bg-green-500'}`} />
+                    <span className="text-[10px] text-text truncate">{new Date(b.createdAt).toLocaleString()}</span>
+                    <span className="text-[9px] text-text-muted uppercase">{b.kind === 'auto' ? '自动' : '手动'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button className="text-[10px] text-primary-600 hover:underline" onClick={() => handleRestore(b)}>恢复</button>
+                    <button className="text-[10px] text-[#c94040] hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-text-placeholder">暂无备份，点击「立即备份」创建第一份</p>
           )}
         </Card>
 
