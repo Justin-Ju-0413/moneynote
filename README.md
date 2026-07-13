@@ -1,73 +1,41 @@
-# React + TypeScript + Vite
+# MoneyNote · AI 智能记账
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+本地优先的个人记账 Web 应用（PWA）。自然语言输入 + 账单导入 + AI 工作台，数据全部存在浏览器 IndexedDB，API Key 本地加密，AI 请求脱敏。
 
-Currently, two official plugins are available:
+> 2026-07-14：作为记账类项目整合后的唯一主力。原 finance-app(Expo 移动端)、项控(Tauri 桌面端) 的 AI 工作台 / 脱敏 / 模糊去重功能已移植进来，两个项目已归档至 `~/Documents/07-归档项目/记账类-归档/`。整合说明见上级目录 `../README.md`。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 功能
 
-## React Compiler
+- **记账**：自然语言一句话记账（LLM 解析金额/分类/日期/备注）；导入支付宝 CSV、微信/平安 Excel 账单，含模板自适应学习与硬去重
+- **AI 工作台**（`/ai-workspace`）：综合审计、自动归类、智能查重、月度摘要四类任务，AI 建议逐条审核后应用
+- **模糊去重审核**（明细页入口）：基于相似度 + 时间窗的可配置查重，保留 A / 保留 B / 忽略
+- **统计 / 预算 / 明细**：分类饼图、趋势折线、预算追踪、全量明细搜索筛选
+- **隐私**：API Key AES-GCM 加密存本地；AI 请求脱敏手机号/订单号/身份证/邮箱
+- **PWA**：可离线安装
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 技术栈
 
-## Expanding the ESLint configuration
+React 19 · Vite · TypeScript · Tailwind v4 · Dexie(IndexedDB) · recharts · framer-motion · vite-plugin-pwa
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 运行
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # 开发服务器
+npm run build    # tsc -b && vite build
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+AI 配置在「设置」页：选服务商预设（DeepSeek / OpenAI / 通义千问 / 自定义），填 API Key 与模型。未配置时 AI 工作台自动回退到本地启发式规则。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 数据层
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Dexie schema 演进至 v7：
+
+| 版本 | 内容 |
+|---|---|
+| v1–v5 | transactions / categories / budgets / settings / classificationCache / parseCache / billTemplates |
+| v6 | `aiSuggestions`（AI 工作台建议） |
+| v7 | `dedupStrategies` / `dedupRecords`（模糊去重） |
+
+升级自动迁移。
