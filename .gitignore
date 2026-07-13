@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 工具/部署产物
+.qoder
+.vercel-tmp
+
+# 根目录截图/测试产物（开发时生成，不入库）
+/*.png
+
