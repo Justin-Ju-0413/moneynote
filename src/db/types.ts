@@ -1,5 +1,5 @@
 import type { EntityTable } from 'dexie'
-import type { LLMParseResult } from '@/llm/types'
+import type { LLMParseResult, AiSuggestion } from '@/llm/types'
 
 export interface Transaction {
   id?: number
@@ -121,6 +121,37 @@ export interface BillTemplate {
   updatedAt: number
 }
 
+// ── 模糊去重相关类型（移植自 finance-app DedupService，适配 MoneyNote Transaction）──
+
+export type DedupTimeWindow = 'SAME_DAY' | 'SAME_WEEK' | 'SAME_MONTH' | 'SAME_QUARTER' | 'SAME_YEAR'
+export type DedupAction = 'IGNORE' | 'MERGE_KEEP_A' | 'MERGE_KEEP_B' | 'DELETE_A' | 'DELETE_B'
+export type DedupStatus = 'PENDING' | 'IGNORED' | 'MERGED' | 'DELETED'
+
+// 去重匹配字段（MoneyNote Transaction 可用字段）
+export type DedupMatchField = 'amount' | 'date' | 'note'
+
+export interface DedupStrategy {
+  id: string
+  name: string
+  matchFields: DedupMatchField[]
+  similarityThreshold: number
+  timeWindow: DedupTimeWindow | null
+  isDefault: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+export interface DedupRecord {
+  id?: number
+  entryAId: number
+  entryBId: number
+  similarity: number
+  status: DedupStatus
+  action: DedupAction | null
+  detectTime: number
+  handleTime?: number
+}
+
 export interface AppDBSchema {
   transactions: EntityTable<Transaction, 'id'>
   categories: EntityTable<Category, 'id'>
@@ -129,6 +160,9 @@ export interface AppDBSchema {
   classificationCache: EntityTable<ClassificationCache, 'merchant'>
   parseCache: EntityTable<ParseCache, 'cacheKey'>
   billTemplates: EntityTable<BillTemplate, 'id'>
+  aiSuggestions: EntityTable<AiSuggestion, 'id'>
+  dedupStrategies: EntityTable<DedupStrategy, 'id'>
+  dedupRecords: EntityTable<DedupRecord, 'id'>
 }
 
 // NLP 解析结果

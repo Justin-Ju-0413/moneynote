@@ -23,10 +23,12 @@ export function useLLMSettings() {
       const maxTokens = (map.get('llm.maxTokens') as number) || 300
       const temperature = (map.get('llm.temperature') as number) ?? 0.1
       const timeout = (map.get('llm.timeout') as number) || 8000
+      const privacyMode = map.get('llm.privacyMode') !== false // 默认 true
+      const batchSize = (map.get('llm.batchSize') as number) || 120
 
       const apiKey = encryptedKey ? await decryptApiKey(encryptedKey) : ''
 
-      setConfig({ enabled, endpoint, apiKey, model, maxTokens, temperature, timeout })
+      setConfig({ enabled, endpoint, apiKey, model, maxTokens, temperature, timeout, privacyMode, batchSize })
       setIsLoading(false)
     }
 
@@ -38,6 +40,7 @@ export function useLLMSettings() {
     const current = config || {
       enabled: false, endpoint: '', apiKey: '', model: '',
       maxTokens: 300, temperature: 0.1, timeout: 8000,
+      privacyMode: true, batchSize: 120,
     }
 
     const newConfig = { ...current, ...updates }
@@ -55,6 +58,8 @@ export function useLLMSettings() {
     if (updates.maxTokens !== undefined) await db.settings.put({ key: 'llm.maxTokens', value: updates.maxTokens })
     if (updates.temperature !== undefined) await db.settings.put({ key: 'llm.temperature', value: updates.temperature })
     if (updates.timeout !== undefined) await db.settings.put({ key: 'llm.timeout', value: updates.timeout })
+    if (updates.privacyMode !== undefined) await db.settings.put({ key: 'llm.privacyMode', value: updates.privacyMode })
+    if (updates.batchSize !== undefined) await db.settings.put({ key: 'llm.batchSize', value: updates.batchSize })
 
     setConfig(newConfig)
   }, [config])

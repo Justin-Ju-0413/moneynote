@@ -9,6 +9,9 @@ export class AppDB extends Dexie {
   classificationCache!: AppDBSchema['classificationCache']
   parseCache!: AppDBSchema['parseCache']
   billTemplates!: AppDBSchema['billTemplates']
+  aiSuggestions!: AppDBSchema['aiSuggestions']
+  dedupStrategies!: AppDBSchema['dedupStrategies']
+  dedupRecords!: AppDBSchema['dedupRecords']
 
   constructor() {
     super('MoneyNoteDB')
@@ -38,6 +41,17 @@ export class AppDB extends Dexie {
     // v5: 账单格式模板表（自适应学习系统）
     this.version(5).stores({
       billTemplates: '++id, fingerprint, name, source',
+    })
+
+    // v6: AI 工作台建议表（移植自 项控）
+    this.version(6).stores({
+      aiSuggestions: '++id, task, type, status, createdAt',
+    })
+
+    // v7: 模糊去重策略与记录表（移植自 finance-app）
+    this.version(7).stores({
+      dedupStrategies: 'id, isDefault',
+      dedupRecords: '++id, status, entryAId, entryBId',
     })
   }
 }

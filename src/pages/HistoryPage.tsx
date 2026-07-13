@@ -3,18 +3,36 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TransactionList } from '@/components/transaction/TransactionList'
 import { EditDialog } from '@/components/transaction/EditDialog'
+import { Dialog } from '@/components/ui/Dialog'
+import { Button } from '@/components/ui/Button'
 import { useTransactions } from '@/hooks/useTransactions'
+import { useDedup } from '@/hooks/useDedup'
 import { useToast } from '@/components/ui/Toast'
 import { CATEGORY_MAP } from '@/utils/constants'
 import { db } from '@/db'
-import type { Transaction } from '@/db/types'
+import type { Transaction, DedupRecord } from '@/db/types'
 
 export function HistoryPage() {
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
+  const [showDedup, setShowDedup] = useState(false)
+  const [dedupBusy, setDedupBusy] = useState(false)
   const { updateTransaction, deleteTransaction } = useTransactions()
   const { showToast } = useToast()
+  const { pendingRecords, txMap, detect, handleDuplicate } = useDedup()
+
+  const handleDetect = async () => {
+    setDedupBusy(true)
+    const count = await detect()
+    showToast(count > 0 ? `发现 ${count} 组疑似重复` : '未发现疑似重复', count > 0 ? 'success' : 'info')
+    setDedupBusy(false)
+  }
+
+  const handleDedupAction = async (record: DedupRecord, action: 'MERGE_KEEP_A' | 'MERGE_KEEP_B' | 'IGNORE') => {
+    await handleDuplicate(record, action)
+    showToast(action === 'IGNORE' ? '已忽略' : '已合并', 'success')
+  }
 
   const transactions = useLiveQuery(
     () => db.transactions.orderBy('date').reverse().toArray(),
@@ -85,6 +103,16 @@ export function HistoryPage() {
           ))}
         </div>
 
+        {/* 查重审核入口 */}
+        <div className="flex justify-end -mt-1">
+          <button
+            onClick={() => setShowDedup(true)}
+            className="px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium border border-primary-300/50 text-text-muted hover:text-primary-600 transition-colors"
+          >
+            查重审核 {pendingRecords.length > 0 ? `· ${pendingRecords.length}` : ''}
+          </button>
+        </div>
+
         {/* 交易列表 */}
         <TransactionList
           transactions={filteredTransactions}
@@ -99,6 +127,56 @@ export function HistoryPage() {
         onSave={handleSave}
         onDelete={handleDelete}
       />
+
+      {/* 查重审核弹窗 */}
+      <Dialog open={showDedup} onClose={() => setShowDedup(false)} title="查重审核">
+        <div className="space-y-3">
+          {pendingRecords.length === 0 ? (
+            <p className="text-xs text-text-muted text-center py-6">
+              {dedupBusy ? '检测中…' : '暂无疑似重复流水，可点击下方重新检测'}
+            </p>
+          ) : (
+            pendingRecords.map((r) => {
+              const a = txMap.get(r.entryAId)
+              const b = txMap.get(r.entryBId)
+              if (!a || !b) return null
+              return (
+                <div key={r.id} className="border border-primary-200/40 p-3 space-y-2">
+                  <p className="text-[10px] text-text-muted">相似度 {Math.round(r.similarity * 100)}%</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="border border-primary-200/30 p-2">
+                      <p className="text-[10px] text-text-muted">{a.date}</p>
+                      <p className="text-[11px] text-text truncate">{a.note || '(无备注)'}</p>
+                      <p className="text-xs font-heading text-text mt-0.5">
+                        {a.type === 'income' ? '+' : '-'}¥{a.amount.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="border border-primary-200/30 p-2">
+                      <p className="text-[10px] text-text-muted">{b.date}</p>
+                      <p className="text-[11px] text-text truncate">{b.note || '(无备注)'}</p>
+                      <p className="text-xs font-heading text-text mt-0.5">
+                        {b.type === 'income' ? '+' : '-'}¥{b.amount.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button size="sm" variant="secondary" onClick={() => handleDedupAction(r, 'MERGE_KEEP_A')} className="flex-1">保留A删B</Button>
+                    <Button size="sm" variant="secondary" onClick={() => handleDedupAction(r, 'MERGE_KEEP_B')} className="flex-1">保留B删A</Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleDedupAction(r, 'IGNORE')} className="flex-1">忽略</Button>
+                  </div>
+                </div>
+              )
+            })
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <Button variant="secondary" onClick={handleDetect} disabled={dedupBusy} className="flex-1">
+              {dedupBusy ? '检测中...' : '重新检测'}
+            </Button>
+            <Button variant="ghost" onClick={() => setShowDedup(false)} className="flex-1">关闭</Button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   )
 }

@@ -22,5 +22,6 @@ export const NAV_TABS = [
   { to: '/stats', label: '统计' },
   { to: '/history', label: '明细' },
   { to: '/budget', label: '预算' },
+  { to: '/ai-workspace', label: 'AI' },
   { to: '/settings', label: '设置' },
 ] as const

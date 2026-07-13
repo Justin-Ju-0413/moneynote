@@ -7,6 +7,7 @@ import { StatsPage } from '@/pages/StatsPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import { BudgetPage } from '@/pages/BudgetPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { AIWorkspacePage } from '@/pages/AIWorkspacePage'
 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
@@ -32,6 +33,7 @@ function AnimatedRoutes() {
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/budget" element={<BudgetPage />} />
+          <Route path="/ai-workspace" element={<AIWorkspacePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </motion.div>

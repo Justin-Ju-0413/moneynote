@@ -56,4 +56,5 @@ export async function bulkImportTransactions(
 
 export { db }
 export type { Transaction, Category, Budget, Setting, ParsedTransaction, ClassificationCache, ParseCache,
-  BillTemplate, ColumnMapping, ColumnRole, ColumnType, FilterRule, TemplateFingerprint } from './types'
+  BillTemplate, ColumnMapping, ColumnRole, ColumnType, FilterRule, TemplateFingerprint,
+  DedupStrategy, DedupRecord, DedupTimeWindow, DedupAction, DedupStatus, DedupMatchField } from './types'

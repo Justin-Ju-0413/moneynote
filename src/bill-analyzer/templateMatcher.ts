@@ -1,6 +1,6 @@
 import type { BillTemplate, TemplateFingerprint } from '@/db/types'
 import { db } from '@/db'
-import { BUILTIN_TEMPLATES, BUILTIN_DETECTION } from './builtinTemplates'
+import { BUILTIN_TEMPLATES } from './builtinTemplates'
 
 export interface MatchResult {
   template: BillTemplate | null

@@ -7,6 +7,8 @@ export interface LLMConfig {
   maxTokens: number
   temperature: number
   timeout: number
+  privacyMode?: boolean // AI 工作台/批量分类请求是否脱敏（默认 true）
+  batchSize?: number // AI 工作台单次审计条数（默认 120）
 }
 
 // LLM 解析结果
@@ -30,6 +32,29 @@ export interface ProviderPreset {
 
 // LLM 调用状态
 export type LLMStatus = 'idle' | 'loading' | 'success' | 'error'
+
+// ── AI 工作台（移植自 项控 ledger-ai-agent）──
+// 审计任务类型
+export type AuditTask = 'audit' | 'categorize' | 'dedupe' | 'analyzeMonth'
+
+// 建议类型
+export type SuggestionType = 'category' | 'duplicate' | 'anomaly' | 'summary'
+
+// 建议状态
+export type SuggestionStatus = 'pending' | 'accepted' | 'dismissed'
+
+// AI 建议（既是 LLM 返回形状，也是 Dexie 持久化实体）
+export interface AiSuggestion {
+  id?: number
+  task: AuditTask
+  type: SuggestionType
+  transactionIds: number[] // 关联的 Transaction id（MoneyNote 主键为 number）
+  result: string // category 建议时为分类 id；其余为结论文本
+  confidence: number
+  reason: string
+  status: SuggestionStatus
+  createdAt: number
+}
 
 export const LLM_PRESETS: ProviderPreset[] = [
   { name: 'openai',   endpoint: 'https://api.openai.com',                          models: ['gpt-4.1-nano', 'gpt-4o-mini', 'gpt-4o'], label: 'OpenAI' },
