@@ -81,3 +81,32 @@
 | P0-6 静默错误可观测 | ✅ |
 
 **P0 全部完成 🎉** — lint 0 / 单测 38(原 27)/ 构建通过。基线已拉回全绿。`p0-cleanup` 分支可合并到 main 后进入 P1 架构升级。
+
+---
+
+## P1 架构升级(进行中)
+
+### P1-1 LLMClient 统一抽象 ✅
+
+- **结果**:4 份重复 fetch 收敛为 `llmChat`;LLM 层可测(+13 单测);lint 0 / 单测 51 / 构建通过
+- **commit**:`2842d56`(分支 `p1-architecture`)
+- **改了什么**:
+  - 新增 `src/llm/client.ts`:`llmChat` 统一 fetch + 错误映射(offline/config/timeout/network/http),OpenAI 兼容为基,Provider 适配器可在此扩展;`__setLLMTransport` 可注入 transport 作 mock 边界
+  - `service.ts` 的 callLLM/callLLMBatch/runLLMAudit + `aiMapper.ts` 的 callLLMForMapping 全部改用 llmChat,删除 4 份重复 URL/Bearer/状态码/超时
+  - 行为保持:签名/返回形状不变;offline 判断改 `=== false`(浏览器不变,兼容测试环境);runLLMAudit 空 content 仍当 `'{}'` 解析
+  - HTTP 错误文案统一短句('API Key 无效' 等,原 callLLM 长句并入)
+  - 新增 `client.test.ts` 13 条
+
+### P1 进度总览
+
+| 项 | 状态 |
+|---|---|
+| P1-1 LLMClient 统一抽象 | ✅ |
+| P1-2 Task 注册抽象 | ⬜ |
+| P1-3 Prompt 版本化 | ⬜ |
+| P1-4 bill-analyzer 并入 llm 层 | ⬜ |
+| P1-5 Repository / 状态层 | ⬜ |
+| P1-6 Dexie 迁移框架 | ⬜ |
+| P1-7 测试补齐(单测 + E2E) | ⬜ |
+| P1-8 结构化输出 | ⬜ |
+| P1-9 加密审计 | ⬜ |
