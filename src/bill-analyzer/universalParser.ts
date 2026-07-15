@@ -1,5 +1,6 @@
 import type { BillTemplate, ColumnMapping, FilterRule } from '@/db/types'
 import type { RawBillRow } from '@/utils/import'
+import * as log from '@/utils/log'
 
 export interface ParseResult {
   source: string
@@ -354,7 +355,7 @@ export function applyFilterRules(cellValues: string[], rules: FilterRule[]): str
         break
       case 'column_regex':
         if (rule.value) {
-          try { match = new RegExp(rule.value).test(value) } catch { /* noop */ }
+          try { match = new RegExp(rule.value).test(value) } catch (err) { log.warn('过滤规则正则无效,已跳过', { pattern: rule.value, err }) }
         }
         break
     }
@@ -371,7 +372,7 @@ function applyCleanPrefixes(value: string, prefixes: string[]): string {
   for (const prefix of prefixes) {
     try {
       result = result.replace(new RegExp(prefix), '')
-    } catch { /* noop */ }
+    } catch (err) { log.warn('清洗前缀正则无效,已跳过', { pattern: prefix, err }) }
   }
   return result
 }

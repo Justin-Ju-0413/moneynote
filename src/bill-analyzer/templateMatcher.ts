@@ -1,6 +1,7 @@
 import type { BillTemplate, TemplateFingerprint } from '@/db/types'
 import { db } from '@/db'
 import { BUILTIN_TEMPLATES } from './builtinTemplates'
+import * as log from '@/utils/log'
 
 export interface MatchResult {
   template: BillTemplate | null
@@ -94,7 +95,7 @@ export async function updateTemplateUsage(template: BillTemplate): Promise<void>
       lastUsedAt: Date.now(),
       updatedAt: Date.now(),
     })
-  } catch { /* noop */ }
+  } catch (err) { log.warn('模板使用统计更新失败', err) }
 }
 
 // ── 保存新模板 ──

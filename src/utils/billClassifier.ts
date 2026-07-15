@@ -5,6 +5,7 @@ import type { LLMConfig } from '@/llm/types'
 import { matchCategory } from '@/nlp/categoryMatcher'
 import { callLLMBatch } from '@/llm/service'
 import { db } from '@/db'
+import * as log from '@/utils/log'
 
 export type ImportTransaction = Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
 
@@ -60,14 +61,14 @@ async function lookupCache(merchant: string): Promise<{ category: string; confid
     if (entry && Date.now() - entry.updatedAt < CACHE_TTL_MS) {
       return { category: entry.category, confidence: entry.confidence }
     }
-  } catch { /* noop */ }
+  } catch (err) { log.warn('分类缓存读取失败,降级为未命中', err) }
   return null
 }
 
 async function writeCache(merchant: string, category: string, confidence: number): Promise<void> {
   try {
     await db.classificationCache.put({ merchant, category, confidence, updatedAt: Date.now() })
-  } catch { /* noop */ }
+  } catch (err) { log.warn('分类缓存写入失败', err) }
 }
 
 // ── 主入口：三阶段分类 ──
