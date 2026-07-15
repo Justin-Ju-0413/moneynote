@@ -78,8 +78,10 @@ export function calculateSimilarity(a: Transaction, b: Transaction, matchFields:
 }
 
 // 检测疑似重复对（纯逻辑，不写库）
-// 优化：当 amount 参与匹配时，按 amount 升序排列并提前剪枝——
-// 即使其余字段全满分也达不到阈值即终止内层循环，把 O(n²) 降到接近 O(n·桶)。
+// 两阶段：① 硬去重快速路径 O(n)：按 amount|date|note 哈希分组，三字段全等的交易
+//           无论策略如何算相似度都是 1.0，直接成对发出，不进 O(n²) 模糊比较。
+//         ② 模糊去重 O(n²)：当 amount 参与匹配时按 amount 升序+提前剪枝，
+//           把 O(n²) 降到接近 O(n·桶)；并跳过已在①发出的精确重复对。
 export function detectDuplicates(
   transactions: Transaction[],
   strategy: DedupStrategy = DEFAULT_DEDUP_STRATEGY,
@@ -90,6 +92,31 @@ export function detectDuplicates(
   const n = fields.length || 1
   const useAmountPrune = fields.includes('amount')
 
+  // ① 硬去重快速路径：O(n) 找出精确重复对
+  const exactGroups = new Map<string, Transaction[]>()
+  for (const t of transactions) {
+    if (t.id === undefined) continue
+    const key = `${t.amount}|${t.date}|${t.note ?? ''}`
+    const group = exactGroups.get(key)
+    if (group) group.push(t)
+    else exactGroups.set(key, [t])
+  }
+  for (const group of exactGroups.values()) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        pairs.push({
+          entryAId: group[i].id as number,
+          entryBId: group[j].id as number,
+          similarity: 1,
+          status: 'PENDING',
+          action: null,
+          detectTime,
+        })
+      }
+    }
+  }
+
+  // ② 模糊去重：O(n²)，跳过精确重复对
   const sorted = useAmountPrune
     ? [...transactions].sort((a, b) => a.amount - b.amount)
     : transactions
@@ -105,6 +132,9 @@ export function detectDuplicates(
         // 即使其余字段全取 1 也达不到阈值 -> 跳过；amount 升序，后续差距更大，可提前终止
         if ((amountSim + (n - 1)) / n < strategy.similarityThreshold) break
       }
+
+      // 精确重复已在①发出，跳过避免重复计算/重复发出
+      if (a.amount === b.amount && a.date === b.date && (a.note ?? '') === (b.note ?? '')) continue
 
       if (!isInSameTimeWindow(a.date, b.date, strategy.timeWindow)) continue
 

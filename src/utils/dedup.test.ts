@@ -94,4 +94,38 @@ describe('detectDuplicates', () => {
     // note 相似度极低，平均 (1+1+低)/3 < 0.85
     expect(pairs).toHaveLength(0)
   })
+
+  it('硬去重快速路径：三笔全同发出 3 对，相似度均为 1', () => {
+    const txs = [
+      tx({ id: 1, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 2, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 3, amount: 28, note: '星巴克', date: '2026-07-01' }),
+    ]
+    const pairs = detectDuplicates(txs, DEFAULT_DEDUP_STRATEGY)
+    expect(pairs).toHaveLength(3) // C(3,2)
+    expect(pairs.every((p) => p.similarity === 1)).toBe(true)
+  })
+
+  it('精确重复不重复发出（快速路径与模糊路径不重叠）', () => {
+    const txs = [
+      tx({ id: 1, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 2, amount: 28, note: '星巴克', date: '2026-07-01' }),
+    ]
+    const pairs = detectDuplicates(txs, DEFAULT_DEDUP_STRATEGY)
+    expect(pairs).toHaveLength(1)
+    expect(pairs[0].similarity).toBe(1)
+  })
+
+  it('精确重复与模糊近重复并存：两者都被发出', () => {
+    const txs = [
+      tx({ id: 1, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 2, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 3, amount: 28, note: '星巴克拿铁', date: '2026-07-01' }),
+    ]
+    const pairs = detectDuplicates(txs, DEFAULT_DEDUP_STRATEGY)
+    // (1,2) 精确 sim=1；(1,3) (2,3) 模糊——note Jaccard 0.6，平均 (1+1+0.6)/3≈0.867 >= 0.85
+    expect(pairs).toHaveLength(3)
+    const exact = pairs.find((p) => p.entryAId === 1 && p.entryBId === 2)
+    expect(exact?.similarity).toBe(1)
+  })
 })
