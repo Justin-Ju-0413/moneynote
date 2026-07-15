@@ -1,5 +1,6 @@
 import type { ColumnRole, ColumnType, TemplateFingerprint } from '@/db/types'
 import { BUILTIN_DETECTION } from './builtinTemplates'
+import { parseCSVLine } from '@/utils/csv'
 
 // ── 表头行检测结果 ──
 export interface HeaderDetection {
@@ -374,30 +375,4 @@ function fnv1aHash(str: string): string {
     hash = (hash * 0x01000193) >>> 0
   }
   return hash.toString(16).padStart(8, '0')
-}
-
-/** 简单 CSV 行解析（处理引号包裹 + 转义双引号） */
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (ch === '"') {
-      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-        current += '"'
-        i++
-      } else {
-        inQuotes = !inQuotes
-      }
-    } else if (ch === ',' && !inQuotes) {
-      result.push(current)
-      current = ''
-    } else {
-      current += ch
-    }
-  }
-  result.push(current)
-  return result
 }

@@ -1,6 +1,7 @@
 import type { BillTemplate, ColumnMapping, FilterRule } from '@/db/types'
 import type { RawBillRow } from '@/utils/import'
 import * as log from '@/utils/log'
+import { parseCSVLine } from '@/utils/csv'
 
 export interface ParseResult {
   source: string
@@ -374,30 +375,5 @@ function applyCleanPrefixes(value: string, prefixes: string[]): string {
       result = result.replace(new RegExp(prefix), '')
     } catch (err) { log.warn('清洗前缀正则无效,已跳过', { pattern: prefix, err }) }
   }
-  return result
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (ch === '"') {
-      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-        current += '"'
-        i++
-      } else {
-        inQuotes = !inQuotes
-      }
-    } else if (ch === ',' && !inQuotes) {
-      result.push(current)
-      current = ''
-    } else {
-      current += ch
-    }
-  }
-  result.push(current)
   return result
 }
