@@ -40,13 +40,44 @@
   - 行为不变(三字段全等的对原本也算出 1.0),仅提速;大库多重复时收益明显
   - 补 3 个测试:三笔全同发 3 对 / 不重复发出 / 精确+模糊并存
 
+### P0-5 PWA 补图标 ✅
+
+- **结果**:manifest 引用的 192/512/apple-touch-icon PNG 补齐;构建 precache 22->25
+- **commit**:`dba4a4b`
+- **改了什么**:
+  - 新增 `scripts/generate-icons.mjs`:用 sharp 从 `favicon.svg` 光栅化为 192/512/180 三尺寸 PNG(可复现再生)
+  - sharp 加为 devDep
+  - **附带发现**:`npm audit` 报 `xlsx@0.18.5` 高危(原型污染 + ReDoS),为既有依赖债、npm 上无修复版本(SheetJS 已迁自家 CDN),留待单独处理(可换 `@e965/xlsx` 或 CDN 版)
+
+### P0-6 静默错误可观测 ✅
+
+- **结果**:5 处关键路径静默 catch 改为结构化 `warn`;lint 0
+- **commit**:`77a201e`
+- **改了什么**:
+  - 新增 `src/utils/log.ts`:统一 `[MoneyNote]` 前缀的 `warn`/`error`,为未来遥测留接入点
+  - 5 处 `catch { noop }` 改 `log.warn`:billClassifier 缓存读/写、universalParser 过滤规则/清洗前缀正则无效、templateMatcher 统计更新
+  - 保留静默:4 处 JSON.parse 三层 fallback(正常控制流)、db/index.ts 内置模板回填(init 守卫,有注释)
+
+### P0-3 删 legacyParse + 统一 CSV 解析 ✅
+
+- **结果**:移除 300+ 行 `@deprecated` legacyParse;3 份 parseCSVLine 合并;precache 1383.81->1379.26 KiB;lint 0 / 单测 38 / 构建通过
+- **commit**:`e3dc1f3`
+- **改了什么**:
+  - 新增 `src/utils/csv.ts`,analyzer/universalParser 改 import 并删本地副本,import.ts 删 legacyParse 后不再需要
+  - `parseBillFile` 5c 由「静默走旧解析器兜底」改为明确抛错:无法识别格式时要求完成列映射学习
+  - 移除 legacyParse / legacyDetectExcelSource / legacyParseAlipayCSV / legacyParseWeChatExcel / legacyParsePingAnExcel
+  - `ParseResult.matchType` 去掉 `'legacy'`(内置模板已在 5a 覆盖三来源标准格式)
+  - **行为变化**:仅「非标准格式 + 用户取消学习」窄场景,原先隐藏兜底导入 -> 现明确报错(更可预期)
+
 ### P0 进度总览
 
 | 项 | 状态 |
 |---|---|
 | P0-1 Lint 清零 | ✅ |
 | P0-2 导出修复(CSV BOM/转义 + JSON schemaVersion) | ✅ |
-| P0-3 删 legacyParse + 统一 CSV 解析 | ⬜ |
+| P0-3 删 legacyParse + 统一 CSV 解析 | ✅ |
 | P0-4 硬去重快速路径 | ✅ |
-| P0-5 PWA 补图标 | ⬜ |
-| P0-6 静默错误可观测 | ⬜ |
+| P0-5 PWA 补图标 | ✅ |
+| P0-6 静默错误可观测 | ✅ |
+
+**P0 全部完成 🎉** — lint 0 / 单测 38(原 27)/ 构建通过。基线已拉回全绿。`p0-cleanup` 分支可合并到 main 后进入 P1 架构升级。
