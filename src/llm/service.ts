@@ -3,6 +3,7 @@ import { buildMessages, parseLLMResponse, buildBatchMessages, parseBatchResponse
 import type { BatchClassifyItem } from './prompt'
 import { buildAuditSystemPrompt, parseAuditSuggestions } from './auditPrompt'
 import { maybeRedact } from './redact'
+import { llmChat, llmErrorMessage } from './client'
 import type { Transaction } from '@/db/types'
 import { matchCategory } from '@/nlp/categoryMatcher'
 
@@ -11,69 +12,19 @@ export interface CallResult {
   error?: string
 }
 
-// 调用 OpenAI 兼容 API
+// 调用 OpenAI 兼容 API（自然语言解析单条）
 export async function callLLM(config: LLMConfig, userInput: string): Promise<CallResult> {
-  // 离线检测
-  if (!navigator.onLine) {
-    return { result: null, error: 'offline' }
-  }
+  const { content, errorKind, errorMessage } = await llmChat(config, {
+    messages: buildMessages(userInput),
+    maxTokens: 300,
+    timeout: 8000,
+  })
+  if (errorKind) return { result: null, error: llmErrorMessage(errorKind, errorMessage) }
+  if (!content) return { result: null, error: 'empty' }
 
-  if (!config.apiKey || !config.endpoint || !config.model) {
-    return { result: null, error: 'config' }
-  }
-
-  const messages = buildMessages(userInput)
-  const url = `${config.endpoint.replace(/\/$/, '')}/v1/chat/completions`
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        max_tokens: config.maxTokens || 300,
-        temperature: config.temperature ?? 0.1,
-      }),
-      signal: AbortSignal.timeout(config.timeout || 8000),
-    })
-
-    if (!response.ok) {
-      const status = response.status
-      if (status === 401 || status === 403) {
-        return { result: null, error: 'API Key 无效，请检查设置' }
-      }
-      if (status === 429) {
-        return { result: null, error: 'API 额度不足或请求过于频繁' }
-      }
-      if (status === 404) {
-        return { result: null, error: '模型名称不存在，请检查配置' }
-      }
-      return { result: null, error: `服务端错误 (${status})` }
-    }
-
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
-
-    if (!content) {
-      return { result: null, error: 'empty' }
-    }
-
-    const parsed = parseLLMResponse(content)
-    if (!parsed) {
-      return { result: null, error: 'parse' }
-    }
-
-    return { result: parsed }
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'TimeoutError') {
-      return { result: null, error: 'timeout' }
-    }
-    return { result: null, error: 'network' }
-  }
+  const parsed = parseLLMResponse(content)
+  if (!parsed) return { result: null, error: 'parse' }
+  return { result: parsed }
 }
 
 // 测试连接（发送最简请求验证配置）
@@ -99,50 +50,20 @@ export async function callLLMBatch(
   items: string[],
   privacyMode = true,
 ): Promise<BatchResult> {
-  if (!navigator.onLine) return { results: new Array(items.length).fill(null), error: 'offline' }
-  if (!config.apiKey || !config.endpoint || !config.model || items.length === 0) {
-    return { results: new Array(items.length).fill(null), error: 'config' }
-  }
+  if (items.length === 0) return { results: [], error: 'config' }
 
   const messages = buildBatchMessages(items.map((item) => maybeRedact(item, privacyMode)))
-  const url = `${config.endpoint.replace(/\/$/, '')}/v1/chat/completions`
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        max_tokens: config.maxTokens || 512,
-        temperature: config.temperature ?? 0.1,
-      }),
-      signal: AbortSignal.timeout(config.timeout || 15000),
-    })
-
-    if (!response.ok) {
-      const status = response.status
-      let error = `服务端错误 (${status})`
-      if (status === 401 || status === 403) error = 'API Key 无效'
-      else if (status === 429) error = 'API 额度不足'
-      else if (status === 404) error = '模型不存在'
-      return { results: new Array(items.length).fill(null), error }
-    }
-
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
-    if (!content) return { results: new Array(items.length).fill(null), error: 'empty' }
-
-    return { results: parseBatchResponse(content, items.length) }
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'TimeoutError') {
-      return { results: new Array(items.length).fill(null), error: 'timeout' }
-    }
-    return { results: new Array(items.length).fill(null), error: 'network' }
+  const { content, errorKind, errorMessage } = await llmChat(config, {
+    messages,
+    maxTokens: 512,
+    timeout: 15000,
+  })
+  if (errorKind) {
+    return { results: new Array(items.length).fill(null), error: llmErrorMessage(errorKind, errorMessage) }
   }
+  if (!content) return { results: new Array(items.length).fill(null), error: 'empty' }
+
+  return { results: parseBatchResponse(content, items.length) }
 }
 
 // ── AI 工作台：统一审计服务（移植自 项控 ledger-ai-agent）──
@@ -186,59 +107,29 @@ export async function runLLMAudit(
   const privacyMode = options.privacyMode ?? config.privacyMode ?? true
   const batchSize = options.batchSize ?? config.batchSize ?? 120
 
-  // 未配置 API Key -> 直接走本地启发式
-  if (!config.apiKey || !config.endpoint || !config.model) {
-    return { suggestions: heuristicSuggestions(transactions, task), error: 'config' }
-  }
-  if (!navigator.onLine) {
-    return { suggestions: heuristicSuggestions(transactions, task), error: 'offline' }
-  }
-
   const payload = transactions
     .slice(0, Math.max(1, batchSize))
     .map((t) => redactTransaction(t, privacyMode))
-  const url = `${config.endpoint.replace(/\/$/, '')}/v1/chat/completions`
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        temperature: config.temperature ?? 0.1,
-        max_tokens: config.maxTokens || 800,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: buildAuditSystemPrompt(task) },
-          { role: 'user', content: JSON.stringify({ transactions: payload }) },
-        ],
-      }),
-      signal: AbortSignal.timeout(config.timeout || 20000),
-    })
+  const { content, errorKind, errorMessage } = await llmChat(config, {
+    messages: [
+      { role: 'system', content: buildAuditSystemPrompt(task) },
+      { role: 'user', content: JSON.stringify({ transactions: payload }) },
+    ],
+    maxTokens: 800,
+    timeout: 20000,
+    responseFormat: 'json_object',
+  })
 
-    if (!response.ok) {
-      const status = response.status
-      let error = `服务端错误 (${status})`
-      if (status === 401 || status === 403) error = 'API Key 无效'
-      else if (status === 429) error = 'API 额度不足'
-      else if (status === 404) error = '模型不存在'
-      return { suggestions: heuristicSuggestions(transactions, task), error }
-    }
+  // 出错(含未配置/离线)->回退本地启发式
+  if (errorKind) {
+    return { suggestions: heuristicSuggestions(transactions, task), error: llmErrorMessage(errorKind, errorMessage) }
+  }
 
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content ?? '{}'
-    const suggestions = parseAuditSuggestions(content, task)
-    return {
-      suggestions: suggestions.length ? suggestions : heuristicSuggestions(transactions, task),
-    }
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'TimeoutError') {
-      return { suggestions: heuristicSuggestions(transactions, task), error: 'timeout' }
-    }
-    return { suggestions: heuristicSuggestions(transactions, task), error: 'network' }
+  // 空 content 视作 '{}'(json_object 模式下偶发),与原实现一致
+  const suggestions = parseAuditSuggestions(content ?? '{}', task)
+  return {
+    suggestions: suggestions.length ? suggestions : heuristicSuggestions(transactions, task),
   }
 }
 
