@@ -7,7 +7,7 @@ import { TransactionList } from '@/components/transaction/TransactionList'
 import { EditDialog } from '@/components/transaction/EditDialog'
 import { useNLPInput } from '@/hooks/useNLPInput'
 import { useTransactions } from '@/hooks/useTransactions'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast-context'
 import { db } from '@/db'
 import type { Transaction } from '@/db/types'
 

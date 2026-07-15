@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { Transaction } from '@/db/types'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -20,15 +20,19 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
   const [note, setNote] = useState('')
   const [category, setCategory] = useState('')
   const [date, setDate] = useState('')
+  const [syncKey, setSyncKey] = useState('')
 
-  useEffect(() => {
+  // transaction/open 变化时同步表单（render 期调整状态，避免 effect 级联渲染）
+  const nextSyncKey = transaction ? `${transaction.id ?? 'new'}|${open}` : `|${open}`
+  if (nextSyncKey !== syncKey) {
+    setSyncKey(nextSyncKey)
     if (transaction && open) {
       setAmount(transaction.amount.toString())
       setNote(transaction.note || '')
       setCategory(transaction.category)
       setDate(transaction.date)
     }
-  }, [transaction, open])
+  }
 
   const handleSave = () => {
     if (!transaction) return

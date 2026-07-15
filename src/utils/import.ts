@@ -143,7 +143,7 @@ async function legacyDetectExcelSource(buffer: ArrayBuffer): Promise<'wechat' | 
 async function legacyParseAlipayCSV(file: File): Promise<ParseResult> {
   const buffer = await file.arrayBuffer()
 
-  let text = ''
+  let text: string
   try {
     text = new TextDecoder('gbk').decode(buffer)
     if (!text.includes('交易时间')) {

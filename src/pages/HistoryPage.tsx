@@ -7,10 +7,12 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useDedup } from '@/hooks/useDedup'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast-context'
 import { CATEGORY_MAP } from '@/utils/constants'
 import { db } from '@/db'
 import type { Transaction, DedupRecord } from '@/db/types'
+
+const EMPTY_TRANSACTIONS: Transaction[] = []
 
 export function HistoryPage() {
   const [search, setSearch] = useState('')
@@ -40,7 +42,7 @@ export function HistoryPage() {
 
   const transactions = useLiveQuery(
     () => db.transactions.orderBy('date').reverse().toArray(),
-  ) || []
+  ) || EMPTY_TRANSACTIONS
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {

@@ -3,22 +3,7 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import type { ColumnRole, ColumnMapping } from '@/db/types'
 import type { LearningContext } from '@/bill-analyzer/learningFlow'
-
-const ROLE_OPTIONS: { value: ColumnRole; label: string }[] = [
-  { value: 'date', label: '日期' },
-  { value: 'amount', label: '金额' },
-  { value: 'direction', label: '收支方向' },
-  { value: 'note', label: '备注' },
-  { value: 'counterparty', label: '交易对方' },
-  { value: 'category', label: '分类' },
-  { value: 'status', label: '状态' },
-  { value: 'balance', label: '余额' },
-  { value: 'skip', label: '忽略' },
-]
-
-const ROLE_LABELS: Record<string, string> = Object.fromEntries(
-  ROLE_OPTIONS.map(o => [o.value, o.label]),
-)
+import { ROLE_OPTIONS } from './roleLabels'
 
 interface ColumnMappingDialogProps {
   open: boolean
@@ -35,22 +20,22 @@ export function ColumnMappingDialog({
 }: ColumnMappingDialogProps) {
   const [name, setName] = useState('')
   const [roles, setRoles] = useState<(ColumnRole | null)[]>([])
+  const [syncedContext, setSyncedContext] = useState<LearningContext | null>(null)
 
-  // 初始化
-  const initialized = useMemo(() => {
-    if (!context) return false
-    setName(context.suggestedName)
-    setRoles([...context.columnRoles])
-    return true
-  }, [context])
-
-  if (!initialized || !context) return null
-
-  const { headers, grid, fingerprint, columnMappings, preview, warnings } = context
-  const headerIndex = fingerprint.headerRowIndex
+  // context 变化时同步初始值（render 期调整状态，避免 effect 级联渲染）
+  if (context !== syncedContext) {
+    setSyncedContext(context)
+    if (context) {
+      setName(context.suggestedName)
+      setRoles([...context.columnRoles])
+    }
+  }
 
   // 样本数据（取表头后 3 行）
   const sampleRows: string[][] = useMemo(() => {
+    if (!context) return []
+    const headerIndex = context.fingerprint.headerRowIndex
+    const grid = context.grid
     const rows: string[][] = []
     for (let i = headerIndex + 1; i < Math.min(headerIndex + 4, grid.length); i++) {
       const row = grid[i]
@@ -66,7 +51,11 @@ export function ColumnMappingDialog({
       }))
     }
     return rows
-  }, [grid, headerIndex])
+  }, [context])
+
+  if (!context) return null
+
+  const { headers, columnMappings, preview, warnings } = context
 
   const handleRoleChange = (colIndex: number, role: ColumnRole) => {
     const newRoles = [...roles]
@@ -192,9 +181,4 @@ export function ColumnMappingDialog({
       </div>
     </Dialog>
   )
-}
-
-// 角色标签工具函数
-export function getRoleLabel(role: string): string {
-  return ROLE_LABELS[role] || role
 }

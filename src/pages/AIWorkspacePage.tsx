@@ -5,13 +5,15 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast-context'
 import { useAIWorkspace } from '@/hooks/useAIWorkspace'
 import { useLLMSettings } from '@/hooks/useLLMSettings'
 import { db } from '@/db'
 import type { Transaction } from '@/db/types'
 import { CATEGORY_MAP } from '@/utils/constants'
 import type { AuditTask, AiSuggestion, SuggestionType } from '@/llm/types'
+
+const EMPTY_TRANSACTIONS: Transaction[] = []
 
 const TASKS: { task: AuditTask; label: string; desc: string; icon: string }[] = [
   { task: 'audit', label: '综合审计', desc: '异常 + 重复 + 分类', icon: '🛡' },
@@ -54,7 +56,7 @@ export function AIWorkspacePage() {
     privacyMode,
   } = useAIWorkspace()
 
-  const transactions = useLiveQuery(() => db.transactions.toArray()) ?? []
+  const transactions = useLiveQuery(() => db.transactions.toArray()) ?? EMPTY_TRANSACTIONS
   const txCount = transactions.length
   const txMap = useMemo(
     () => new Map(transactions.map((t) => [t.id as number, t])),

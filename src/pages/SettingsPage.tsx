@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
-import { useToast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast-context'
 import { useLLMSettings } from '@/hooks/useLLMSettings'
 import { useBillTemplateLearning } from '@/hooks/useBillTemplateLearning'
 import { ColumnMappingDialog } from '@/components/input/ColumnMappingDialog'
@@ -51,16 +51,14 @@ export function SettingsPage() {
   const [formEnabled, setFormEnabled] = useState(false)
   const [formInitialized, setFormInitialized] = useState(false)
 
-  // config 加载后初始化表单
-  useEffect(() => {
-    if (config && !formInitialized) {
-      setFormEndpoint(config.endpoint)
-      setFormModel(config.model)
-      setFormApiKey(config.apiKey)
-      setFormEnabled(config.enabled)
-      setFormInitialized(true)
-    }
-  }, [config, formInitialized])
+  // config 加载后初始化表单（render 期调整状态，避免 effect 级联渲染）
+  if (config && !formInitialized) {
+    setFormEndpoint(config.endpoint)
+    setFormModel(config.model)
+    setFormApiKey(config.apiKey)
+    setFormEnabled(config.enabled)
+    setFormInitialized(true)
+  }
 
   const transactions = useLiveQuery(() => db.transactions.toArray()) || []
   const transactionCount = transactions.length
@@ -326,7 +324,6 @@ export function SettingsPage() {
   }
 
   const settingItems = [
-    { title: '导入账单', desc: '支持支付宝 CSV、微信/平安银行 Excel 等账单文件', action: handleImportClick, disabled: isImporting },
     { title: '导出 CSV', desc: '导出为 Excel 可打开的表格文件', action: handleExportCSV },
     { title: '导出 JSON', desc: '导出为备份文件，可用于恢复', action: handleExportJSON },
     { title: '清除 AI 缓存', desc: `分类缓存 ${cacheCount} 条 + 解析缓存 ${parseCacheCount} 条`, action: handleClearCache },
@@ -583,6 +580,21 @@ export function SettingsPage() {
 
         {/* 设置项 */}
         <div className="space-y-0 border-t border-b border-primary-200/30">
+          {/* 导入账单：handler 读 fileInputRef，直接挂 onClick 以满足 React Compiler */}
+          <div
+            className={`cursor-pointer hover:bg-primary-50/20 px-4 py-4 md:px-5 md:py-5 transition-colors border-b border-primary-200/30 ${
+              isImporting ? 'opacity-50 pointer-events-none' : ''
+            }`}
+            onClick={handleImportClick}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-text">导入账单</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{isImporting ? (importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 Excel 等账单文件'}</p>
+              </div>
+              <span className="text-text-placeholder text-sm">›</span>
+            </div>
+          </div>
           {settingItems.map((item, i) => (
             <div
               key={item.title}

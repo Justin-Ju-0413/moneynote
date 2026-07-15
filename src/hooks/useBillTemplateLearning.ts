@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import type { BillTemplate, ColumnMapping } from '@/db/types'
 import type { LearningContext } from '@/bill-analyzer/learningFlow'
 import { contextToTemplate } from '@/bill-analyzer/learningFlow'
@@ -14,10 +14,10 @@ export type LearningState =
 
 export function useBillTemplateLearning() {
   const [state, setState] = useState<LearningState>({ phase: 'idle' })
-  const fileRef = useRef<File | null>(null)
+  const [file, setFile] = useState<File | null>(null)
 
-  const startLearning = useCallback((file: File, context: LearningContext) => {
-    fileRef.current = file
+  const startLearning = useCallback((nextFile: File, context: LearningContext) => {
+    setFile(nextFile)
     setState({ phase: 'confirming', context })
   }, [])
 
@@ -50,18 +50,18 @@ export function useBillTemplateLearning() {
   }, [state])
 
   const cancel = useCallback(() => {
-    fileRef.current = null
+    setFile(null)
     setState({ phase: 'idle' })
   }, [])
 
   const reset = useCallback(() => {
-    fileRef.current = null
+    setFile(null)
     setState({ phase: 'idle' })
   }, [])
 
   return {
     state,
-    file: fileRef.current,
+    file,
     startLearning,
     updateMappings,
     confirm,

@@ -334,7 +334,7 @@ async function parseCSVToGrid(
   const buffer = await file.arrayBuffer()
 
   // 尝试 GBK 解码
-  let text = ''
+  let text: string
   let encoding: 'gbk' | 'utf-8' = 'gbk'
   try {
     text = new TextDecoder('gbk').decode(buffer)

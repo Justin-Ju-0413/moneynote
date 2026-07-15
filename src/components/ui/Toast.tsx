@@ -1,28 +1,8 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-interface ToastAction {
-  label: string
-  onClick: () => unknown
-}
-
-interface Toast {
-  id: number
-  message: string
-  type: 'success' | 'error' | 'info'
-  action?: ToastAction
-}
-
-interface ToastContextType {
-  showToast: (message: string, type?: 'success' | 'error' | 'info', action?: ToastAction) => void
-}
-
-const ToastContext = createContext<ToastContextType>({ showToast: () => {} })
-
-export function useToast() {
-  return useContext(ToastContext)
-}
+import { ToastContext } from '@/components/ui/toast-context'
+import type { Toast, ToastAction } from '@/components/ui/toast-context'
 
 let toastId = 0
 

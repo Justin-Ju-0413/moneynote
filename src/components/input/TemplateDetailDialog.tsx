@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import type { BillTemplate } from '@/db/types'
-import { getRoleLabel } from '@/components/input/ColumnMappingDialog'
+import { getRoleLabel } from '@/components/input/roleLabels'
 
 interface TemplateDetailDialogProps {
   open: boolean
