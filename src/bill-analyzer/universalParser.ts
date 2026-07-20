@@ -30,15 +30,34 @@ export async function parseWithTemplate(
   }
 
   // 构建 header → ColumnMapping 查找表
+  const actualHeaders = (data[headerIndex] || []).map(c => {
+    const full = String(c ?? '').trim()
+    const nl = full.indexOf('\n')
+    return nl > 0 ? full.slice(0, nl).trim() : full
+  })
+  const headerToIndex = new Map<string, number>()
+  actualHeaders.forEach((h, i) => { if (h) headerToIndex.set(h, i) })
+  const alignedMappings = template.columnMappings.map(m => {
+    const idx = headerToIndex.get(m.normalizedHeader)
+    return idx !== undefined ? { ...m, columnIndex: idx } : m
+  })
+  const origIdxToHeader = new Map<number, string>()
+  for (const m of template.columnMappings) origIdxToHeader.set(m.columnIndex, m.normalizedHeader)
+  const alignedFilters = template.filterRules.map(r => {
+    const hdr = origIdxToHeader.get(r.columnIndex)
+    const idx = hdr ? headerToIndex.get(hdr) : undefined
+    return idx !== undefined ? { ...r, columnIndex: idx } : r
+  })
+
   const mappingByHeader = new Map<string, ColumnMapping>()
-  for (const m of template.columnMappings) {
+  for (const m of alignedMappings) {
     mappingByHeader.set(m.normalizedHeader, m)
   }
 
   // 找关键角色列
-  const dateMapping = template.columnMappings.find(m => m.role === 'date')
-  const amountMapping = template.columnMappings.find(m => m.role === 'amount')
-  const directionMapping = template.columnMappings.find(m => m.role === 'direction')
+  const dateMapping = alignedMappings.find(m => m.role === 'date')
+  const amountMapping = alignedMappings.find(m => m.role === 'amount')
+  const directionMapping = alignedMappings.find(m => m.role === 'direction')
 
   if (!dateMapping || !amountMapping) {
     throw new Error('模板缺少 date 或 amount 列映射')
@@ -71,7 +90,7 @@ export async function parseWithTemplate(
     }
 
     // 应用过滤规则
-    const skipReason = applyFilterRules(cellValues, template.filterRules)
+    const skipReason = applyFilterRules(cellValues, alignedFilters)
     if (skipReason) { trackSkip(`filter:${skipReason}`); continue }
 
     // 解析金额
@@ -101,7 +120,7 @@ export async function parseWithTemplate(
     }
 
     // 添加所有列的原始值（按 normalizedHeader）
-    for (const m of template.columnMappings) {
+    for (const m of alignedMappings) {
       if (m.role === 'skip') continue
       const val = cellValues[m.columnIndex] || ''
       // 应用 transform 清洗
@@ -114,13 +133,13 @@ export async function parseWithTemplate(
 
     // 兼容字段映射（确保下游 billClassifier 能正常工作）
     if (!fields['商品说明'] && !fields['商品']) {
-      const noteMapping = template.columnMappings.find(m => m.role === 'note')
+      const noteMapping = alignedMappings.find(m => m.role === 'note')
       if (noteMapping) {
         fields['商品说明'] = cellValues[noteMapping.columnIndex] || ''
       }
     }
     if (!fields['交易对方']) {
-      const cpMapping = template.columnMappings.find(m => m.role === 'counterparty')
+      const cpMapping = alignedMappings.find(m => m.role === 'counterparty')
       if (cpMapping) {
         fields['交易对方'] = cellValues[cpMapping.columnIndex] || ''
       }
