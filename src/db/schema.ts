@@ -14,6 +14,7 @@ export class AppDB extends Dexie {
   dedupRecords!: AppDBSchema['dedupRecords']
   backups!: AppDBSchema['backups']
   auditCache!: AppDBSchema['auditCache']
+  chatMessages!: AppDBSchema['chatMessages']
 
   constructor() {
     super('MoneyNoteDB')
@@ -70,6 +71,11 @@ export class AppDB extends Dexie {
     // 修复 getAllTemplates() 的 orderBy('importCount') 因缺索引抛 DexieError 导致设置页白屏
     this.version(10).stores({
       billTemplates: '++id, fingerprint, name, source, importCount',
+    })
+
+    // v11: 聊天记账消息表(首页 ChatGPT 式对话,持久化对话历史)
+    this.version(11).stores({
+      chatMessages: '++id, createdAt',
     })
   }
 }

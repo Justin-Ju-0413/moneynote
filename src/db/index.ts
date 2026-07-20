@@ -58,4 +58,4 @@ export { db }
 export type { Transaction, Category, Budget, Setting, ParsedTransaction, ClassificationCache, ParseCache,
   BillTemplate, ColumnMapping, ColumnRole, ColumnType, FilterRule, TemplateFingerprint,
   DedupStrategy, DedupRecord, DedupTimeWindow, DedupAction, DedupStatus, DedupMatchField,
-  BackupRecord, AuditCache } from './types'
+  BackupRecord, AuditCache, ChatMessage, ChatCard, ChatIntent } from './types'

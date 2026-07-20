@@ -170,6 +170,28 @@ export interface AuditCache {
   createdAt: number
 }
 
+// ── 聊天记账消息（首页 ChatGPT 式对话）──
+export type ChatIntent = 'record' | 'query' | 'modify' | 'delete' | 'chat'
+
+// 聊天消息里附带的数据变更确认卡片（record/modify/delete 三类)
+export interface ChatCard {
+  kind: 'record' | 'modify' | 'delete'
+  status: 'pending' | 'confirmed' | 'cancelled'
+  parsed?: ParsedTransaction        // record: 待记交易
+  txId?: number                     // modify/delete: 目标交易 id
+  snapshot?: Transaction            // modify: 改前原件;delete: 待删原件(展示+可恢复)
+  changes?: Partial<Transaction>    // modify: 要改的字段
+}
+
+export interface ChatMessage {
+  id?: number
+  role: 'user' | 'assistant'
+  content: string                   // 文本(user 输入 / assistant 回复)
+  createdAt: number
+  intent?: ChatIntent
+  card?: ChatCard
+}
+
 export interface AppDBSchema {
   transactions: EntityTable<Transaction, 'id'>
   categories: EntityTable<Category, 'id'>
@@ -183,6 +205,7 @@ export interface AppDBSchema {
   dedupRecords: EntityTable<DedupRecord, 'id'>
   backups: EntityTable<BackupRecord, 'id'>
   auditCache: EntityTable<AuditCache, 'cacheKey'>
+  chatMessages: EntityTable<ChatMessage, 'id'>
 }
 
 // NLP 解析结果

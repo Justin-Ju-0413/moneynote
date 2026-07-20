@@ -2,6 +2,8 @@ import type { LLMConfig, LLMParseResult, AuditTask, AiSuggestion } from './types
 import { buildMessages, parseLLMResponse, buildBatchMessages, parseBatchResponse } from './prompt'
 import type { BatchClassifyItem } from './prompt'
 import { buildAuditSystemPrompt, parseAuditSuggestions } from './auditPrompt'
+import { buildChatMessages, parseChatIntent } from './chatPrompt'
+import type { ChatContext, ChatIntentResult } from './chatPrompt'
 import { maybeRedact } from './redact'
 import { runTask, type TaskContext, type TaskDescriptor } from './task'
 import type { Transaction } from '@/db/types'
@@ -134,6 +136,35 @@ export async function runLLMAudit(
   const ctx: TaskContext = { config, privacyMode: options.privacyMode ?? config.privacyMode ?? true }
   const r = await runTask(auditTask, { transactions, task, options }, ctx)
   return { suggestions: r.result ?? heuristicSuggestions(transactions, task), error: r.error }
+}
+
+// ── 聊天记账(ChatGPT 式对话):单次 LLM 调用返回结构化意图 ──
+
+interface ChatInput {
+  history: { role: 'user' | 'assistant'; content: string }[]
+  context: ChatContext
+}
+
+const chatTask: TaskDescriptor<ChatInput, ChatIntentResult> = {
+  name: 'chat',
+  chatOptions: { maxTokens: 800, timeout: 15000, responseFormat: 'json_object' },
+  buildMessages: (input) => buildChatMessages(input.history, input.context),
+  parse: (content) => parseChatIntent(content),
+}
+
+export interface ChatRunResult {
+  result: ChatIntentResult | null
+  error?: string
+}
+
+// 运行聊天意图识别:history 含当前用户消息(作为最后一条),context 为数据上下文
+export async function runChat(
+  config: LLMConfig,
+  history: { role: 'user' | 'assistant'; content: string }[],
+  context: ChatContext,
+): Promise<ChatRunResult> {
+  const r = await runTask(chatTask, { history, context }, { config, privacyMode: false })
+  return { result: r.result, error: r.error }
 }
 
 // 本地启发式建议（无 API Key 或请求失败时的回退）
