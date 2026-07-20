@@ -66,7 +66,8 @@ const SYSTEM_PROMPT = `你是 MoneyNote 记账助手,通过自然对话帮用户
 4. modify/delete:txId 必须来自上面最近交易的 id;不确定则 intent=chat 澄清
 5. query:reply 直接答,可引用上下文数字
 6. reply 简短自然,像朋友聊天
-7. 只填用到的字段,其余省略`
+7. 只填用到的字段,其余省略
+8. record/modify/delete 都需用户确认后才执行,reply 必须用一句简短征询语气(如"记一笔咖啡 -¥25?""要把这笔改成50吗?""删除这笔午餐?"),不要用"已记录/已删除/已修改"等过去式,也不要留空`
 
 export function buildContextBlock(ctx: ChatContext): string {
   const today = dayjs().format('YYYY-MM-DD')

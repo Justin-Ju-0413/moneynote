@@ -123,3 +123,27 @@
 | P1-7 测试补齐(单测 + E2E) | ⬜ |
 | P1-8 结构化输出 | ⬜ |
 | P1-9 加密审计 | ⬜ |
+
+---
+
+## 首页聊天记账(ChatGPT 式)✅
+
+> 用户需求:首页改成 ChatGPT 式与 AI 助手聊天记账。决策:记账+查询+修改(全功能)、对话持久化、卡片+确认。方案见 `docs/PLAN-chat-homepage.md`。
+
+- **结果**:首页从「单行输入 + 解析卡片」改为 ChatGPT 式对话;AI 助手支持 record/query/modify/delete 四意图;对话持久化;真实 DeepSeek 端到端验证通过
+- **分支**:`feat/chat-homepage`(基于 `p1-2-task-registry`,复用 P1-2 runTask)
+- **改了什么**:
+  - DB:`ChatMessage`/`ChatCard`/`ChatIntent` 类型 + Dexie v11 `chatMessages` 表(仅加表,无数据变动)
+  - LLM:`chatPrompt.ts`(system prompt 全意图 + 上下文注入:近 20 笔 + 本月/上月/今日/分类汇总)+ `runChat`(复用 P1-2 `runTask`,`json_object`,maxTok 2000)
+  - 编排:`useChat` hook(消息收发、意图执行、卡片确认/取消、LLM 不可用回退本地 NLP `parseInput`)
+  - UI:`ChatMessageList`/`ChatInput`/`TransactionCard` 组件;`HomePage` 重写为聊天布局(头部摘要 + 消息流 + 输入框);删 `QuickInput`/`ParsePreview`/`useNLPInput`(被取代)
+  - **确认制**:record/modify/delete 都走卡片 + 确认(不自动入库),误判可取消
+  - **上下文注入**:每次发消息拉最新数据,LLM 据此答查询、解析「刚才那笔」(选 txId,本地校验存在)
+  - 修复:chatTask maxTokens 800->2000(推理模型 reasoning 占预算致 JSON 截断 -> parse 失败);prompt 要求 reply 征询语气非空;UI 不渲染空内容气泡
+  - 单测 +14(`chatPrompt.test.ts`);lint 0 / 单测 87 / 构建通过
+- **端到端验证**(真实 DeepSeek + deepseek-v4-flash):
+  - 记账:「打车15」-> 回复「记一笔打车支出 ¥15?」+ 卡片 -> 确认 -> 入库,本月 +¥15
+  - 修改:「把刚才那笔改成50」-> ¥35→¥50 卡片 -> 确认 -> 本月更新
+  - 查询:「本月花了多少」->「本月共支出¥50.00」(从注入上下文作答)
+  - 删除:「删掉刚才那笔」-> 删除卡片 -> 确认 -> 本月归零
+  - 统计实时更新;刷新对话历史保留(IndexedDB 持久化)

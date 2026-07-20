@@ -147,7 +147,8 @@ interface ChatInput {
 
 const chatTask: TaskDescriptor<ChatInput, ChatIntentResult> = {
   name: 'chat',
-  chatOptions: { maxTokens: 800, timeout: 15000, responseFormat: 'json_object' },
+  // 推理模型(deepseek-v4-flash)reasoning_content 计入 max_tokens,预算给足避免 JSON 被截断
+  chatOptions: { maxTokens: 2000, timeout: 20000, responseFormat: 'json_object' },
   buildMessages: (input) => buildChatMessages(input.history, input.context),
   parse: (content) => parseChatIntent(content),
 }
