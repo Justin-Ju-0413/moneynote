@@ -65,5 +65,11 @@ export class AppDB extends Dexie {
     this.version(9).stores({
       auditCache: 'cacheKey, task, createdAt',
     })
+
+    // v10: billTemplates 增加 importCount 索引
+    // 修复 getAllTemplates() 的 orderBy('importCount') 因缺索引抛 DexieError 导致设置页白屏
+    this.version(10).stores({
+      billTemplates: '++id, fingerprint, name, source, importCount',
+    })
   }
 }

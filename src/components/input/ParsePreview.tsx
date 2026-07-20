@@ -41,8 +41,8 @@ export function ParsePreview({ result, onConfirm, onUpdate, llmStatus = 'idle', 
         <div className="flex-1">
           <div className="flex items-baseline gap-2">
             {result.amount !== null ? (
-              <span className="text-2xl font-heading text-expense">
-                -¥{result.amount.toFixed(2)}
+              <span className={`text-2xl font-heading ${result.type === 'income' ? 'text-green-600' : 'text-expense'}`}>
+                {result.type === 'income' ? '+' : '-'}¥{result.amount.toFixed(2)}
               </span>
             ) : (
               <span className="text-sm text-text-muted">未识别金额</span>

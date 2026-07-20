@@ -6,6 +6,19 @@ import { parseDate } from './dateParser'
 import { matchCategory } from './categoryMatcher'
 import { cleanNote } from './noteCleaner'
 
+// 收入关键词：命中则 type='income'（默认 expense）
+const INCOME_KEYWORDS = [
+  '工资', '薪水', '薪资', '收入', '报销', '红包', '奖金', '兼职',
+  '分红', '利息', '津贴', '补贴', '退休金', '养老金', '中奖', '收益',
+  '酬劳', '报酬', '稿费', '佣金', '抚恤金', '抚养费', '租金收入',
+  'salary', 'wage', 'income', 'bonus', 'refund',
+]
+
+function detectIncome(text: string): boolean {
+  const lower = text.toLowerCase()
+  return INCOME_KEYWORDS.some(k => lower.includes(k.toLowerCase()))
+}
+
 export function parseInput(rawInput: string): ParsedTransaction {
   if (!rawInput.trim()) {
     return {
@@ -17,6 +30,7 @@ export function parseInput(rawInput: string): ParsedTransaction {
       time: null,
       note: '',
       rawInput,
+      type: 'expense',
       needsReview: true,
     }
   }
@@ -42,6 +56,9 @@ export function parseInput(rawInput: string): ParsedTransaction {
     amountResult.confidence === 'low' ||
     categoryResult.confidence === 'low'
 
+  // 收入识别（关键词命中则为收入）
+  const type: 'expense' | 'income' = detectIncome(normalized) ? 'income' : 'expense'
+
   return {
     amount: amountResult.amount,
     amountConfidence: amountResult.confidence,
@@ -51,6 +68,7 @@ export function parseInput(rawInput: string): ParsedTransaction {
     time: dateResult.time,
     note,
     rawInput,
+    type,
     needsReview,
   }
 }
@@ -98,6 +116,9 @@ export function mergeLLMResult(
   if (llmResult.note && !merged.note) {
     merged.note = llmResult.note
   }
+
+  // type：规则检测到收入则保留，否则采纳 LLM 的 income 判定
+  merged.type = merged.type === 'income' || llmResult.type === 'income' ? 'income' : 'expense'
 
   merged.needsReview = merged.amount === null ||
     merged.amountConfidence === 'low' ||

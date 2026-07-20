@@ -26,7 +26,7 @@ export function HomePage() {
       date: parsedResult.date,
       time: parsedResult.time || undefined,
       note: parsedResult.note,
-      type: 'expense',
+      type: parsedResult.type,
       rawInput: parsedResult.rawInput,
     })
 

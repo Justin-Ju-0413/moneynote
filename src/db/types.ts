@@ -195,5 +195,6 @@ export interface ParsedTransaction {
   time: string | null
   note: string
   rawInput: string
+  type: 'expense' | 'income'
   needsReview: boolean
 }
