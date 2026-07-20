@@ -116,7 +116,7 @@ export async function runLLMAudit(
       { role: 'system', content: buildAuditSystemPrompt(task) },
       { role: 'user', content: JSON.stringify({ transactions: payload }) },
     ],
-    maxTokens: 800,
+    maxTokens: 4000,
     timeout: 20000,
     responseFormat: 'json_object',
   })

@@ -24,7 +24,7 @@ export function useLLMSettings() {
       const temperature = (map.get('llm.temperature') as number) ?? 0.1
       const timeout = (map.get('llm.timeout') as number) || 8000
       const privacyMode = map.get('llm.privacyMode') !== false // 默认 true
-      const batchSize = (map.get('llm.batchSize') as number) || 120
+      const batchSize = (map.get('llm.batchSize') as number) || 30
 
       const apiKey = encryptedKey ? await decryptApiKey(encryptedKey) : ''
 
@@ -40,7 +40,7 @@ export function useLLMSettings() {
     const current = config || {
       enabled: false, endpoint: '', apiKey: '', model: '',
       maxTokens: 300, temperature: 0.1, timeout: 8000,
-      privacyMode: true, batchSize: 120,
+      privacyMode: true, batchSize: 30,
     }
 
     const newConfig = { ...current, ...updates }
