@@ -97,12 +97,25 @@
   - HTTP 错误文案统一短句('API Key 无效' 等,原 callLLM 长句并入)
   - 新增 `client.test.ts` 13 条
 
+### P1-2 Task 注册抽象 ✅
+
+- **结果**:3 个 llm 层 AI 任务(单条解析/批量分类/审计)收敛为 `runTask` 调度;新任务只需提供 `TaskDescriptor` 描述符,零改调度;lint 0 / 单测 73(8 文件)/ 构建通过
+- **commit**:见本分支 `p1-2-task-registry`
+- **改了什么**:
+  - 新增 `src/llm/task.ts`:`TaskDescriptor<I,O>{ name, buildMessages, chatOptions, parse, validate?, fallback?, onEmpty? }` + `runTask`。骨架统一「构建消息 -> llmChat -> 错误守卫 -> 解析 -> 校验 -> 回退」;`__setLLMTransport` 仍为 mock 边界
+  - `service.ts`:callLLM/callLLMBatch/runLLMAudit 改写为 `runTask` 薄封装,内联 `parseTask`/`batchTask`/`auditTask` 三个描述符;`testLLMConnection`/`redactTransaction`/`heuristicSuggestions` 保持不变
+  - **行为保持(关键)**:公共签名与返回形状不变;`'empty'`/`'parse'` 错误串保留(useNLPInput 依赖该区分决定静默/上报);审计始终返回 suggestions(errorKind/空/零建议均走 heuristic);errorKind 回退带 error,解析/校验失败回退不带 error(审计语义)
+  - `onEmpty: 'parse'` 仅审计用(空 content 交 parse 当 `'{}'`,与原实现一致);其余任务空 content 直接 `error='empty'`
+  - `index.ts` 导出 `runTask`/`TaskDescriptor` 等供 P1-4 bill-analyzer 接入
+  - 新增 `task.test.ts` 11 条(覆盖 errorKind/empty/onEmpty=parse/parse-null/validate-fail/fallback/chatOptions 透传)+ `service.test.ts` 10 条(锁定三个公共函数契约)
+  - **遗留**:bill-analyzer 的 `aiMapper` 仍手写守卫,待 P1-4 并入 llm 层时迁移为 `mappingTask` 描述符(届时 `parseMappingResponse` 与 `parseBatchResponse` 的三层 JSON 提取可一并去重)
+
 ### P1 进度总览
 
 | 项 | 状态 |
 |---|---|
 | P1-1 LLMClient 统一抽象 | ✅ |
-| P1-2 Task 注册抽象 | ⬜ |
+| P1-2 Task 注册抽象 | ✅ |
 | P1-3 Prompt 版本化 | ⬜ |
 | P1-4 bill-analyzer 并入 llm 层 | ⬜ |
 | P1-5 Repository / 状态层 | ⬜ |

@@ -3,7 +3,7 @@ import { buildMessages, parseLLMResponse, buildBatchMessages, parseBatchResponse
 import type { BatchClassifyItem } from './prompt'
 import { buildAuditSystemPrompt, parseAuditSuggestions } from './auditPrompt'
 import { maybeRedact } from './redact'
-import { llmChat, llmErrorMessage } from './client'
+import { runTask, type TaskContext, type TaskDescriptor } from './task'
 import type { Transaction } from '@/db/types'
 import { matchCategory } from '@/nlp/categoryMatcher'
 
@@ -12,19 +12,29 @@ export interface CallResult {
   error?: string
 }
 
+// ── 任务描述符(P1-2 注册式):新 AI 任务零改调度 ──
+
+// 单条自然语言解析
+const parseTask: TaskDescriptor<string, LLMParseResult> = {
+  name: 'parse',
+  buildMessages: (input) => buildMessages(input),
+  chatOptions: { maxTokens: 300, timeout: 8000 },
+  parse: (content) => parseLLMResponse(content),
+}
+
+// 批量分类(多条记录一次 API 请求)
+const batchTask: TaskDescriptor<string[], (BatchClassifyItem | null)[]> = {
+  name: 'batchClassify',
+  buildMessages: (items, ctx) => buildBatchMessages(items.map((item) => maybeRedact(item, ctx.privacyMode))),
+  chatOptions: { maxTokens: 512, timeout: 15000 },
+  parse: (content, items) => parseBatchResponse(content, items.length),
+}
+
+// ── 公共 API ──
+
 // 调用 OpenAI 兼容 API（自然语言解析单条）
 export async function callLLM(config: LLMConfig, userInput: string): Promise<CallResult> {
-  const { content, errorKind, errorMessage } = await llmChat(config, {
-    messages: buildMessages(userInput),
-    maxTokens: 300,
-    timeout: 8000,
-  })
-  if (errorKind) return { result: null, error: llmErrorMessage(errorKind, errorMessage) }
-  if (!content) return { result: null, error: 'empty' }
-
-  const parsed = parseLLMResponse(content)
-  if (!parsed) return { result: null, error: 'parse' }
-  return { result: parsed }
+  return runTask(parseTask, userInput, { config, privacyMode: false })
 }
 
 // 测试连接（发送最简请求验证配置）
@@ -44,26 +54,14 @@ export interface BatchResult {
   error?: string
 }
 
-// 批量分类调用（多条记录一次 API 请求）
 export async function callLLMBatch(
   config: LLMConfig,
   items: string[],
   privacyMode = true,
 ): Promise<BatchResult> {
   if (items.length === 0) return { results: [], error: 'config' }
-
-  const messages = buildBatchMessages(items.map((item) => maybeRedact(item, privacyMode)))
-  const { content, errorKind, errorMessage } = await llmChat(config, {
-    messages,
-    maxTokens: 512,
-    timeout: 15000,
-  })
-  if (errorKind) {
-    return { results: new Array(items.length).fill(null), error: llmErrorMessage(errorKind, errorMessage) }
-  }
-  if (!content) return { results: new Array(items.length).fill(null), error: 'empty' }
-
-  return { results: parseBatchResponse(content, items.length) }
+  const r = await runTask(batchTask, items, { config, privacyMode })
+  return { results: r.result ?? new Array(items.length).fill(null), error: r.error }
 }
 
 // ── AI 工作台：统一审计服务（移植自 项控 ledger-ai-agent）──
@@ -97,6 +95,35 @@ export interface AuditResult {
   error?: string
 }
 
+// 审计任务输入
+interface AuditInput {
+  transactions: Transaction[]
+  task: AuditTask
+  options: { privacyMode?: boolean; batchSize?: number }
+}
+
+// 审计任务:audit / categorize / dedupe / analyzeMonth
+const auditTask: TaskDescriptor<AuditInput, AiSuggestion[]> = {
+  name: 'audit',
+  onEmpty: 'parse', // 空 content(json_object 模式偶发)交 parse 当 '{}' 处理
+  chatOptions: { maxTokens: 4000, timeout: 20000, responseFormat: 'json_object' },
+  buildMessages: (input, ctx) => {
+    const privacyMode = input.options.privacyMode ?? ctx.config.privacyMode ?? true
+    const batchSize = input.options.batchSize ?? ctx.config.batchSize ?? 120
+    const payload = input.transactions
+      .slice(0, Math.max(1, batchSize))
+      .map((t) => redactTransaction(t, privacyMode))
+    return [
+      { role: 'system', content: buildAuditSystemPrompt(input.task) },
+      { role: 'user', content: JSON.stringify({ transactions: payload }) },
+    ]
+  },
+  parse: (content, input) => parseAuditSuggestions(content || '{}', input.task),
+  validate: (suggestions) => suggestions.length > 0,
+  // 出错/空/零建议 -> 回退本地启发式
+  fallback: (input) => heuristicSuggestions(input.transactions, input.task),
+}
+
 // 运行 AI 审计任务：audit / categorize / dedupe / analyzeMonth
 export async function runLLMAudit(
   config: LLMConfig,
@@ -104,33 +131,9 @@ export async function runLLMAudit(
   task: AuditTask,
   options: { privacyMode?: boolean; batchSize?: number } = {},
 ): Promise<AuditResult> {
-  const privacyMode = options.privacyMode ?? config.privacyMode ?? true
-  const batchSize = options.batchSize ?? config.batchSize ?? 120
-
-  const payload = transactions
-    .slice(0, Math.max(1, batchSize))
-    .map((t) => redactTransaction(t, privacyMode))
-
-  const { content, errorKind, errorMessage } = await llmChat(config, {
-    messages: [
-      { role: 'system', content: buildAuditSystemPrompt(task) },
-      { role: 'user', content: JSON.stringify({ transactions: payload }) },
-    ],
-    maxTokens: 4000,
-    timeout: 20000,
-    responseFormat: 'json_object',
-  })
-
-  // 出错(含未配置/离线)->回退本地启发式
-  if (errorKind) {
-    return { suggestions: heuristicSuggestions(transactions, task), error: llmErrorMessage(errorKind, errorMessage) }
-  }
-
-  // 空 content 视作 '{}'(json_object 模式下偶发),与原实现一致
-  const suggestions = parseAuditSuggestions(content ?? '{}', task)
-  return {
-    suggestions: suggestions.length ? suggestions : heuristicSuggestions(transactions, task),
-  }
+  const ctx: TaskContext = { config, privacyMode: options.privacyMode ?? config.privacyMode ?? true }
+  const r = await runTask(auditTask, { transactions, task, options }, ctx)
+  return { suggestions: r.result ?? heuristicSuggestions(transactions, task), error: r.error }
 }
 
 // 本地启发式建议（无 API Key 或请求失败时的回退）
