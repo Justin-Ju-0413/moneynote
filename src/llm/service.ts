@@ -177,7 +177,7 @@ export function heuristicSuggestions(transactions: Transaction[], task: AuditTas
   if (task === 'audit' || task === 'categorize') {
     for (const t of transactions) {
       if (t.id === undefined) continue
-      const matched = matchCategory(`${t.note ?? ''} ${t.category}`)
+      const matched = matchCategory(`${t.note ?? ''} ${t.category}`, t.type)
       if (matched.confidence !== 'low' && matched.category !== t.category) {
         suggestions.push({
           task,

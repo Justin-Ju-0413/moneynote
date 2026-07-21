@@ -69,11 +69,22 @@ const BUILTIN_KEYWORDS: Record<string, string[]> = {
   ],
 }
 
-export function matchCategory(text: string): CategoryResult {
+// 收入分类关键词
+const BUILTIN_KEYWORDS_INCOME: Record<string, string[]> = {
+  salary: ['工资', '薪水', '薪资', '发薪', '工资入账'],
+  parttime: ['兼职', '外快', '副业', '酬劳', '报酬', '稿费', '佣金'],
+  investment: ['分红', '利息', '收益', '理财', '股息', '股票', '基金收益'],
+  refund: ['退款', '退货', '退回', '返还'],
+  income_other: ['红包', '奖金', '中奖', '报销', '津贴', '补贴', '收款'],
+}
+
+export function matchCategory(text: string, type: 'expense' | 'income' = 'expense'): CategoryResult {
+  const dict = type === 'income' ? BUILTIN_KEYWORDS_INCOME : BUILTIN_KEYWORDS
+  const fallback = type === 'income' ? 'income_other' : 'other'
   const lowerText = text.toLowerCase()
   const scores: Record<string, { score: number; keyword: string }> = {}
 
-  for (const [category, keywords] of Object.entries(BUILTIN_KEYWORDS)) {
+  for (const [category, keywords] of Object.entries(dict)) {
     for (const keyword of keywords) {
       const lowerKeyword = keyword.toLowerCase()
       if (lowerText.includes(lowerKeyword)) {
@@ -88,7 +99,7 @@ export function matchCategory(text: string): CategoryResult {
   }
 
   // 找到最高分
-  let bestCategory = 'other'
+  let bestCategory = fallback
   let bestScore = 0
   let bestKeyword = ''
 

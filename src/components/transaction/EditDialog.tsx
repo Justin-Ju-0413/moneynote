@@ -3,7 +3,7 @@ import type { Transaction } from '@/db/types'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 
 interface EditDialogProps {
   transaction: Transaction | null
@@ -13,14 +13,16 @@ interface EditDialogProps {
   onDelete: (id: number) => void
 }
 
-const categories = Object.entries(CATEGORY_MAP)
-
 export function EditDialog({ transaction, open, onClose, onSave, onDelete }: EditDialogProps) {
+  const { expenseCategories, incomeCategories } = useCategories()
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [category, setCategory] = useState('')
   const [date, setDate] = useState('')
   const [syncKey, setSyncKey] = useState('')
+
+  // 分类按 transaction.type 过滤：支出选支出分类、收入选收入分类
+  const cats = transaction?.type === 'income' ? incomeCategories : expenseCategories
 
   // transaction/open 变化时同步表单（render 期调整状态，避免 effect 级联渲染）
   const nextSyncKey = transaction ? `${transaction.id ?? 'new'}|${open}` : `|${open}`
@@ -87,16 +89,16 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
         <div>
           <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2 block">分类</label>
           <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
-            {categories.map(([id, info]) => (
+            {cats.map((c) => (
               <button
-                key={id}
+                key={c.id}
                 className={`flex flex-col items-center gap-1 p-2 min-h-11 min-w-11 transition-colors ${
-                  category === id ? 'bg-primary-100/50 border border-primary-400' : 'border border-transparent hover:bg-primary-50/30'
+                  category === c.id ? 'bg-primary-100/50 border border-primary-400' : 'border border-transparent hover:bg-primary-50/30'
                 }`}
-                onClick={() => setCategory(id)}
+                onClick={() => setCategory(c.id)}
               >
-                <CategoryIcon category={id} size="sm" />
-                <span className="text-[10px] text-text-secondary">{info.name}</span>
+                <CategoryIcon category={c.id} size="sm" />
+                <span className="text-[10px] text-text-secondary">{c.name}</span>
               </button>
             ))}
           </div>

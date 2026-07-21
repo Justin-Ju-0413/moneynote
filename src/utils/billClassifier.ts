@@ -130,7 +130,7 @@ export async function classifyBillRows(
 
     // 第二级：关键词匹配
     if (tx.category === 'other') {
-      const matchResult = matchCategory(classifyText)
+      const matchResult = matchCategory(classifyText, tx.type)
       if (matchResult.confidence !== 'low') {
         tx.category = matchResult.category
       } else {

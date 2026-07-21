@@ -44,8 +44,11 @@ export function parseInput(rawInput: string): ParsedTransaction {
   // 阶段 3：金额提取
   const amountResult = extractAmount(normalized)
 
-  // 阶段 4：分类匹配
-  const categoryResult = matchCategory(normalized)
+  // 收入识别（关键词命中则为收入），先于分类匹配以选用对应分类集
+  const type: 'expense' | 'income' = detectIncome(normalized) ? 'income' : 'expense'
+
+  // 阶段 4：分类匹配（按 type 在对应分类集中匹配）
+  const categoryResult = matchCategory(normalized, type)
 
   // 阶段 5：备注清理
   const note = cleanNote(normalized, dateResult.matchedText, amountResult.matchedText)
@@ -55,9 +58,6 @@ export function parseInput(rawInput: string): ParsedTransaction {
     amountResult.amount === null ||
     amountResult.confidence === 'low' ||
     categoryResult.confidence === 'low'
-
-  // 收入识别（关键词命中则为收入）
-  const type: 'expense' | 'income' = detectIncome(normalized) ? 'income' : 'expense'
 
   return {
     amount: amountResult.amount,

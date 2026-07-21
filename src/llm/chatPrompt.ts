@@ -3,8 +3,7 @@
 import dayjs from 'dayjs'
 import type { Transaction, ChatIntent } from '@/db/types'
 import type { LLMParseResult } from './types'
-import { VALID_CATEGORIES } from './types'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { VALID_CATEGORIES, VALID_INCOME_CATEGORIES, ALL_CATEGORIES, validCategoriesFor } from './types'
 
 type Message = { role: string; content: string }
 
@@ -16,6 +15,7 @@ export interface ChatContext {
   lastMonthExpense: number
   todayExpense: number
   monthCategorySums: Record<string, number>
+  categoryMap: Record<string, string> // id -> 名称，用于 context 展示
 }
 
 export interface ChatModifyChanges {
@@ -35,7 +35,8 @@ export interface ChatIntentResult {
   reply: string
 }
 
-const CATEGORY_LIST = VALID_CATEGORIES.join('、')
+const EXPENSE_LIST = VALID_CATEGORIES.join('、')
+const INCOME_LIST = VALID_INCOME_CATEGORIES.join('、')
 
 const SYSTEM_PROMPT = `你是 MoneyNote 记账助手,通过自然对话帮用户记账、查询、修改、删除交易。只返回严格 JSON,不要解释或 markdown 代码块。
 
@@ -61,7 +62,7 @@ const SYSTEM_PROMPT = `你是 MoneyNote 记账助手,通过自然对话帮用户
 
 ## 规则
 1. 只返回 JSON,不要 markdown 或额外文本
-2. category 必须是以下之一: ${CATEGORY_LIST}
+2. category 必须与 type 匹配：支出(type=expense)用 ${EXPENSE_LIST}；收入(type=income)用 ${INCOME_LIST}
 3. record:amount 正数;收入场景(工资/报销/收款/红包等)type=income;未提日期用今天
 4. modify/delete:txId 必须来自上面最近交易的 id;不确定则 intent=chat 澄清
 5. query:reply 直接答,可引用上下文数字
@@ -79,7 +80,7 @@ export function buildContextBlock(ctx: ChatContext): string {
   )
   const catParts = Object.entries(ctx.monthCategorySums)
     .filter(([, v]) => v > 0)
-    .map(([k, v]) => `${CATEGORY_MAP[k]?.name ?? k} ¥${v.toFixed(2)}`)
+    .map(([k, v]) => `${ctx.categoryMap?.[k] ?? k} ¥${v.toFixed(2)}`)
   if (catParts.length) lines.push(`本月分类支出:${catParts.join('、')}。`)
 
   const recent = ctx.recentTransactions.slice(0, 20)
@@ -89,7 +90,7 @@ export function buildContextBlock(ctx: ChatContext): string {
       lines.push(
         `  - id=${t.id} | ${t.date}${t.time ? ' ' + t.time : ''} | ` +
         `${t.type === 'income' ? '收入' : '支出'} ¥${t.amount.toFixed(2)} | ` +
-        `${CATEGORY_MAP[t.category]?.name ?? t.category} | ${t.note ?? ''}`,
+        `${ctx.categoryMap?.[t.category] ?? t.category} | ${t.note ?? ''}`,
       )
     }
   } else {
@@ -117,10 +118,11 @@ function normalizeTransaction(t: Record<string, unknown>): LLMParseResult {
     if (!isNaN(n) && n > 0) amount = n
   }
   const type = t.type === 'income' ? 'income' : 'expense'
+  const validCats = validCategoriesFor(type)
   const category =
-    typeof t.category === 'string' && (VALID_CATEGORIES as readonly string[]).includes(t.category)
+    typeof t.category === 'string' && validCats.includes(t.category)
       ? t.category
-      : 'other'
+      : (type === 'income' ? 'income_other' : 'other')
   let date = dayjs().format('YYYY-MM-DD')
   if (typeof t.date === 'string' && dayjs(t.date, 'YYYY-MM-DD', true).isValid()) date = t.date
   let time: string | null = null
@@ -136,7 +138,7 @@ function normalizeChanges(c: Record<string, unknown>): ChatModifyChanges {
     const n = parseFloat(c.amount)
     if (!isNaN(n) && n > 0) out.amount = n
   }
-  if (typeof c.category === 'string' && (VALID_CATEGORIES as readonly string[]).includes(c.category)) {
+  if (typeof c.category === 'string' && (ALL_CATEGORIES as readonly string[]).includes(c.category)) {
     out.category = c.category
   }
   if (typeof c.note === 'string') out.note = c.note.trim()

@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { Card } from '@/components/ui/Card'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 
 interface CategoryPieChartProps {
   data: Record<string, number>
@@ -8,13 +8,12 @@ interface CategoryPieChartProps {
 }
 
 export function CategoryPieChart({ data, total }: CategoryPieChartProps) {
+  const { getInfo } = useCategories()
   const chartData = Object.entries(data)
-    .map(([category, amount]) => ({
-      name: CATEGORY_MAP[category]?.name || category,
-      value: amount,
-      color: CATEGORY_MAP[category]?.color || '#6b7b8d',
-      icon: CATEGORY_MAP[category]?.icon || '📦',
-    }))
+    .map(([category, amount]) => {
+      const info = getInfo(category)
+      return { name: info.name, value: amount, color: info.color, icon: info.icon }
+    })
     .sort((a, b) => b.value - a.value)
 
   if (chartData.length === 0) {

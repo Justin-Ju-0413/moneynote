@@ -14,11 +14,11 @@ function csvField(value: string | number | undefined | null): string {
   return s
 }
 
-export function exportToCSV(transactions: Transaction[]): string {
+export function exportToCSV(transactions: Transaction[], categoryMap: Record<string, string> = {}): string {
   const header = ['日期', '时间', '类型', '分类', '金额', '备注']
   const lines = [header.map(csvField).join(',')]
   for (const t of transactions) {
-    const cat = CATEGORY_MAP[t.category]?.name || t.category
+    const cat = categoryMap[t.category] || CATEGORY_MAP[t.category]?.name || t.category
     const type = t.type === 'expense' ? '支出' : '收入'
     const row = [t.date, t.time || '', type, cat, t.amount, t.note || '']
     lines.push(row.map(csvField).join(','))

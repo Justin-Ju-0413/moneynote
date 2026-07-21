@@ -1,4 +1,4 @@
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 
 interface CategoryIconProps {
   category: string
@@ -12,7 +12,8 @@ const sizes = {
 }
 
 export function CategoryIcon({ category, size = 'md' }: CategoryIconProps) {
-  const info = CATEGORY_MAP[category] || CATEGORY_MAP['other']
+  const { getInfo } = useCategories()
+  const info = getInfo(category)
   return (
     <div
       className={`flex items-center justify-center border ${sizes[size]}`}

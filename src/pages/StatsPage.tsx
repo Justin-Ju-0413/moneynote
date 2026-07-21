@@ -21,11 +21,21 @@ export function StatsPage() {
         />
 
         <Card>
-          <div className="text-center">
-            <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">总支出</p>
-            <p className="text-3xl md:text-4xl lg:text-5xl font-heading text-expense">¥{stats.totalExpense.toFixed(2)}</p>
-            <p className="text-[10px] font-mono text-text-muted mt-1">{stats.count} 笔记录</p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">支出</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-heading text-expense">¥{stats.totalExpense.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">收入</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-heading text-income">¥{stats.totalIncome.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">结余</p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-heading text-text">¥{stats.netIncome.toFixed(2)}</p>
+            </div>
           </div>
+          <p className="text-[10px] font-mono text-text-muted mt-3 text-center">{stats.count} 笔支出 · {stats.incomeCount} 笔收入</p>
         </Card>
 
         <div className="md:grid md:grid-cols-2 md:gap-5 lg:gap-6">

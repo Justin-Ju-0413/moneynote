@@ -12,12 +12,18 @@ db.on('populate', (tx) => {
   tx.table('billTemplates').bulkAdd(BUILTIN_TEMPLATES)
 })
 
-// DB 升级后补充内置模板（populate 仅在首次创建时触发，升级不会触发）
+// DB 升级后补充内置模板与收入分类（populate 仅在首次创建时触发，升级不会触发）
 db.on('ready', async () => {
   try {
     const count = await db.billTemplates.count()
     if (count === 0) {
       await db.billTemplates.bulkAdd(BUILTIN_TEMPLATES)
+    }
+    // 收入分类为后增内置项，对已存在的库幂等补写（按 salary id 检测）
+    const hasSalary = await db.categories.get('salary')
+    if (!hasSalary) {
+      const incomeCats = defaultCategories.filter((c) => c.type === 'income')
+      if (incomeCats.length > 0) await db.categories.bulkAdd(incomeCats)
     }
   } catch { /* 表未就绪时忽略 */ }
 })

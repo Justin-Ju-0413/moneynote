@@ -10,7 +10,7 @@ import { useAIWorkspace } from '@/hooks/useAIWorkspace'
 import { useLLMSettings } from '@/hooks/useLLMSettings'
 import { db } from '@/db'
 import type { Transaction } from '@/db/types'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 import type { AuditTask, AiSuggestion, SuggestionType } from '@/llm/types'
 
 const EMPTY_TRANSACTIONS: Transaction[] = []
@@ -235,6 +235,7 @@ interface SuggestionCardProps {
 }
 
 function SuggestionCard({ suggestion, txMap, onApply, onDismiss }: SuggestionCardProps) {
+  const { getInfo } = useCategories()
   const meta = TYPE_META[suggestion.type]
   const isSummary = suggestion.type === 'summary'
   const txs = suggestion.transactionIds
@@ -262,7 +263,7 @@ function SuggestionCard({ suggestion, txMap, onApply, onDismiss }: SuggestionCar
         <p className="text-xs text-text mb-2">
           建议分类为
           <span className="font-heading text-primary-600 mx-1">
-            {CATEGORY_MAP[suggestion.result]?.name || suggestion.result}
+            {getInfo(suggestion.result).name}
           </span>
         </p>
       )}

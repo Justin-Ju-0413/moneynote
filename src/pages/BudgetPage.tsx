@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useToast } from '@/components/ui/toast-context'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 import { db } from '@/db'
 import dayjs from 'dayjs'
 
@@ -17,6 +17,7 @@ export function BudgetPage() {
   const [inputAmount, setInputAmount] = useState('')
 
   const budgets = useLiveQuery(() => db.budgets.toArray())
+  const { expenseCategories, getInfo } = useCategories()
 
   // 本月各分类支出
   const monthSpending = useLiveQuery(async () => {
@@ -64,7 +65,7 @@ export function BudgetPage() {
     setShowDialog(true)
   }
 
-  const categories = Object.entries(CATEGORY_MAP)
+  const categories = expenseCategories
 
   return (
     <div>
@@ -105,18 +106,18 @@ export function BudgetPage() {
         {/* 各分类预算 */}
         <h2 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">分类预算</h2>
         <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 lg:gap-5">
-        {categories.map(([id, info]) => {
-          const budget = budgetsList.find(b => b.category === id)
-          const spent = spending[id] || 0
+        {categories.map((c) => {
+          const budget = budgetsList.find(b => b.category === c.id)
+          const spent = spending[c.id] || 0
           const budgetAmount = budget?.amount || 0
 
           return (
-            <Card key={id} className="cursor-pointer" onClick={() => openBudgetDialog(id)}>
+            <Card key={c.id} className="cursor-pointer" onClick={() => openBudgetDialog(c.id)}>
               <div className="flex items-center gap-3">
-                <CategoryIcon category={id} size="sm" />
+                <CategoryIcon category={c.id} size="sm" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-text">{info.name}</span>
+                    <span className="text-xs text-text">{c.name}</span>
                     {budgetAmount > 0 && (
                       <span className="text-[10px] font-mono text-text-muted">
                         ¥{spent.toFixed(0)} / ¥{budgetAmount.toFixed(0)}
@@ -129,7 +130,7 @@ export function BudgetPage() {
                         className="h-full transition-all duration-500"
                         style={{
                           width: `${Math.min((spent / budgetAmount) * 100, 100)}%`,
-                          backgroundColor: spent > budgetAmount ? '#c94040' : info.color,
+                          backgroundColor: spent > budgetAmount ? '#c94040' : c.color,
                         }}
                       />
                     </div>
@@ -149,7 +150,7 @@ export function BudgetPage() {
         <div className="space-y-5">
           <div>
             <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">
-              {editBudget?.category === 'total' ? '月度总预算' : `${CATEGORY_MAP[editBudget?.category || 'other']?.name} 预算`}
+              {editBudget?.category === 'total' ? '月度总预算' : `${getInfo(editBudget?.category || 'other').name} 预算`}
             </label>
             <div className="flex items-center gap-2 border border-primary-300 px-3 py-2.5">
               <span className="text-text-muted text-sm">¥</span>

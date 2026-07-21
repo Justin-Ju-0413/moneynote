@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TransactionList } from '@/components/transaction/TransactionList'
@@ -7,12 +7,13 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useDedup } from '@/hooks/useDedup'
+import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/components/ui/toast-context'
-import { CATEGORY_MAP } from '@/utils/constants'
 import { db } from '@/db'
 import type { Transaction, DedupRecord } from '@/db/types'
 
 const EMPTY_TRANSACTIONS: Transaction[] = []
+const PAGE_SIZE = 50
 
 export function HistoryPage() {
   const [search, setSearch] = useState('')
@@ -20,9 +21,15 @@ export function HistoryPage() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
   const [showDedup, setShowDedup] = useState(false)
   const [dedupBusy, setDedupBusy] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const { updateTransaction, deleteTransaction } = useTransactions()
   const { showToast } = useToast()
   const { pendingRecords, txMap, detect, handleDuplicate } = useDedup()
+  const { getInfo, expenseCategories, incomeCategories } = useCategories()
+  const categories = [...expenseCategories, ...incomeCategories]
+
+  const isFiltering = !!search || !!filterCategory
 
   const handleDetect = async () => {
     setDedupBusy(true)
@@ -40,27 +47,53 @@ export function HistoryPage() {
     )
   }
 
+  // 无筛选时分页加载（limit visibleCount），有筛选时全量加载后内存 filter
   const transactions = useLiveQuery(
-    () => db.transactions.orderBy('date').reverse().toArray(),
-  ) || EMPTY_TRANSACTIONS
-
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      if (filterCategory && t.category !== filterCategory) return false
-      if (search) {
-        const q = search.toLowerCase()
-        const catName = CATEGORY_MAP[t.category]?.name || ''
-        return (
-          t.note?.toLowerCase().includes(q) ||
-          catName.toLowerCase().includes(q) ||
-          t.amount.toString().includes(q)
-        )
+    async () => {
+      if (isFiltering) {
+        const all = await db.transactions.orderBy('date').reverse().toArray()
+        return all.filter((t) => {
+          if (filterCategory && t.category !== filterCategory) return false
+          if (search) {
+            const q = search.toLowerCase()
+            const catName = getInfo(t.category).name
+            return (
+              t.note?.toLowerCase().includes(q) ||
+              catName.toLowerCase().includes(q) ||
+              t.amount.toString().includes(q)
+            )
+          }
+          return true
+        })
       }
-      return true
-    })
-  }, [transactions, search, filterCategory])
+      return db.transactions.orderBy('date').reverse().limit(visibleCount).toArray()
+    },
+    [isFiltering, search, filterCategory, visibleCount, getInfo],
+  ) ?? EMPTY_TRANSACTIONS
 
-  const categories = Object.entries(CATEGORY_MAP)
+  // 搜索/筛选变化时重置分页（在事件回调里 setState，避免 effect 级联渲染）
+  const handleSearchChange = (v: string) => {
+    setSearch(v)
+    setVisibleCount(PAGE_SIZE)
+  }
+  const handleCategoryChange = (id: string) => {
+    setFilterCategory(id)
+    setVisibleCount(PAGE_SIZE)
+  }
+
+  // 无筛选时滚动到底加载更多；transactions.length < visibleCount 表示已无更多
+  useEffect(() => {
+    if (isFiltering) return
+    const el = sentinelRef.current
+    if (!el) return
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && transactions.length >= visibleCount) {
+        setVisibleCount((c) => c + PAGE_SIZE)
+      }
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [isFiltering, transactions.length, visibleCount])
 
   const handleSave = async (id: number, data: Partial<Transaction>) => {
     await updateTransaction(id, data)
@@ -82,7 +115,7 @@ export function HistoryPage() {
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="搜索备注、分类、金额..."
           className="w-full px-4 py-2.5 md:py-3 border border-primary-300/50 text-sm outline-none bg-transparent text-text placeholder:text-text-placeholder"
         />
@@ -93,19 +126,19 @@ export function HistoryPage() {
             className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
               !filterCategory ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
             }`}
-            onClick={() => setFilterCategory('')}
+            onClick={() => handleCategoryChange('')}
           >
             全部
           </button>
-          {categories.map(([id, info]) => (
+          {categories.map((c) => (
             <button
-              key={id}
+              key={c.id}
               className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
-                filterCategory === id ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
+                filterCategory === c.id ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
               }`}
-              onClick={() => setFilterCategory(filterCategory === id ? '' : id)}
+              onClick={() => handleCategoryChange(filterCategory === c.id ? '' : c.id)}
             >
-              {info.name}
+              {c.name}
             </button>
           ))}
         </div>
@@ -122,9 +155,11 @@ export function HistoryPage() {
 
         {/* 交易列表 */}
         <TransactionList
-          transactions={filteredTransactions}
+          transactions={transactions}
           onItemClick={(t) => setEditTransaction(t)}
         />
+        {/* 无筛选时的滚动哨兵，触底加载下一页 */}
+        {!isFiltering && <div ref={sentinelRef} className="h-4" />}
       </div>
 
       <EditDialog

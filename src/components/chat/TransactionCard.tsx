@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 import { formatDate } from '@/utils/format'
 import { Button } from '@/components/ui/Button'
 import type { ChatCard } from '@/db/types'
@@ -27,6 +27,7 @@ interface Display {
 }
 
 export function TransactionCard({ card, onConfirm, onCancel }: Props) {
+  const { getInfo } = useCategories()
   const pending = card.status === 'pending'
 
   let display: Display | null = null
@@ -65,7 +66,7 @@ export function TransactionCard({ card, onConfirm, onCancel }: Props) {
 
   if (!display) return null
 
-  const cat = CATEGORY_MAP[display.category]
+  const catName = getInfo(display.category).name
   const income = display.type === 'income'
   const statusText =
     card.status === 'confirmed'
@@ -98,7 +99,7 @@ export function TransactionCard({ card, onConfirm, onCancel }: Props) {
             </span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-xs text-text-secondary">{cat?.name || '其他'}</span>
+            <span className="text-xs text-text-secondary">{catName}</span>
             <span className="text-primary-300">·</span>
             <span className="text-xs text-text-muted">{formatDate(display.date)}</span>
           </div>

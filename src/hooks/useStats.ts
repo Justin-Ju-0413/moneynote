@@ -30,21 +30,38 @@ export function useStats() {
 
   const stats = useMemo(() => {
     const expenses = transactions.filter(t => t.type === 'expense')
+    const incomes = transactions.filter(t => t.type === 'income')
     const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0)
+    const totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0)
 
-    // 按分类统计
+    // 按分类统计（支出）
     const byCategory = expenses.reduce<Record<string, number>>((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount
       return acc
     }, {})
 
-    // 按日期统计
+    // 按分类统计（收入）
+    const byCategoryIncome = incomes.reduce<Record<string, number>>((acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + t.amount
+      return acc
+    }, {})
+
+    // 按日期统计（支出趋势）
     const byDate = expenses.reduce<Record<string, number>>((acc, t) => {
       acc[t.date] = (acc[t.date] || 0) + t.amount
       return acc
     }, {})
 
-    return { totalExpense, byCategory, byDate, count: expenses.length }
+    return {
+      totalExpense,
+      totalIncome,
+      netIncome: totalIncome - totalExpense,
+      byCategory,
+      byCategoryIncome,
+      byDate,
+      count: expenses.length,
+      incomeCount: incomes.length,
+    }
   }, [transactions])
 
   const navigateDate = (direction: number) => {

@@ -1,6 +1,6 @@
 import type { Transaction } from '@/db/types'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 
 interface TransactionItemProps {
   transaction: Transaction
@@ -8,7 +8,8 @@ interface TransactionItemProps {
 }
 
 export function TransactionItem({ transaction, onClick }: TransactionItemProps) {
-  const info = CATEGORY_MAP[transaction.category] || CATEGORY_MAP['other']
+  const { getInfo } = useCategories()
+  const info = getInfo(transaction.category)
   const isExpense = transaction.type === 'expense'
 
   return (

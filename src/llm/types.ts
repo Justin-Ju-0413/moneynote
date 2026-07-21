@@ -63,4 +63,17 @@ export const LLM_PRESETS: ProviderPreset[] = [
   { name: 'custom',   endpoint: '',                                                models: [],                                  label: '自定义' },
 ]
 
-export const VALID_CATEGORIES = ['food', 'transport', 'shopping', 'entertainment', 'housing', 'medical', 'education', 'other'] as const
+// 合法分类白名单：支出与收入分开，category 必须与 transaction.type 匹配
+export const VALID_EXPENSE_CATEGORIES = ['food', 'transport', 'shopping', 'entertainment', 'housing', 'medical', 'education', 'other'] as const
+export const VALID_INCOME_CATEGORIES = ['salary', 'parttime', 'investment', 'refund', 'income_other'] as const
+
+// 聚合（用于不区分收支的校验场景，如 modify 的 changes）
+export const ALL_CATEGORIES = [...VALID_EXPENSE_CATEGORIES, ...VALID_INCOME_CATEGORIES] as const
+
+// 保留旧别名（指向支出集合），兼容现有 import；新代码请用 validCategoriesFor(type)
+export const VALID_CATEGORIES = VALID_EXPENSE_CATEGORIES
+
+// 按 type 取合法分类集合
+export function validCategoriesFor(type: 'expense' | 'income'): readonly string[] {
+  return type === 'income' ? VALID_INCOME_CATEGORIES : VALID_EXPENSE_CATEGORIES
+}

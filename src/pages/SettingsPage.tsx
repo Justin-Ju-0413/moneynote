@@ -9,6 +9,7 @@ import { useLLMSettings } from '@/hooks/useLLMSettings'
 import { useBillTemplateLearning } from '@/hooks/useBillTemplateLearning'
 import { ColumnMappingDialog } from '@/components/input/ColumnMappingDialog'
 import { TemplateDetailDialog } from '@/components/input/TemplateDetailDialog'
+import { CategoryManager } from '@/components/settings/CategoryManager'
 import { LLM_PRESETS } from '@/llm/types'
 import { db, bulkImportTransactions } from '@/db'
 import type { BillTemplate, ColumnMapping, BackupRecord } from '@/db/types'
@@ -17,7 +18,8 @@ import { parseBillFile, SOURCE_LABELS } from '@/utils/import'
 import type { ParseResult } from '@/utils/import'
 import { classifyBillRows } from '@/utils/billClassifier'
 import type { ClassifyResult } from '@/utils/billClassifier'
-import { CATEGORY_MAP } from '@/utils/constants'
+import { APP_VERSION } from '@/utils/constants'
+import { useCategories } from '@/hooks/useCategories'
 import { getAllTemplates, deleteTemplate } from '@/bill-analyzer/templateMatcher'
 import { createBackup, listBackups, restoreBackup, deleteBackup, setAutoBackupEnabled } from '@/utils/backup'
 
@@ -31,6 +33,7 @@ interface ImportResultDetail {
 
 export function SettingsPage() {
   const { showToast } = useToast()
+  const { getInfo } = useCategories()
   const { config, isLoading, saveConfig, testConnection } = useLLMSettings()
   const learning = useBillTemplateLearning()
   const [showApiKey, setShowApiKey] = useState(false)
@@ -270,12 +273,15 @@ export function SettingsPage() {
     }
   }
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (transactionCount === 0) {
       showToast('暂无数据可导出', 'info')
       return
     }
-    const csv = exportToCSV(transactions)
+    const cats = await db.categories.toArray()
+    const categoryMap: Record<string, string> = {}
+    for (const c of cats) categoryMap[c.id] = c.name
+    const csv = exportToCSV(transactions, categoryMap)
     downloadFile(csv, `moneynote_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8')
     showToast('CSV 导出成功')
   }
@@ -316,8 +322,8 @@ export function SettingsPage() {
       .sort((a, b) => b[1] - a[1])
       .map(([cat, count]) => ({
         id: cat,
-        name: CATEGORY_MAP[cat]?.name || cat,
-        icon: CATEGORY_MAP[cat]?.icon || '📦',
+        name: getInfo(cat).name,
+        icon: getInfo(cat).icon,
         count,
         pct: Math.round(count / result.classifyResult.transactions.length * 100),
       }))
@@ -392,6 +398,9 @@ export function SettingsPage() {
             <p className="text-[10px] text-text-placeholder">导入新格式账单时将自动学习</p>
           )}
         </Card>
+
+        {/* 分类管理 */}
+        <CategoryManager />
 
         {/* AI 智能解析 */}
         <Card>
@@ -618,7 +627,7 @@ export function SettingsPage() {
         <Card>
           <div className="text-center py-3">
             <p className="font-heading text-lg text-primary-700 mb-1">MoneyNote</p>
-            <p className="text-[10px] tracking-widest uppercase text-text-muted">AI 智能记账 · v1.0.0</p>
+            <p className="text-[10px] tracking-widest uppercase text-text-muted">AI 智能记账 · v{APP_VERSION}</p>
             <div className="h-px bg-primary-200/30 my-3" />
             <p className="text-[10px] text-text-placeholder">自然语言输入，轻松记一笔</p>
           </div>

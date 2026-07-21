@@ -20,6 +20,9 @@ async function buildContext(): Promise<ChatContext> {
 
   const recent = await db.transactions.orderBy('date').reverse().limit(20).toArray()
   const all = await db.transactions.toArray()
+  const cats = await db.categories.toArray()
+  const categoryMap: Record<string, string> = {}
+  for (const c of cats) categoryMap[c.id] = c.name
 
   let monthExpense = 0
   let monthIncome = 0
@@ -40,7 +43,7 @@ async function buildContext(): Promise<ChatContext> {
     if (t.date.startsWith(lastYm) && t.type === 'expense') lastMonthExpense += t.amount
   }
 
-  return { recentTransactions: recent, monthExpense, monthIncome, lastMonthExpense, todayExpense, monthCategorySums }
+  return { recentTransactions: recent, monthExpense, monthIncome, lastMonthExpense, todayExpense, monthCategorySums, categoryMap }
 }
 
 // LLMParseResult -> ParsedTransaction(卡片展示与确认入库用)

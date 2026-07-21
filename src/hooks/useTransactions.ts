@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import dayjs from 'dayjs'
 import { db } from '@/db'
 import type { Transaction } from '@/db/types'
 
@@ -47,11 +48,18 @@ export function useTransactions() {
 
   // 本月支出
   const monthExpense = useLiveQuery(async () => {
-    const now = new Date()
-    const start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-    const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-31`
+    const start = dayjs().startOf('month').format('YYYY-MM-DD')
+    const end = dayjs().endOf('month').format('YYYY-MM-DD')
     const txs = await db.transactions.where('date').between(start, end, true, true).toArray()
     return txs.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+  }) ?? 0
+
+  // 本月收入
+  const monthIncome = useLiveQuery(async () => {
+    const start = dayjs().startOf('month').format('YYYY-MM-DD')
+    const end = dayjs().endOf('month').format('YYYY-MM-DD')
+    const txs = await db.transactions.where('date').between(start, end, true, true).toArray()
+    return txs.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
   }) ?? 0
 
   return {
@@ -62,5 +70,6 @@ export function useTransactions() {
     deleteTransaction,
     todayExpense,
     monthExpense,
+    monthIncome,
   }
 }

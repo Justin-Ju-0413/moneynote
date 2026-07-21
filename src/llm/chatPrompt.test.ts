@@ -10,6 +10,7 @@ const ctx = (over: Partial<ChatContext> = {}): ChatContext => ({
   lastMonthExpense: 0,
   todayExpense: 0,
   monthCategorySums: {},
+  categoryMap: { food: '餐饮', transport: '交通' },
   ...over,
 })
 

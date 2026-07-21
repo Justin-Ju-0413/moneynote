@@ -5,22 +5,38 @@ import { ChatInput } from '@/components/chat/ChatInput'
 import { formatAmountShort } from '@/utils/format'
 
 export function HomePage() {
-  const { messages, sending, sendMessage, confirmCard, cancelCard, aiEnabled } = useChat()
-  const { todayExpense, monthExpense } = useTransactions()
+  const { messages, sending, sendMessage, confirmCard, cancelCard, clearMessages, aiEnabled } = useChat()
+  const { todayExpense, monthExpense, monthIncome } = useTransactions()
 
   return (
     <div className="flex flex-col h-[calc(100dvh-5rem)] lg:h-[calc(100dvh-2rem)]">
       {/* 精简头部 + 收支摘要 */}
       <div className="px-5 pt-5 pb-3 md:px-8 lg:px-10">
-        <h1 className="font-heading text-lg text-text">记账</h1>
-        <div className="flex items-center gap-3 mt-1 text-xs text-text-muted">
-          <span>
-            今日 <span className="text-expense font-medium">{formatAmountShort(todayExpense)}</span>
-          </span>
-          <span className="text-primary-300">·</span>
-          <span>
-            本月 <span className="text-expense font-medium">{formatAmountShort(monthExpense)}</span>
-          </span>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-heading text-lg text-text">记账</h1>
+            <div className="flex items-center gap-3 mt-1 text-xs text-text-muted">
+              <span>
+                今日 <span className="text-expense font-medium">{formatAmountShort(todayExpense)}</span>
+              </span>
+              <span className="text-primary-300">·</span>
+              <span>
+                本月支 <span className="text-expense font-medium">{formatAmountShort(monthExpense)}</span>
+              </span>
+              <span className="text-primary-300">·</span>
+              <span>
+                收 <span className="text-income font-medium">{formatAmountShort(monthIncome)}</span>
+              </span>
+            </div>
+          </div>
+          {messages.length > 0 && (
+            <button
+              onClick={() => { if (confirm('清空全部对话记录？')) clearMessages() }}
+              className="text-[10px] tracking-widest uppercase text-text-muted hover:text-primary-600 transition-colors shrink-0"
+            >
+              清空
+            </button>
+          )}
         </div>
       </div>
 
