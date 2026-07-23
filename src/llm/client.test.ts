@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { llmChat, llmErrorMessage, __setLLMTransport } from './client'
+import { llmChat, llmErrorMessage, normalizeEndpoint, __setLLMTransport } from './client'
 import type { LLMConfig } from './types'
 
 const config: LLMConfig = {
@@ -96,6 +96,16 @@ describe('llmChat', () => {
     await llmChat(config, { messages: [] })
     expect((headers as Record<string, string>).Authorization).toBe('Bearer sk-x')
   })
+
+  it('endpoint 含 /v1 时实际请求 URL 不双拼', async () => {
+    let calledUrl = ''
+    reset = __setLLMTransport((async (url: string) => {
+      calledUrl = url
+      return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'x' } }] }) }
+    }) as unknown as FetchLike)
+    await llmChat({ ...config, endpoint: 'https://api.deepseek.com/v1' }, { messages: [] })
+    expect(calledUrl).toBe('https://api.deepseek.com/v1/chat/completions')
+  })
 })
 
 describe('llmErrorMessage', () => {
@@ -109,5 +119,37 @@ describe('llmErrorMessage', () => {
   })
   it('http 缺文案时兜底', () => {
     expect(llmErrorMessage('http')).toBe('服务端错误')
+  })
+})
+
+describe('normalizeEndpoint', () => {
+  it('base 无 /v1 不变', () => {
+    expect(normalizeEndpoint('https://api.deepseek.com')).toBe('https://api.deepseek.com')
+  })
+  it('去掉尾斜杠', () => {
+    expect(normalizeEndpoint('https://api.x.com/')).toBe('https://api.x.com')
+  })
+  it('去掉结尾 /v1', () => {
+    expect(normalizeEndpoint('https://api.x.com/v1')).toBe('https://api.x.com')
+  })
+  it('去掉结尾 /v1/ (尾斜杠 + v1)', () => {
+    expect(normalizeEndpoint('https://api.x.com/v1/')).toBe('https://api.x.com')
+  })
+  it('保留路径中间段(如 compatible-mode)', () => {
+    expect(normalizeEndpoint('https://dashscope.aliyuncs.com/compatible-mode'))
+      .toBe('https://dashscope.aliyuncs.com/compatible-mode')
+  })
+  it('保留路径中间段并去结尾 /v1', () => {
+    expect(normalizeEndpoint('https://dashscope.aliyuncs.com/compatible-mode/v1'))
+      .toBe('https://dashscope.aliyuncs.com/compatible-mode')
+  })
+  it('trim 首尾空白', () => {
+    expect(normalizeEndpoint('  https://api.x.com  ')).toBe('https://api.x.com')
+  })
+  it('大小写不敏感 V1', () => {
+    expect(normalizeEndpoint('https://api.x.com/V1')).toBe('https://api.x.com')
+  })
+  it('多个尾斜杠全去', () => {
+    expect(normalizeEndpoint('https://api.x.com///')).toBe('https://api.x.com')
   })
 })

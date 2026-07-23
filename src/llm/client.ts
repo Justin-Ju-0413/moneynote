@@ -45,13 +45,23 @@ export function llmErrorMessage(kind: LLMErrorKind, httpMessage?: string): strin
   return kind === 'http' ? (httpMessage ?? '服务端错误') : kind
 }
 
+/**
+ * 归一化 endpoint:去掉首尾空白、尾斜杠与结尾的 /v1。
+ * 用户常粘贴 `https://api.x.com/v1`(多数文档/工具如此展示),直接拼接
+ * `/v1/chat/completions` 会得到 `/v1/v1/...` 触发 404,且错误被映射成
+ * 「模型不存在」严重误导排查。归一化后无论是否带 /v1 都能拼出正确路径。
+ */
+export function normalizeEndpoint(endpoint: string): string {
+  return endpoint.trim().replace(/\/+$/, '').replace(/\/v1$/i, '')
+}
+
 export async function llmChat(config: LLMConfig, opts: LLMChatOptions): Promise<LLMChatResult> {
   if (navigator.onLine === false) return { content: null, errorKind: 'offline' }
   if (!config.apiKey || !config.endpoint || !config.model) {
     return { content: null, errorKind: 'config' }
   }
 
-  const url = `${config.endpoint.replace(/\/$/, '')}/v1/chat/completions`
+  const url = `${normalizeEndpoint(config.endpoint)}/v1/chat/completions`
   const body: Record<string, unknown> = {
     model: config.model,
     messages: opts.messages,
