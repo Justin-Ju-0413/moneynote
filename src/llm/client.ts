@@ -56,7 +56,7 @@ export function normalizeEndpoint(endpoint: string): string {
 }
 
 export async function llmChat(config: LLMConfig, opts: LLMChatOptions): Promise<LLMChatResult> {
-  if (navigator.onLine === false) return { content: null, errorKind: 'offline' }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return { content: null, errorKind: 'offline' }
   if (!config.apiKey || !config.endpoint || !config.model) {
     return { content: null, errorKind: 'config' }
   }
