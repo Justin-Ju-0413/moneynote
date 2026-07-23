@@ -321,7 +321,7 @@ export async function parseFileToGrid(
 async function parseExcelToGrid(
   file: File,
 ): Promise<{ data: (string | number | Date)[][]; fileType: 'xlsx' }> {
-  const XLSX = await import('xlsx')
+  const XLSX = await import('@e965/xlsx')
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
   const sheet = workbook.Sheets[workbook.SheetNames[0]]

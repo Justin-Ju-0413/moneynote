@@ -43,24 +43,21 @@ async function getDerivedKey(): Promise<CryptoKey> {
 // 加密 API Key → Base64 字符串
 export async function encryptApiKey(plainKey: string): Promise<string> {
   if (!plainKey) return ''
-  try {
-    const encoder = new TextEncoder()
-    const key = await getDerivedKey()
-    const iv = crypto.getRandomValues(new Uint8Array(12))
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encoder.encode(plainKey)
-    )
-    // 将 IV + 密文拼接后 Base64 编码
-    const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length)
-    combined.set(iv)
-    combined.set(new Uint8Array(encrypted), iv.length)
-    return btoa(String.fromCharCode(...combined))
-  } catch {
-    // 降级：Base64 编码
-    return btoa(plainKey)
-  }
+  // AES-GCM 加密。失败时直接抛错--绝不降级为 Base64(那等于明文存储 API Key)。
+  // crypto.subtle 在安全上下文(https / localhost)可用;Vite dev 与 PWA 生产均满足。
+  const encoder = new TextEncoder()
+  const key = await getDerivedKey()
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encoder.encode(plainKey)
+  )
+  // 将 IV + 密文拼接后 Base64 编码
+  const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length)
+  combined.set(iv)
+  combined.set(new Uint8Array(encrypted), iv.length)
+  return btoa(String.fromCharCode(...combined))
 }
 
 // 解密 API Key
@@ -78,7 +75,8 @@ export async function decryptApiKey(encryptedKey: string): Promise<string> {
     )
     return new TextDecoder().decode(decrypted)
   } catch {
-    // 降级：尝试 Base64 解码
+    // 兼容历史降级数据:旧版本加密失败时会以裸 Base64 存储,此处尝试解码。
+    // 新数据均为 AES-GCM,此分支仅用于读取遗留明文 Base64 key;用户下次保存时重新加密(渐进迁移)
     try {
       return atob(encryptedKey)
     } catch {
