@@ -2,6 +2,11 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 规范,版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+- PWA 新版本更新提示弹窗(registerType: prompt),已安装用户可感知并主动刷新到新版本
+
 ## [1.1.0] - 2026-07-23
 
 ### Added
