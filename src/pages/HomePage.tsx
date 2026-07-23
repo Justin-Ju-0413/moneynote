@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useChat } from '@/hooks/useChat'
 import { useTransactions } from '@/hooks/useTransactions'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ChatMessageList } from '@/components/chat/ChatMessageList'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { formatAmountShort } from '@/utils/format'
@@ -7,6 +9,7 @@ import { formatAmountShort } from '@/utils/format'
 export function HomePage() {
   const { messages, sending, sendMessage, confirmCard, cancelCard, clearMessages, aiEnabled } = useChat()
   const { todayExpense, monthExpense, monthIncome } = useTransactions()
+  const [confirmClear, setConfirmClear] = useState(false)
 
   return (
     <div className="flex flex-col h-[calc(100dvh-5rem)] lg:h-[calc(100dvh-2rem)]">
@@ -31,7 +34,7 @@ export function HomePage() {
           </div>
           {messages.length > 0 && (
             <button
-              onClick={() => { if (confirm('清空全部对话记录？')) clearMessages() }}
+              onClick={() => setConfirmClear(true)}
               className="text-[10px] tracking-widest uppercase text-text-muted hover:text-primary-600 transition-colors shrink-0"
             >
               清空
@@ -55,6 +58,16 @@ export function HomePage() {
       <div className="px-5 pb-3 md:px-8 lg:px-10">
         <ChatInput onSend={sendMessage} sending={sending} />
       </div>
+
+      <ConfirmDialog
+        open={confirmClear}
+        title="清空对话"
+        message="清空全部对话记录？"
+        confirmText="清空"
+        danger
+        onConfirm={() => { clearMessages(); setConfirmClear(false) }}
+        onCancel={() => setConfirmClear(false)}
+      />
     </div>
   )
 }

@@ -19,10 +19,11 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
   const [note, setNote] = useState('')
   const [category, setCategory] = useState('')
   const [date, setDate] = useState('')
+  const [type, setType] = useState<'expense' | 'income'>('expense')
   const [syncKey, setSyncKey] = useState('')
 
-  // 分类按 transaction.type 过滤：支出选支出分类、收入选收入分类
-  const cats = transaction?.type === 'income' ? incomeCategories : expenseCategories
+  // 分类按当前编辑的 type 过滤(可切换):支出选支出分类、收入选收入分类
+  const cats = type === 'income' ? incomeCategories : expenseCategories
 
   // transaction/open 变化时同步表单（render 期调整状态，避免 effect 级联渲染）
   const nextSyncKey = transaction ? `${transaction.id ?? 'new'}|${open}` : `|${open}`
@@ -33,7 +34,15 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
       setNote(transaction.note || '')
       setCategory(transaction.category)
       setDate(transaction.date)
+      setType(transaction.type)
     }
+  }
+
+  // 切收支类型:重置为该类型的第一个分类,避免 category 与 type 不匹配
+  const handleTypeChange = (t: 'expense' | 'income') => {
+    setType(t)
+    const newCats = t === 'income' ? incomeCategories : expenseCategories
+    setCategory(newCats[0]?.id ?? '')
   }
 
   const handleSave = () => {
@@ -43,6 +52,7 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
       note,
       category,
       date,
+      type,
     })
     onClose()
   }
@@ -56,6 +66,24 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
   return (
     <Dialog open={open} onClose={onClose} title="编辑记录">
       <div className="space-y-5">
+        {/* 收支类型(可切换,切类型时分类集跟着切换) */}
+        <div>
+          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">类型</label>
+          <div className="flex gap-1.5">
+            {(['expense', 'income'] as const).map((t) => (
+              <button
+                key={t}
+                className={`flex-1 px-3 py-2 text-[10px] tracking-widest uppercase font-medium transition-colors ${
+                  type === t ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
+                }`}
+                onClick={() => handleTypeChange(t)}
+              >
+                {t === 'expense' ? '支出' : '收入'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">金额</label>
           <input

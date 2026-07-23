@@ -22,12 +22,13 @@ export function HistoryPage() {
   const [showDedup, setShowDedup] = useState(false)
   const [dedupBusy, setDedupBusy] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [categoryTab, setCategoryTab] = useState<'expense' | 'income'>('expense')
   const sentinelRef = useRef<HTMLDivElement>(null)
   const { updateTransaction, deleteTransaction } = useTransactions()
   const { showToast } = useToast()
   const { pendingRecords, txMap, detect, handleDuplicate } = useDedup()
   const { getInfo, expenseCategories, incomeCategories } = useCategories()
-  const categories = [...expenseCategories, ...incomeCategories]
+  const tabCategories = categoryTab === 'expense' ? expenseCategories : incomeCategories
 
   const isFiltering = !!search || !!filterCategory
 
@@ -80,6 +81,11 @@ export function HistoryPage() {
     setFilterCategory(id)
     setVisibleCount(PAGE_SIZE)
   }
+  const handleTabChange = (tab: 'expense' | 'income') => {
+    setCategoryTab(tab)
+    setFilterCategory('')
+    setVisibleCount(PAGE_SIZE)
+  }
 
   // 无筛选时滚动到底加载更多；transactions.length < visibleCount 表示已无更多
   useEffect(() => {
@@ -120,27 +126,42 @@ export function HistoryPage() {
           className="w-full px-4 py-2.5 md:py-3 border border-primary-300/50 text-sm outline-none bg-transparent text-text placeholder:text-text-placeholder"
         />
 
-        {/* 分类筛选 */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-          <button
-            className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
-              !filterCategory ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-            }`}
-            onClick={() => handleCategoryChange('')}
-          >
-            全部
-          </button>
-          {categories.map((c) => (
+        {/* 分类筛选:支出/收入分组,避免 14 个 chip 收支混排 */}
+        <div className="space-y-2">
+          <div className="flex gap-1.5">
+            {(['expense', 'income'] as const).map((tab) => (
+              <button
+                key={tab}
+                className={`px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium transition-colors ${
+                  categoryTab === tab ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
+                }`}
+                onClick={() => handleTabChange(tab)}
+              >
+                {tab === 'expense' ? '支出' : '收入'}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
             <button
-              key={c.id}
               className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
-                filterCategory === c.id ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
+                !filterCategory ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
               }`}
-              onClick={() => handleCategoryChange(filterCategory === c.id ? '' : c.id)}
+              onClick={() => handleCategoryChange('')}
             >
-              {c.name}
+              全部
             </button>
-          ))}
+            {tabCategories.map((c) => (
+              <button
+                key={c.id}
+                className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
+                  filterCategory === c.id ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
+                }`}
+                onClick={() => handleCategoryChange(filterCategory === c.id ? '' : c.id)}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 查重审核入口 */}

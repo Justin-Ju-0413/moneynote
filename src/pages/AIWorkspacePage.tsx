@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/toast-context'
 import { useAIWorkspace } from '@/hooks/useAIWorkspace'
 import { useLLMSettings } from '@/hooks/useLLMSettings'
@@ -62,6 +63,7 @@ export function AIWorkspacePage() {
     () => new Map(transactions.map((t) => [t.id as number, t])),
     [transactions],
   )
+  const [confirmClear, setConfirmClear] = useState(false)
 
   const handleRun = async (task: AuditTask) => {
     if (running) return
@@ -87,10 +89,11 @@ export function AIWorkspacePage() {
     await dismissSuggestion(id)
   }
 
-  const handleClear = async () => {
-    if (!confirm('确定清空所有建议记录吗？')) return
+  const handleClear = () => setConfirmClear(true)
+  const doClear = async () => {
     await clearAll()
     showToast('已清空')
+    setConfirmClear(false)
   }
 
   const handleCleanupProcessed = async () => {
@@ -223,6 +226,16 @@ export function AIWorkspacePage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmClear}
+        title="清空建议"
+        message="确定清空所有建议记录吗？"
+        confirmText="清空"
+        danger
+        onConfirm={doClear}
+        onCancel={() => setConfirmClear(false)}
+      />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/toast-context'
 import { useLLMSettings } from '@/hooks/useLLMSettings'
 import { useBillTemplateLearning } from '@/hooks/useBillTemplateLearning'
@@ -31,6 +32,14 @@ interface ImportResultDetail {
   classifyResult: ClassifyResult
 }
 
+interface ConfirmAction {
+  title: string
+  message: string
+  confirmText?: string
+  danger?: boolean
+  onConfirm: () => Promise<void> | void
+}
+
 export function SettingsPage() {
   const { showToast } = useToast()
   const { getInfo } = useCategories()
@@ -44,6 +53,7 @@ export function SettingsPage() {
   const [importProgress, setImportProgress] = useState('')
   const [importResult, setImportResult] = useState<ImportResultDetail | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<BillTemplate | null>(null)
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resolveCallbackRef = useRef<((template: BillTemplate | null) => void) | null>(null)
 
@@ -93,14 +103,21 @@ export function SettingsPage() {
     showToast(next ? '已开启自动备份' : '已关闭自动备份', 'info')
   }
 
-  const handleRestore = async (b: BackupRecord) => {
-    if (!confirm(`确认恢复到 ${new Date(b.createdAt).toLocaleString()} 的备份？当前数据将被覆盖。`)) return
-    try {
-      await restoreBackup(b.id as number)
-      showToast('已恢复，刷新页面以生效', 'success')
-    } catch {
-      showToast('恢复失败', 'error')
-    }
+  const handleRestore = (b: BackupRecord) => {
+    setConfirmAction({
+      title: '恢复备份',
+      message: `确认恢复到 ${new Date(b.createdAt).toLocaleString()} 的备份？当前数据将被覆盖。`,
+      confirmText: '恢复',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await restoreBackup(b.id as number)
+          showToast('已恢复，刷新页面以生效', 'success')
+        } catch {
+          showToast('恢复失败', 'error')
+        }
+      },
+    })
   }
 
   const handleDeleteBackup = async (id: number) => {
@@ -146,17 +163,21 @@ export function SettingsPage() {
   const handleTest = async () => {
     setIsTesting(true)
     setTestSuccess(false)
-    await saveConfig({
-      enabled: formEnabled,
-      endpoint: formEndpoint,
-      model: formModel,
-      apiKey: formApiKey,
-    })
-    const result = await testConnection()
-    showToast(result.message, result.success ? 'success' : 'error')
-    if (result.success) {
-      setTestSuccess(true)
-      setTimeout(() => setTestSuccess(false), 2000)
+    try {
+      await saveConfig({
+        enabled: formEnabled,
+        endpoint: formEndpoint,
+        model: formModel,
+        apiKey: formApiKey,
+      })
+      const result = await testConnection()
+      showToast(result.message, result.success ? 'success' : 'error')
+      if (result.success) {
+        setTestSuccess(true)
+        setTimeout(() => setTestSuccess(false), 2000)
+      }
+    } catch {
+      showToast('保存失败', 'error')
     }
     setIsTesting(false)
   }
@@ -296,20 +317,33 @@ export function SettingsPage() {
     showToast('JSON 导出成功')
   }
 
-  const handleClearData = async () => {
-    if (!confirm('确定要清除所有数据吗？此操作不可恢复！')) return
-    await db.transactions.clear()
-    await db.budgets.clear()
-    await db.classificationCache.clear()
-    await db.parseCache.clear()
-    showToast('数据已清除')
+  const handleClearData = () => {
+    setConfirmAction({
+      title: '清除所有数据',
+      message: '确定要清除所有数据吗？此操作不可恢复！',
+      confirmText: '清除',
+      danger: true,
+      onConfirm: async () => {
+        await db.transactions.clear()
+        await db.budgets.clear()
+        await db.classificationCache.clear()
+        await db.parseCache.clear()
+        showToast('数据已清除')
+      },
+    })
   }
 
-  const handleClearCache = async () => {
-    if (!confirm('确定要清除 AI 缓存吗？下次输入/导入将重新调用 AI。')) return
-    await db.classificationCache.clear()
-    await db.parseCache.clear()
-    showToast('AI 缓存已清除')
+  const handleClearCache = () => {
+    setConfirmAction({
+      title: '清除 AI 缓存',
+      message: '确定要清除 AI 缓存吗？下次输入/导入将重新调用 AI。',
+      confirmText: '清除',
+      onConfirm: async () => {
+        await db.classificationCache.clear()
+        await db.parseCache.clear()
+        showToast('AI 缓存已清除')
+      },
+    })
   }
 
   // 计算分类分布（用于导入结果详情）
@@ -736,6 +770,21 @@ export function SettingsPage() {
         template={selectedTemplate}
         onClose={() => setSelectedTemplate(null)}
         onDelete={handleDeleteTemplate}
+      />
+
+      {/* 统一确认弹窗(恢复备份/清除数据/清除缓存) */}
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={confirmAction?.title}
+        message={confirmAction?.message ?? ''}
+        confirmText={confirmAction?.confirmText}
+        danger={confirmAction?.danger}
+        onConfirm={async () => {
+          const act = confirmAction
+          setConfirmAction(null)
+          if (act) await act.onConfirm()
+        }}
+        onCancel={() => setConfirmAction(null)}
       />
     </div>
   )

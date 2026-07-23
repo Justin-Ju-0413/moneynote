@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/components/ui/toast-context'
 import type { Category } from '@/db/types'
@@ -13,6 +14,7 @@ export function CategoryManager() {
   const { categories, expenseCategories, incomeCategories, addCategory, updateCategory, deleteCategory, isCategoryInUse } = useCategories()
   const { showToast } = useToast()
   const [edit, setEdit] = useState<EditState | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
   const [formId, setFormId] = useState('')
   const [formName, setFormName] = useState('')
   const [formIcon, setFormIcon] = useState('📦')
@@ -59,9 +61,13 @@ export function CategoryManager() {
   const handleDelete = async (c: Category) => {
     if (c.isBuiltIn) { showToast('内置分类不可删除', 'error'); return }
     if (await isCategoryInUse(c.id)) { showToast('该分类已被交易使用，无法删除', 'error'); return }
-    if (!confirm(`确认删除分类「${c.name}」？`)) return
-    await deleteCategory(c.id)
+    setConfirmDelete(c)
+  }
+  const doDelete = async () => {
+    if (!confirmDelete) return
+    await deleteCategory(confirmDelete.id)
     showToast('分类已删除')
+    setConfirmDelete(null)
   }
 
   const renderRow = (c: Category) => (
@@ -153,6 +159,16 @@ export function CategoryManager() {
           </div>
         </div>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="删除分类"
+        message={confirmDelete ? `确认删除分类「${confirmDelete.name}」？` : ''}
+        confirmText="删除"
+        danger
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Card>
   )
 }
