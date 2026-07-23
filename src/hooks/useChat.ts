@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import dayjs from 'dayjs'
 import { db } from '@/db'
 import { runChat } from '@/llm/service'
 import type { ChatContext, ChatIntentResult } from '@/llm/chatPrompt'
@@ -9,39 +10,48 @@ import type { ChatMessage, ChatCard, ParsedTransaction } from '@/db/types'
 import type { LLMParseResult } from '@/llm/types'
 
 // ── 上下文构建:每次发送时拉最新数据,供 LLM 答查询/解析"刚才那笔" ──
+// 走 [type+date] 复合索引的范围查询,避免 db.transactions.toArray() 全量加载
+// (大库时每发一条消息都 O(全表),这是 ROADMAP 标注的全量聚合债)
 async function buildContext(): Promise<ChatContext> {
-  const now = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const ym = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
-  const lastYm = now.getMonth() === 0
-    ? `${now.getFullYear() - 1}-12`
-    : `${now.getFullYear()}-${pad(now.getMonth())}`
-  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  const now = dayjs()
+  const monthStart = now.startOf('month').format('YYYY-MM-DD')
+  const monthEnd = now.endOf('month').format('YYYY-MM-DD')
+  const lastMonthStart = now.subtract(1, 'month').startOf('month').format('YYYY-MM-DD')
+  const lastMonthEnd = now.subtract(1, 'month').endOf('month').format('YYYY-MM-DD')
+  const today = now.format('YYYY-MM-DD')
 
   const recent = await db.transactions.orderBy('date').reverse().limit(20).toArray()
-  const all = await db.transactions.toArray()
   const cats = await db.categories.toArray()
   const categoryMap: Record<string, string> = {}
   for (const c of cats) categoryMap[c.id] = c.name
 
+  // 本月支出:一次索引查询同时算月总、分类汇总、今日支出
+  const monthExpenseTx = await db.transactions
+    .where('[type+date]')
+    .between(['expense', monthStart], ['expense', monthEnd], true, true)
+    .toArray()
   let monthExpense = 0
-  let monthIncome = 0
-  let lastMonthExpense = 0
   let todayExpense = 0
   const monthCategorySums: Record<string, number> = {}
-
-  for (const t of all) {
-    if (t.date.startsWith(ym)) {
-      if (t.type === 'expense') {
-        monthExpense += t.amount
-        monthCategorySums[t.category] = (monthCategorySums[t.category] ?? 0) + t.amount
-        if (t.date === today) todayExpense += t.amount
-      } else {
-        monthIncome += t.amount
-      }
-    }
-    if (t.date.startsWith(lastYm) && t.type === 'expense') lastMonthExpense += t.amount
+  for (const t of monthExpenseTx) {
+    monthExpense += t.amount
+    monthCategorySums[t.category] = (monthCategorySums[t.category] ?? 0) + t.amount
+    if (t.date === today) todayExpense += t.amount
   }
+
+  // 本月收入
+  const monthIncome = (await db.transactions
+    .where('[type+date]')
+    .between(['income', monthStart], ['income', monthEnd], true, true)
+    .toArray()
+  ).reduce((s, t) => s + t.amount, 0)
+
+  // 上月支出
+  const lastMonthExpense = (await db.transactions
+    .where('[type+date]')
+    .between(['expense', lastMonthStart], ['expense', lastMonthEnd], true, true)
+    .toArray()
+  ).reduce((s, t) => s + t.amount, 0)
 
   return { recentTransactions: recent, monthExpense, monthIncome, lastMonthExpense, todayExpense, monthCategorySums, categoryMap }
 }
