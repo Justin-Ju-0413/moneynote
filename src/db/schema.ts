@@ -77,5 +77,14 @@ export class AppDB extends Dexie {
     this.version(11).stores({
       chatMessages: '++id, createdAt',
     })
+
+    // ── 迁移框架说明 ──
+    // 当前 11 个版本均为加表/加索引(纯 schema 变更,Dexie 自动处理,无需 upgrade)。
+    // 未来若需字段重命名/类型变更/数据回填,新增 version 并链式 .upgrade():
+    //   this.version(12).stores({ transactions: '++,date,category,type,[type+date],newField' })
+    //     .upgrade(async (tx) => {
+    //       await tx.table('transactions').toCollection().modify((t) => { t.newField = null })
+    //     })
+    // 表/索引契约 + CRUD 见 schema.test.ts(用 fake-indexeddb 跑)。
   }
 }
