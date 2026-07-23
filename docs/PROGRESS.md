@@ -4,6 +4,30 @@
 
 ---
 
+## 2026-07-23
+
+### 测试驱动的迭代:9 项修复 + 版本管理 + PWA(基于全量测试报告)
+
+> 触发:对 6 页面 + 聊天记账 + 移动端做端到端实测,产出 11 项问题分级,逐项修复。
+> 单测 87 -> 117(+30),lint 0 / build 通过 / 首屏 gzip ~177kB。8 个 commit,合并 main,打 tag v1.1.0。
+
+- **fix(llm)** `09558b5`:endpoint /v1 归一化,避免用户粘贴带 /v1 的地址双拼致 404(原错误被映射成「模型不存在」误导)。+10 单测。
+- **perf** `66b6156`:统计聚合走 [type+date] 复合索引(useTransactions 月收支、useChat.buildContext 去全量 toArray);顺手修 todayExpense UTC 时区 bug(UTC+8 凌晨误判为昨天致今日支出 ¥0)。
+- **fix(security)** `90f7dfc`:crypto 去掉 Base64 静默降级(失败抛错不存明文,decrypt 保留兼容旧数据);xlsx@0.18.5 原型污染+ReDoS 换 @e965/xlsx@0.20.3(API 兼容)。+6 单测。
+- **fix(nlp)** `956958b`:amountExtractor P1 模式 matchedText 吞助词「了」致备注残缺(「午餐吃了34」->「午餐吃」),配 group:1 保留助词。+10 单测。
+- **feat(db)** `3683558`:schema 迁移框架(ROADMAP P1-6)--upgrade() 用法注释 + fake-indexeddb 契约单测(13 表 / CRUD / [type+date] 索引)。+4 单测。
+- **feat(ui)** `a0fd22f`:HistoryPage 分类 chip 加支出/收入 tab;EditDialog 加收支类型 toggle;ConfirmDialog 替代 6 处 native confirm;SettingsPage.handleTest 加 try/catch。
+- **chore** `2c425c7`:版本管理基建--.gitattributes(强制 LF)+ CHANGELOG.md(Keep a Changelog)+ GitHub Actions CI(lint+test+build)+ 版本号 1.0.0->1.1.0。**P1-6 勾选**。
+- **feat(pwa)** `62b491a`:registerType autoUpdate->prompt + UpdatePrompt 组件,已安装用户可感知新版本(版本管理的用户体验闭环)。
+- **发布**:feat/chat-homepage fast-forward 合并 main(93bb549..62b491a),打 tag v1.1.0 并推送。Release / 分支保护待用户在 GitHub 网页完成(需认证)。
+
+### ROADMAP 勾选
+
+- [x] P1-6 Dexie 迁移框架(本次)
+- 其余测试发现的修复(endpoint/时区/nlp/UI/confirm/PWA/版本管理)不在 ROADMAP 显式列,记入本日志。
+
+---
+
 ## 2026-07-15
 
 ### P0-1 Lint 清零 ✅
@@ -119,7 +143,7 @@
 | P1-3 Prompt 版本化 | ⬜ |
 | P1-4 bill-analyzer 并入 llm 层 | ⬜ |
 | P1-5 Repository / 状态层 | ⬜ |
-| P1-6 Dexie 迁移框架 | ⬜ |
+| P1-6 Dexie 迁移框架 | ✅ |
 | P1-7 测试补齐(单测 + E2E) | ⬜ |
 | P1-8 结构化输出 | ⬜ |
 | P1-9 加密审计 | ⬜ |
