@@ -6,6 +6,10 @@
 
 ### Added
 - PWA 新版本更新提示弹窗(registerType: prompt),已安装用户可感知并主动刷新到新版本
+- 增加无需 API Key 的合成示例账单、恢复/迁移/隐私说明和表格导入边界测试
+
+### Changed
+- Excel 解析器改为 `read-excel-file`；仅接受 `.xlsx`，单文件上限 20 MB，旧 `.xls` 需先转换
 
 ## [1.1.0] - 2026-07-23
 

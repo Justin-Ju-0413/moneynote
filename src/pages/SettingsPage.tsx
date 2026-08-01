@@ -378,7 +378,7 @@ export function SettingsPage() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.xlsx,.xls"
+          accept=".csv,.xlsx"
           className="hidden"
           onChange={handleFileSelected}
         />
@@ -633,7 +633,7 @@ export function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-text">导入账单</p>
-                <p className="text-[10px] text-text-muted mt-0.5">{isImporting ? (importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 Excel 等账单文件'}</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{isImporting ? (importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 XLSX；旧 XLS 请先另存为 XLSX'}</p>
               </div>
               <span className="text-text-placeholder text-sm">›</span>
             </div>
