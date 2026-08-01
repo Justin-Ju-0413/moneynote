@@ -1,5 +1,7 @@
 # MoneyNote · AI 智能记账
 
+[![CI](https://github.com/Justin-Ju-0413/moneynote/actions/workflows/ci.yml/badge.svg)](https://github.com/Justin-Ju-0413/moneynote/actions/workflows/ci.yml)
+
 本地优先的个人记账 Web 应用（PWA）。自然语言输入 + 账单导入 + AI 工作台，数据全部存在浏览器 IndexedDB，API Key 本地加密，AI 请求脱敏。
 
 ## 功能
@@ -19,7 +21,7 @@ React 19 · Vite · TypeScript · Tailwind v4 · Dexie(IndexedDB) · recharts ·
 ## 运行
 
 ```bash
-npm install
+npm ci
 npm run dev      # 开发服务器
 npm run build    # tsc -b && vite build
 npm run lint
@@ -27,6 +29,12 @@ npm test         # vitest 单测（redact/auditPrompt/dedup 纯逻辑）
 ```
 
 AI 配置在「设置」页：选服务商预设（DeepSeek / OpenAI / 通义千问 / 自定义），填 API Key 与模型。未配置时 AI 工作台自动回退到本地启发式规则。
+
+### 无 API Key 演示
+
+应用不要求登录或 API Key。启动后可以直接新增记录，或在设置页导入 [`public/sample-data.csv`](public/sample-data.csv) 体验统计、预算、导出和本地规则；只有显式启用在线 AI 服务时才会发送已脱敏的请求。
+
+账单导入支持 `.csv` 和 `.xlsx`。二进制 `.xls` 不再支持，请先另存为 `.xlsx`；单个 Excel 文件限制为 20 MB。
 
 ## 数据层
 
@@ -43,6 +51,17 @@ Dexie schema 演进至 v11：
 | v11 | `chatMessages`（首页 ChatGPT 式对话历史持久化） |
 
 升级自动迁移。
+
+## 恢复、迁移与隐私
+
+- **恢复**：设置页可创建和恢复 IndexedDB 快照；自动快照最多保留 10 份。关键操作另有 5 秒撤销，但它不能替代离线备份。
+- **迁移**：JSON 导出包含 `schemaVersion`。升级前建议先导出 JSON；未来 schema 变更必须提供向前迁移和旧导出兼容测试。
+- **隐私**：交易和设置默认只保存在当前浏览器。清理站点数据、浏览器配置损坏或设备丢失都可能同时删除数据与同库快照，因此重要账本应定期导出到仓库之外。
+- **AI 边界**：API Key 使用浏览器端 AES-GCM 封装保存，交易文本在请求前做字段脱敏；浏览器端加密不能防御已控制设备或同源恶意脚本。不开启 AI 时不会发出 AI 请求。
+
+## Release 与开发约定
+
+稳定入口始终为 `main`。功能在分支上开发并通过 PR 合并；版本使用 SemVer，并在 GitHub Release 与 [`CHANGELOG.md`](CHANGELOG.md) 同步记录。未来方向见 [`docs/ROADMAP.md`](docs/ROADMAP.md)。
 
 ## License
 

@@ -1,6 +1,7 @@
 import type { ColumnRole, ColumnType, TemplateFingerprint } from '@/db/types'
 import { BUILTIN_DETECTION } from './builtinTemplates'
 import { parseCSVLine } from '@/utils/csv'
+import { readXlsxGrid } from '@/utils/spreadsheet'
 
 // ── 表头行检测结果 ──
 export interface HeaderDetection {
@@ -311,7 +312,7 @@ export async function parseFileToGrid(
   if (name.endsWith('.csv')) {
     return parseCSVToGrid(file)
   }
-  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+  if (name.endsWith('.xlsx')) {
     return parseExcelToGrid(file)
   }
 
@@ -321,12 +322,7 @@ export async function parseFileToGrid(
 async function parseExcelToGrid(
   file: File,
 ): Promise<{ data: (string | number | Date)[][]; fileType: 'xlsx' }> {
-  const XLSX = await import('@e965/xlsx')
-  const buffer = await file.arrayBuffer()
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
-  const sheet = workbook.Sheets[workbook.SheetNames[0]]
-  const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as (string | number | Date)[][]
-  return { data, fileType: 'xlsx' }
+  return { data: await readXlsxGrid(file), fileType: 'xlsx' }
 }
 
 async function parseCSVToGrid(

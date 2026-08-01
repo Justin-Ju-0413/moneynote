@@ -2,6 +2,7 @@ import type { BillTemplate, ColumnMapping, FilterRule } from '@/db/types'
 import type { RawBillRow } from '@/utils/import'
 import * as log from '@/utils/log'
 import { parseCSVLine } from '@/utils/csv'
+import { readXlsxGrid } from '@/utils/spreadsheet'
 
 export interface ParseResult {
   source: string
@@ -270,12 +271,7 @@ async function readFileAsGrid(
     return lines.map(line => parseCSVLine(line))
   }
 
-  // Excel
-  const XLSX = await import('@e965/xlsx')
-  const buffer = await file.arrayBuffer()
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
-  const sheet = workbook.Sheets[workbook.SheetNames[0]]
-  return XLSX.utils.sheet_to_json(sheet, { header: 1 }) as (string | number | Date)[][]
+  return readXlsxGrid(file)
 }
 
 function locateHeaderRow(

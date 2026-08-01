@@ -6,7 +6,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UpdatePrompt } from '@/components/ui/UpdatePrompt'
 
-// 路由级懒加载：把 recharts(统计页)/@e965/xlsx(设置页) 等拆出首屏 bundle
+// 路由级懒加载：把 recharts(统计页)/表格解析器(设置页)等拆出首屏 bundle
 const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })))
 const StatsPage = lazy(() => import('@/pages/StatsPage').then((m) => ({ default: m.StatsPage })))
 const HistoryPage = lazy(() => import('@/pages/HistoryPage').then((m) => ({ default: m.HistoryPage })))
