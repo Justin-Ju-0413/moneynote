@@ -21,6 +21,7 @@ function makeTemplate(overrides: Partial<BillTemplate> = {}): Omit<BillTemplate,
   return {
     fingerprint: '', name: '测试模板', source: 'alipay', isBuiltIn: false,
     fileType: 'csv', encoding: 'gbk', headerRowIndex: -1, columnMappings: BASE_MAPPINGS,
+    filterRules: [], lastUsedAt: 0,
     importCount: 0, createdAt: 0, updatedAt: 0,
     ...overrides,
   }

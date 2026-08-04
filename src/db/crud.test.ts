@@ -16,30 +16,30 @@ describe('bulkImportTransactions', () => {
 
   it('批量导入新交易', async () => {
     const r = await bulkImportTransactions([
-      { amount: 10, category: 'food', date: '2026-08-01', type: 'expense', note: 'a' },
-      { amount: 20, category: 'salary', date: '2026-08-02', type: 'income', note: 'b' },
+      { amount: 10, category: 'food', date: '2026-08-01', type: 'expense' as const, note: 'a' },
+      { amount: 20, category: 'salary', date: '2026-08-02', type: 'income' as const, note: 'b' },
     ])
     expect(r).toEqual({ imported: 2, skipped: 0 })
     expect(await db.transactions.count()).toBe(2)
   })
 
   it('date+amount+note 全同视为重复跳过', async () => {
-    const tx = { amount: 10, category: 'food', date: '2026-08-01', type: 'expense', note: 'a' }
+    const tx = { amount: 10, category: 'food', date: '2026-08-01', type: 'expense' as const, note: 'a' }
     await bulkImportTransactions([tx])
     const r = await bulkImportTransactions([tx])
     expect(r).toEqual({ imported: 0, skipped: 1 })
   })
 
   it('备注不同则不视为重复', async () => {
-    await bulkImportTransactions([{ amount: 10, category: 'food', date: '2026-08-01', type: 'expense', note: 'a' }])
-    const r = await bulkImportTransactions([{ amount: 10, category: 'food', date: '2026-08-01', type: 'expense', note: 'b' }])
+    await bulkImportTransactions([{ amount: 10, category: 'food', date: '2026-08-01', type: 'expense' as const, note: 'a' }])
+    const r = await bulkImportTransactions([{ amount: 10, category: 'food', date: '2026-08-01', type: 'expense' as const, note: 'b' }])
     expect(r.imported).toBe(1)
     expect(r.skipped).toBe(0)
   })
 
   it('导入写入 createdAt/updatedAt', async () => {
     const before = Date.now()
-    await bulkImportTransactions([{ amount: 5, category: 'food', date: '2026-08-01', type: 'expense', note: 'x' }])
+    await bulkImportTransactions([{ amount: 5, category: 'food', date: '2026-08-01', type: 'expense' as const, note: 'x' }])
     const tx = (await db.transactions.toArray())[0]
     expect(tx.createdAt).toBeGreaterThanOrEqual(before)
     expect(tx.updatedAt).toBeGreaterThanOrEqual(before)
