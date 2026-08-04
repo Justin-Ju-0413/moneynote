@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test'
-import { recordResponse, queryResponse, modifyResponse, deleteResponse, auditResponse, parseResponse } from '../fixtures/llm-responses'
+import { recordResponse, queryResponse, modifyResponse, deleteResponse, auditResponse, parseResponse, batchResponse } from '../fixtures/llm-responses'
 
 export interface LLMCall {
   url: string
@@ -19,7 +19,8 @@ function chatResponse(lastUser: string, system: string): unknown {
 
   if (/删/.test(lastUser)) return deleteResponse(txId)
   if (/改/.test(lastUser)) return modifyResponse(txId)
-  if (/花了|多少|查询|消费/.test(lastUser)) return queryResponse()
+  // 收窄 query 触发词:裸「花了/消费」是记账口语(如「打车花了30」),不路由到 query
+  if (/多少|查询|本月/.test(lastUser)) return queryResponse()
   return recordResponse(lastUser)
 }
 
@@ -40,7 +41,19 @@ export async function mockLLM(page: Page): Promise<MockLLMHandle> {
     calls.push({ url: route.request().url(), system, lastUser })
 
     let content: string
-    if (system.includes('记账助手')) {
+    // 分发顺序按标识特异性从高到低:「记账助手」是其他 prompt 的子串(如「记账助手的结构化数据提取引擎」),
+    // 必须先匹配更具体的标识,否则单条解析会被错误路由到 chat 分支
+    if (system.includes('结构化数据提取')) {
+      // 单条解析(快速记账 / testLLMConnection):返回 LLMParseResult 形状
+      content = JSON.stringify(parseResponse())
+    } else if (system.includes('交易分类引擎')) {
+      // 批量分类:返回分类数组,长度与输入条数一致
+      const userContent = messages.find((m) => m.role === 'user')?.content ?? ''
+      const countMatch = userContent.match(/以下\s*(\d+)\s*条/)
+      const lineCount = userContent.split('\n').filter((l) => /^\s*\d+\./.test(l)).length
+      const count = countMatch ? Number(countMatch[1]) : lineCount > 0 ? lineCount : 1
+      content = JSON.stringify(batchResponse(count))
+    } else if (system.includes('记账助手')) {
       content = JSON.stringify(chatResponse(lastUser, system))
     } else if (system.includes('个人账单审计助手')) {
       let payload: { transactions: { id: number }[] } = { transactions: [] }

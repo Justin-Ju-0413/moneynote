@@ -50,6 +50,14 @@ export function auditResponse(task: 'audit' | 'categorize' | 'dedupe' | 'analyze
       })),
     }
   }
+  // analyzeMonth:allowedTypesForTask 只允许 summary,否则 parseAuditSuggestions 过滤后为空
+  if (task === 'analyzeMonth') {
+    return {
+      suggestions: [{
+        type: 'summary', transactionIds: ids, result: '支出 ¥35.00,收入 ¥0.00', confidence: 0.9, reason: '月度摘要',
+      }],
+    }
+  }
   // audit:一条分类建议即可驱动「应用」按钮
   return {
     suggestions: ids.slice(0, 1).map((id) => ({
@@ -64,4 +72,11 @@ export function parseResponse() {
     amount: 10, category: 'food', type: 'expense',
     date: today(), time: null, note: '测试', confidence: 0.9,
   }
+}
+
+// 批量分类:返回与输入条数一致的分类数组(parseBatchResponse 期望形状)
+export function batchResponse(count: number) {
+  return Array.from({ length: count }, () => ({
+    category: 'food', confidence: 0.9, reason: '批量分类建议',
+  }))
 }
