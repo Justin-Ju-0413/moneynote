@@ -112,8 +112,11 @@ export function matchCategory(text: string, type: 'expense' | 'income' = 'expens
   }
 
   // 根据分数判断置信度
+  // score = 10 + 关键词长度:2 字及以上关键词(score>=12)视为明确命中 → high;
+  // 单字关键词(score=11,如 药/书/茶/包)存在歧义 → medium。
+  // (对齐 spec:直接命中词典关键词如 打车/工资 应为 high)
   let confidence: 'high' | 'medium' | 'low' = 'low'
-  if (bestScore >= 15) {
+  if (bestScore >= 12) {
     confidence = 'high'
   } else if (bestScore >= 10) {
     confidence = 'medium'
