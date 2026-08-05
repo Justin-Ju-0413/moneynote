@@ -43,7 +43,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。三条进化�
 - [ ] **bill-analyzer 并入 llm 层**,消除 `aiMapper` 重复模式
 - [ ] **Repository / 状态层**:引 repository 解耦 `useLiveQuery` 与业务,派生统计收敛(避免各 hook 重复实例化 `useLiveQuery`)
 - [x] **Dexie 迁移框架**:补 `upgrade()` + schema 校验 + 迁移单测,支撑未来字段重命名 / 类型变更
-- [ ] **测试补齐**:DB CRUD / 备份恢复 / 导入导出 / NLP / 模板匹配单测;Playwright E2E 覆盖核心流(记账 -> 导入 -> AI 工作台 -> 去重)
+- [x] **测试补齐**:DB CRUD / 备份恢复 / 导入导出 / NLP / 模板匹配单测;Playwright E2E 覆盖核心流(记账 -> 导入 -> AI 工作台 -> 去重)
 - [ ] **结构化输出**:provider 支持时用 JSON schema / function calling 替代正则提取,替代 `src/llm/prompt.ts` 三层 fallback
 - [ ] **加密审计**:`src/llm/crypto.ts:1` 硬编码 passphrase + 盐存 localStorage,明确威胁模型,规划用户密码派生迁移路径
 
