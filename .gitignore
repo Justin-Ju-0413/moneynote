@@ -27,6 +27,10 @@ dist-ssr
 .qoder
 .vercel-tmp
 
+# Playwright 测试产物（本地 E2E 生成，不入库）
+playwright-report
+test-results
+
 # 根目录截图/测试产物（开发时生成，不入库）
 /*.png
 
