@@ -1,6 +1,9 @@
 // E2E mock LLM 响应构造器:按意图返回应用 chatPrompt 约定的严格 JSON
+import dayjs from 'dayjs'
+
+// 用本地日期而非 UTC:UTC+8 凌晨 00:00-08:00 记的交易会落到「昨天」,每月 1 日该窗口内「本月支」断言必失败
 function today(): string {
-  return new Date().toISOString().split('T')[0]
+  return dayjs().format('YYYY-MM-DD')
 }
 
 // record:从用户消息动态提取金额与备注,与断言保持一致

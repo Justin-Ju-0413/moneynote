@@ -17,7 +17,8 @@ test.describe('智能查重', () => {
     await page.getByPlaceholder(/和助手聊聊/).fill('拿铁20')
     await page.getByRole('button', { name: '发送' }).click()
     await page.getByRole('button', { name: '确认记录' }).click()
-    await page.getByText('已记录').waitFor()
+    // 等两笔都完成:waitFor('已记录') 会命中第一条 badge 立即返回或 strict 报错,无法作为第二笔的同步点
+    await expect(page.getByText('已记录')).toHaveCount(2)
 
     // 智能查重:mock 返回 duplicate 建议(取 payload 前两个 id)
     await page.goto('/ai-workspace')

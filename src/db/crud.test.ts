@@ -63,7 +63,7 @@ describe('categories CRUD', () => {
     expect(await db.categories.get('test_cat')).toBeUndefined()
   })
 
-  it('内置分类保留,非内置可删', async () => {
+  it('内置分类也可被删除', async () => {
     await db.categories.delete('food')
     expect(await db.categories.get('food')).toBeUndefined()
   })

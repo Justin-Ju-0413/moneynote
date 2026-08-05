@@ -71,12 +71,20 @@ describe('backup', () => {
     expect(await db.backups.get(id)).toBeUndefined()
   })
 
-  it('restoreBackup 恢复 transactions 数据(先清空再写回)', async () => {
+  it('restoreBackup 恢复 transactions 数据(restore 自身清库,restore 前写的干扰数据被清除)', async () => {
+    // 先写 1 笔待备份数据,创建备份(备份内恰好 1 笔)
     await db.transactions.add({
       amount: 10, category: 'food', date: '2026-08-05', type: 'expense', note: 'a', createdAt: 1, updatedAt: 1,
     })
     const id = await createBackup('manual')
-    await db.transactions.clear()
+    // 备份后再写 2+1 笔干扰(均不在备份内):restore 若不清库,这些会残留,断言失败
+    await db.transactions.bulkAdd([
+      { amount: 99, category: 'food', date: '2026-08-01', type: 'expense', note: '干扰1', createdAt: 2, updatedAt: 2 },
+      { amount: 88, category: 'food', date: '2026-08-02', type: 'expense', note: '干扰2', createdAt: 3, updatedAt: 3 },
+    ])
+    await db.transactions.add({
+      amount: 77, category: 'food', date: '2026-08-06', type: 'expense', note: '干扰3', createdAt: 4, updatedAt: 4,
+    })
     await restoreBackup(id)
     const txs = await db.transactions.toArray()
     expect(txs).toHaveLength(1)

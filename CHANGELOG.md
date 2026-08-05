@@ -8,12 +8,20 @@
 
 - Playwright E2E 覆盖核心流:聊天记账(record/modify/delete)、账单导入、AI 工作台审计、智能查重;LLM 请求经 page.route 拦截 mock,零生产代码改动,本地 `npm run test:e2e` 运行
 - 单测补齐:backup(8)、import(6)、db CRUD(7)、templateMatcher(9)、NLP 子模块(19),共 +49 用例
+
+### Changed
+
+- 版本号统一:`APP_VERSION` 与 package.json 同步为 1.3.0
+
+## [1.2.0] - 2026-08-01
+
+### Added
+
 - PWA 新版本更新提示弹窗(registerType: prompt),已安装用户可感知并主动刷新到新版本
 - 增加无需 API Key 的合成示例账单、恢复/迁移/隐私说明和表格导入边界测试
 
 ### Changed
 
-- 版本号统一:`APP_VERSION` 与 package.json 同步为 1.3.0
 - Excel 解析器改为 `read-excel-file`；仅接受 `.xlsx`，单文件上限 20 MB，旧 `.xls` 需先转换
 
 ## [1.1.0] - 2026-07-23
