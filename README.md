@@ -11,6 +11,12 @@ A local-first personal-finance PWA. Natural-language entry, bill import, fuzzy d
 
 本地优先的个人记账 PWA:自然语言记账、账单导入、模糊去重、快照恢复、隐私感知 AI。数据全部留在浏览器 IndexedDB,不配置 API Key 也能完整使用。
 
+## Screenshots / 演示
+
+| 对话记账 / Chat entry | 统计 / Stats |
+|---|---|
+| ![Home](docs/screenshots/home.png) | ![Stats](docs/screenshots/stats.png) |
+
 ## Features / 功能
 
 - **记账**:ChatGPT 式对话记账,支持记一笔 / 查询 / 修改 / 删除 / 闲聊 5 种意图,数据变更前弹出确认卡片;自然语言解析走「本地规则 5 阶段管线 + LLM 增强」混合策略
