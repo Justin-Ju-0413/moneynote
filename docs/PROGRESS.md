@@ -8,7 +8,7 @@
 
 ### P1-7 测试补齐 + Playwright E2E
 
-> 单测 117 -> 169(+49:backup 8 / import 6 / db CRUD 7 / templateMatcher 9 / NLP 子模块 19),Playwright E2E 5 spec 全绿,lint 0 / build 通过 / tsc 干净。
+> 单测 117 -> 169(+52:本次 +49 = backup 8 / import 6 / db CRUD 7 / templateMatcher 9 / NLP 子模块 19,另 +3 为 v1.2.0 期间 spreadsheet 等用例计入基线),Playwright E2E 5 spec 全绿,lint 0 / build 通过 / tsc 干净。
 > E2E 走本地 `npm run test:e2e`,不进 CI。**P1-7 勾选**。
 
 - **test(e2e)** Playwright 5 spec 覆盖核心流:首页聊天记账 record/modify/delete 全链路、支付宝 CSV 导入、AI 工作台综合审计+应用、智能查重合并去重;LLM 请求经 `page.route` 拦截 `**/chat/completions`,按 system prompt 标识分发 mock 响应(parse/batch/chat/audit),零生产代码改动
