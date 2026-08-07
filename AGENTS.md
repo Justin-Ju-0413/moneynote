@@ -40,3 +40,17 @@ npm run test:e2e:ui  # Playwright UI 模式
 - `src/bill-analyzer/` 模板自适应解析
 - `src/llm/` LLM 客户端（API Key AES-GCM 本地加密，请求脱敏）
 - `docs/specs/` 设计文档与实现计划
+
+## Hard rules（真实失败教训）
+
+1. **Never leave a failing test in the working tree.** A failing test = task not done. Fix or revert before moving on.
+2. **Update plan checkboxes as you go.** Tick `- [ ]` boxes in `docs/superpowers/plans/*.md` in the same commit you complete the step.
+3. **Commit only intended files.** Check `git status` before every commit; never commit secrets or local DB dumps.
+4. **Push discipline:** after a merge, verify `git status` shows no unpushed commits (main has silently drifted before).
+5. **Timezones:** date parsing/formatting goes through dayjs; tests must not assume a fixed TZ offset.
+
+## In-flight work（as of 2026-08-07）
+
+- 双本地副本已整合：本仓库为 GitHub 同步源，统一走 `05-项目代码/记账类/MoneyNote/` 主副本工作。
+- P1-7（测试 + E2E）计划文档：`docs/superpowers/plans/2026-08-05-tests-e2e.md`，状态以 ROADMAP 勾选为准。
+- AGENTS.md 由双副本内容合并而成（工作流规则 + 中文规范）。
