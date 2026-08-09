@@ -87,9 +87,8 @@ export function matchCategory(
   if (extraKeywords) {
     for (const [cat, words] of Object.entries(extraKeywords)) {
       if (!dict[cat]) dict[cat] = []
-      for (const w of words) {
-        if (w && !dict[cat].includes(w)) dict[cat].push(w)
-      }
+      // 先复制数组再追加，避免浅拷贝共享引用污染 BUILTIN_KEYWORDS 内置词典
+      dict[cat] = [...dict[cat], ...words.filter((w) => w && !dict[cat].includes(w))]
     }
   }
   const fallback = type === 'income' ? 'income_other' : 'other'
