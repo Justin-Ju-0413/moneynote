@@ -15,6 +15,7 @@ export class AppDB extends Dexie {
   backups!: AppDBSchema['backups']
   auditCache!: AppDBSchema['auditCache']
   chatMessages!: AppDBSchema['chatMessages']
+  learningRules!: AppDBSchema['learningRules']
 
   constructor() {
     super('MoneyNoteDB')
@@ -78,10 +79,15 @@ export class AppDB extends Dexie {
       chatMessages: '++id, createdAt',
     })
 
+    // v12: AI 学习规则表（LLM 判断 + 用户纠正沉淀，本地识别进化）
+    this.version(12).stores({
+      learningRules: '++id, merchant',
+    })
+
     // ── 迁移框架说明 ──
-    // 当前 11 个版本均为加表/加索引(纯 schema 变更,Dexie 自动处理,无需 upgrade)。
+    // 当前 12 个版本均为加表/加索引(纯 schema 变更,Dexie 自动处理,无需 upgrade)。
     // 未来若需字段重命名/类型变更/数据回填,新增 version 并链式 .upgrade():
-    //   this.version(12).stores({ transactions: '++,date,category,type,[type+date],newField' })
+    //   this.version(13).stores({ transactions: '++,date,category,type,[type+date],newField' })
     //     .upgrade(async (tx) => {
     //       await tx.table('transactions').toCollection().modify((t) => { t.newField = null })
     //     })

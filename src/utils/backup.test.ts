@@ -6,6 +6,7 @@ import { createBackup, listBackups, deleteBackup, restoreBackup, setAutoBackupEn
 const BACKUP_TABLES = [
   'transactions', 'budgets', 'settings', 'categories',
   'billTemplates', 'aiSuggestions', 'dedupStrategies', 'dedupRecords',
+  'learningRules',
 ]
 
 describe('backup', () => {
@@ -18,6 +19,7 @@ describe('backup', () => {
     await db.aiSuggestions.clear()
     await db.dedupStrategies.clear()
     await db.dedupRecords.clear()
+    await db.learningRules.clear()
     await db.backups.clear()
     await db.categories.bulkAdd([
       { id: 'food', name: '餐饮', icon: '🍜', color: '#3b82f6', keywords: ['午餐'], sortOrder: 1, isBuiltIn: true, type: 'expense' },
@@ -25,7 +27,7 @@ describe('backup', () => {
     await db.settings.put({ key: 'llm.enabled', value: false })
   })
 
-  it('createBackup 写入 payload,含全部 8 张表', async () => {
+  it('createBackup 写入 payload,含全部 9 张表', async () => {
     await db.transactions.add({
       amount: 10, category: 'food', date: '2026-08-05', type: 'expense', note: 'a', createdAt: 1, updatedAt: 1,
     })
