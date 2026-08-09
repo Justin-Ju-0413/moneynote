@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: `LearningRule` 类型（见下）、`db.learningRules` 表（Dexie EntityTable，`++id, merchant` 索引）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 在 `src/db/schema.test.ts` 追加（先看该文件现有写法以匹配风格）：
 
@@ -51,12 +51,12 @@ it('learningRules 表可增删改查', async () => {
 })
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/db/schema.test.ts`
 Expected: FAIL（类型/表不存在）
 
-- [ ] **Step 3: 实现类型与 schema**
+- [x] **Step 3: 实现类型与 schema**
 
 在 `src/db/types.ts` 追加：
 
@@ -87,12 +87,12 @@ this.version(12).stores({
 
 `src/db/schema.ts` 类中声明 `learningRules!: AppDBSchema['learningRules']`
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/db/schema.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 加入备份表**
+- [x] **Step 5: 加入备份表**
 
 `src/utils/backup.ts` 的 `BACKUP_TABLES` 追加 `'learningRules'`：
 
@@ -107,7 +107,7 @@ const BACKUP_TABLES = [
 Run: `npx vitest run src/utils/backup.test.ts`
 Expected: PASS（现有测试应不受影响）
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/db/schema.ts src/db/types.ts src/utils/backup.ts src/db/schema.test.ts
@@ -131,7 +131,7 @@ git commit -m "feat: learningRules 表（DB v12 + 类型 + 备份）"
   - `deleteLearningRule(id: number): Promise<void>` — 删除规则
   - `promoteToKeyword(rule: LearningRule): Promise<boolean>` — 满足门槛则提炼关键词进分类 keywords
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 创建 `src/nlp/learningRules.test.ts`：
 
@@ -195,12 +195,12 @@ describe('list / delete', () => {
 })
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/nlp/learningRules.test.ts`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现核心服务**
+- [x] **Step 3: 实现核心服务**
 
 创建 `src/nlp/learningRules.ts`：
 
@@ -286,12 +286,12 @@ export async function promoteToKeyword(rule: LearningRule): Promise<boolean> {
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/nlp/learningRules.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 补充提炼测试**
+- [x] **Step 5: 补充提炼测试**
 
 在 `src/nlp/learningRules.test.ts` 追加：
 
@@ -346,7 +346,7 @@ describe('promoteToKeyword', () => {
 Run: `npx vitest run src/nlp/learningRules.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/nlp/learningRules.ts src/nlp/learningRules.test.ts
@@ -367,7 +367,7 @@ git commit -m "feat: learningRules 核心服务（读写/优先级 manual>llm/�
 
 **设计说明：** `matchCategory` 保持同步纯函数，新增可选第三参数 `extraKeywords`（`Record<categoryId, string[]>`）。调用方（parseInput / classifyBillRows）异步读取 `db.categories` 后传入。现有调用不受影响（第三参数可选）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 先看现有 `src/nlp/categoryMatcher.test.ts` 是否存在及写法。追加：
 
@@ -389,12 +389,12 @@ it('extraKeywords 分类不存在时兜底 other', () => {
 })
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/nlp/categoryMatcher.test.ts`
 Expected: FAIL（extraKeywords 参数不存在）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 `src/nlp/categoryMatcher.ts`：
 
@@ -417,12 +417,12 @@ export function matchCategory(
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/nlp/categoryMatcher.test.ts`
 Expected: PASS（新增 3 个测试 + 现有全过）
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add src/nlp/categoryMatcher.ts src/nlp/categoryMatcher.test.ts
@@ -443,7 +443,7 @@ git commit -m "fix: matchCategory 支持自定义关键词（修复分类关键�
   - `buildKeywordDict(type: 'expense'|'income'): Promise<Record<string, string[]>>` — 从 db.categories 构建自定义关键词字典（含内置分类的自定义扩充）
   - `classifyWithChain(text: string, type: 'expense'|'income'): Promise<{ category: string; confidence: 'high'|'medium'|'low'; matchedKeyword: string; rule?: LearningRule }>` — 先 learningRules 精确匹配（返回 high），未命中走关键词匹配（内置+自定义），仍 low 返回 low（由调用方决定是否调 LLM）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 创建 `src/nlp/matchChain.test.ts`：
 
@@ -500,12 +500,12 @@ describe('classifyWithChain', () => {
 })
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/nlp/matchChain.test.ts`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 创建 `src/nlp/matchChain.ts`：
 
@@ -551,12 +551,12 @@ export async function classifyWithChain(text: string, type: 'expense' | 'income'
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/nlp/matchChain.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add src/nlp/matchChain.ts src/nlp/matchChain.test.ts
@@ -578,13 +578,13 @@ git commit -m "feat: 匹配链服务（学习规则 > 关键词 > LLM 统一入�
 
 **注意：** `parseInput` 改为 async 后，所有调用方（`useChat.ts:78`、`src/nlp/index.test.ts`）都要 `await`。先 grep 确认调用方。
 
-- [ ] **Step 1: 先查调用方**
+- [x] **Step 1: 先查调用方**
 
 ```bash
 grep -rn "parseInput(" src/ --include="*.ts" --include="*.tsx" | grep -v test
 ```
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `src/nlp/index.test.ts` 追加（或新建 `src/nlp/index.learning.test.ts`，视现有测试结构）：
 
@@ -622,12 +622,12 @@ describe('recordLLMLearning', () => {
 })
 ```
 
-- [ ] **Step 3: 运行确认失败**
+- [x] **Step 3: 运行确认失败**
 
 Run: `npx vitest run src/nlp/index.test.ts`
 Expected: FAIL（parseInput 非 async / recordLLMLearning 不存在）
 
-- [ ] **Step 4: 实现**
+- [x] **Step 4: 实现**
 
 `src/nlp/index.ts` 修改：
 
@@ -659,17 +659,17 @@ export async function recordLLMLearning(parsed: ParsedTransaction, rawInput?: st
 
 3. `src/hooks/useChat.ts` 中 `localNlpFallback` 调用改为 `await parseInput(content)`（Step 1 grep 确认的所有调用方都加 await）
 
-- [ ] **Step 5: 运行确认通过**
+- [x] **Step 5: 运行确认通过**
 
 Run: `npx vitest run src/nlp/index.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: 全量测试**
+- [x] **Step 6: 全量测试**
 
 Run: `npm test`
 Expected: 全绿（确认 parseInput async 化没有破坏其他测试）
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add src/nlp/index.ts src/nlp/index.test.ts src/hooks/useChat.ts
@@ -689,7 +689,7 @@ git commit -m "feat: 聊天解析接入匹配链 + LLM 结果沉淀学习规则"
 - Consumes: `classifyWithChain`（Task 4）、`recordLearning`（Task 2）
 - Produces: `ClassifyResult` 增加字段 `learningCount: number`（本次沉淀的规则数）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `src/utils/billClassifier.test.ts` 追加（先看现有测试文件风格）：
 
@@ -729,12 +729,12 @@ describe('classifyBillRows 学习沉淀', () => {
 
 **注意：** LLM 调用在单测中不可用（mock 外部服务原则），所以测试只验证接口存在与 llm 关闭时的行为。真正验证学习沉淀在 E2E 层（Task 8）或通过直接调用 `recordLearning` 单测覆盖（Task 2 已做）。
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/utils/billClassifier.test.ts`
 Expected: FAIL（learningCount 不存在）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 `src/utils/billClassifier.ts`：
 
@@ -770,17 +770,17 @@ if (r && r.confidence >= 0.7) {
 
 5. 返回对象加 `learningCount`
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/utils/billClassifier.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 全量测试**
+- [x] **Step 5: 全量测试**
 
 Run: `npm test`
 Expected: 全绿
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/utils/billClassifier.ts src/utils/billClassifier.test.ts
@@ -801,7 +801,7 @@ git commit -m "feat: 账单导入接入匹配链 + LLM 结果沉淀学习规则"
 - Consumes: `recordLearning`（Task 2）
 - 行为：三类用户纠正动作后，将交易文本（note/rawInput）与最终分类写入 learningRules（source=manual）
 
-- [ ] **Step 1: 写失败测试（若存在对应测试文件）**
+- [x] **Step 1: 写失败测试（若存在对应测试文件）**
 
 先检查 `src/hooks/useChat.test.ts` / `src/hooks/useAIWorkspace.test.ts` 是否存在。若存在，追加：
 
@@ -815,7 +815,7 @@ it('确认记录后写入 manual 学习规则', async () => {
 
 若测试文件不存在，跳过单测（此层靠 E2E 覆盖，Task 8），直接实现。
 
-- [ ] **Step 2: 实现 useChat（聊天确认）**
+- [x] **Step 2: 实现 useChat（聊天确认）**
 
 `src/hooks/useChat.ts` 的 `confirmCard` record 分支，`db.transactions.add` 后追加：
 
@@ -833,7 +833,7 @@ if (card.kind === 'record' && card.parsed) {
 
 导入：`import { recordLearning } from '@/nlp/learningRules'`
 
-- [ ] **Step 3: 实现 HistoryPage（EditDialog 改分类）**
+- [x] **Step 3: 实现 HistoryPage（EditDialog 改分类）**
 
 `src/pages/HistoryPage.tsx` 的 `handleSave`：
 
@@ -854,7 +854,7 @@ const handleSave = async (id: number, data: Partial<Transaction>) => {
 
 导入：`import { recordLearning } from '@/nlp/learningRules'`
 
-- [ ] **Step 4: 实现 useAIWorkspace（应用建议）**
+- [x] **Step 4: 实现 useAIWorkspace（应用建议）**
 
 `src/hooks/useAIWorkspace.ts` 的 `applySuggestion` category 分支：
 
@@ -874,7 +874,7 @@ if (suggestion.type === 'category' && suggestion.transactionIds.length > 0) {
 
 导入：`import { recordLearning } from '@/nlp/learningRules'`
 
-- [ ] **Step 5: 验证**
+- [x] **Step 5: 验证**
 
 Run: `npm test`
 Expected: 全绿
@@ -882,7 +882,7 @@ Expected: 全绿
 Run: `npm run lint`
 Expected: 0 error
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/hooks/useChat.ts src/pages/HistoryPage.tsx src/hooks/useAIWorkspace.ts
@@ -902,7 +902,7 @@ git commit -m "feat: 用户纠正沉淀学习规则（聊天确认/改分类/AI 
 - Consumes: `listLearningRules` / `deleteLearningRule`（Task 2）、`useCategories` 的 `getInfo`（显示分类名）
 - Produces: `LearningRulesManager` 组件（在 SettingsPage 中渲染）
 
-- [ ] **Step 1: 实现组件**
+- [x] **Step 1: 实现组件**
 
 创建 `src/components/settings/LearningRulesManager.tsx`（风格对齐 CategoryManager.tsx）：
 
@@ -960,7 +960,7 @@ export function LearningRulesManager() {
 }
 ```
 
-- [ ] **Step 2: 接入 SettingsPage**
+- [x] **Step 2: 接入 SettingsPage**
 
 `src/pages/SettingsPage.tsx` 导入并在「账单模板」区块后渲染：
 
@@ -970,13 +970,13 @@ import { LearningRulesManager } from '@/components/settings/LearningRulesManager
 <LearningRulesManager />
 ```
 
-- [ ] **Step 3: 本地验证**
+- [x] **Step 3: 本地验证**
 
 Run: `npm test` — 全绿
 Run: `npm run lint` — 0 error
 Run: `npm run build` — 成功
 
-- [ ] **Step 4: E2E 测试**
+- [x] **Step 4: E2E 测试**
 
 创建 `e2e/specs/learning.spec.ts`：
 
@@ -1005,14 +1005,14 @@ test.describe('AI 学习规则', () => {
 })
 ```
 
-- [ ] **Step 5: 运行 E2E**
+- [x] **Step 5: 运行 E2E**
 
 Run: `npm run test:e2e`
 Expected: 新增 learning.spec.ts PASS + 现有 5 个 E2E 不受影响
 
 **注意：** 若本地 3000/5173 端口有占用（E2E 用 4173 preview，一般无冲突）。E2E 用 `playwright.config.ts` 的 webServer（port 4173）。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add src/components/settings/LearningRulesManager.tsx src/pages/SettingsPage.tsx e2e/specs/learning.spec.ts
@@ -1027,7 +1027,7 @@ git commit -m "feat: 设置页学习规则管理 UI + E2E"
 - Modify: `docs/superpowers/plans/2026-08-10-ai-learning-rules.md`（本文件，勾选）
 - Modify: `docs/superpowers/specs/2026-08-10-ai-learning-rules-design.md`（确认无遗漏）
 
-- [ ] **Step 1: 全量测试**
+- [x] **Step 1: 全量测试**
 
 Run: `npm test`
 Expected: 全部通过（169 现有 + 新增）
@@ -1041,16 +1041,16 @@ Expected: 成功
 Run: `npm run test:e2e`
 Expected: 全部通过（5 现有 + 1 新增 learning）
 
-- [ ] **Step 2: 手动验证学习闭环（浏览器实测）**
+- [x] **Step 2: 手动验证学习闭环（浏览器实测）**
 
 1. 首页聊天输入「格林豪泰酒店576」→ 若未命中关键词，确认记录
 2. 设置页确认出现「格林豪泰酒店576 → 住房 手动 1 次」
 3. 明细页把某笔改分类（EditDialog）→ 设置页出现新 manual 规则
 4. 再次输入同一商户 → 直接 high 命中（不再需要确认）
 
-- [ ] **Step 3: 勾选本计划全部任务**
+- [x] **Step 3: 勾选本计划全部任务**
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add docs/superpowers/plans/2026-08-10-ai-learning-rules.md
