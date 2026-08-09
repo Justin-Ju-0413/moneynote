@@ -80,8 +80,9 @@ export class AppDB extends Dexie {
     })
 
     // v12: AI 学习规则表（LLM 判断 + 用户纠正沉淀，本地识别进化）
+    // updatedAt 索引供 listLearningRules() 按最近更新排序（管理 UI 用）
     this.version(12).stores({
-      learningRules: '++id, merchant',
+      learningRules: '++id, merchant, updatedAt',
     })
 
     // ── 迁移框架说明 ──
