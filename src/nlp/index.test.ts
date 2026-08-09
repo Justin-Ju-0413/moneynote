@@ -1,27 +1,56 @@
-import { describe, it, expect } from 'vitest'
-import { parseInput, extractAmount, cleanNote } from './index'
+import { describe, it, expect, beforeEach } from 'vitest'
+import 'fake-indexeddb/auto'
+import { db } from '@/db'
+import { parseInput, recordLLMLearning, extractAmount, cleanNote } from './index'
+import { matchLearningRule } from './learningRules'
+
+beforeEach(async () => {
+  await db.learningRules.clear()
+})
 
 // 备注清理回归:金额提取的 matchedText 边界曾吞掉助词"了",
 // 导致"午餐吃了34"备注变成"午餐吃"。这里锁定修复行为。
 describe('parseInput 备注(note)清理', () => {
-  it('"午餐吃了34" 保留助词"了"', () => {
-    expect(parseInput('午餐吃了34').note).toBe('午餐吃了')
+  it('"午餐吃了34" 保留助词"了"', async () => {
+    expect((await parseInput('午餐吃了34')).note).toBe('午餐吃了')
   })
 
-  it('"打车去公司花了28块" 保留"了"(块 normalize 为元)', () => {
-    expect(parseInput('打车去公司花了28块').note).toBe('打车去公司花了')
+  it('"打车去公司花了28块" 保留"了"(块 normalize 为元)', async () => {
+    expect((await parseInput('打车去公司花了28块')).note).toBe('打车去公司花了')
   })
 
-  it('"午餐吃了34元" 保留"了"、移除"34元"', () => {
-    expect(parseInput('午餐吃了34元').note).toBe('午餐吃了')
+  it('"午餐吃了34元" 保留"了"、移除"34元"', async () => {
+    expect((await parseInput('午餐吃了34元')).note).toBe('午餐吃了')
   })
 
-  it('"咖啡25" 保留描述', () => {
-    expect(parseInput('咖啡25').note).toBe('咖啡')
+  it('"咖啡25" 保留描述', async () => {
+    expect((await parseInput('咖啡25')).note).toBe('咖啡')
   })
 
-  it('"¥30咖啡" 移除金额保留描述', () => {
-    expect(parseInput('¥30咖啡').note).toBe('咖啡')
+  it('"¥30咖啡" 移除金额保留描述', async () => {
+    expect((await parseInput('¥30咖啡')).note).toBe('咖啡')
+  })
+})
+
+describe('parseInput 匹配链', () => {
+  it('学习规则命中：自定义关键词生效', async () => {
+    await db.categories.update('housing', { keywords: ['格林豪泰'] })
+    const p = await parseInput('格林豪泰酒店576')
+    expect(p.category).toBe('housing')
+    expect(p.categoryConfidence).toBe('high')
+  })
+})
+
+describe('recordLLMLearning', () => {
+  it('LLM 高置信度结果写入学习规则', async () => {
+    await recordLLMLearning({
+      amount: 15, amountConfidence: 'high', category: 'food',
+      categoryConfidence: 'high', date: '2026-08-10', time: null,
+      note: '星巴克咖啡', rawInput: '星巴克15', type: 'expense', needsReview: false,
+    })
+    const rule = await matchLearningRule('星巴克咖啡')
+    expect(rule?.category).toBe('food')
+    expect(rule?.source).toBe('llm')
   })
 })
 

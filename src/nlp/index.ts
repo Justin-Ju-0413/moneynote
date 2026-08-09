@@ -3,8 +3,9 @@ import type { LLMParseResult } from '@/llm/types'
 import { normalize } from './normalizer'
 import { extractAmount } from './amountExtractor'
 import { parseDate } from './dateParser'
-import { matchCategory } from './categoryMatcher'
 import { cleanNote } from './noteCleaner'
+import { classifyWithChain } from './matchChain'
+import { recordLearning } from './learningRules'
 
 // 收入关键词：命中则 type='income'（默认 expense）
 const INCOME_KEYWORDS = [
@@ -19,7 +20,7 @@ function detectIncome(text: string): boolean {
   return INCOME_KEYWORDS.some(k => lower.includes(k.toLowerCase()))
 }
 
-export function parseInput(rawInput: string): ParsedTransaction {
+export async function parseInput(rawInput: string): Promise<ParsedTransaction> {
   if (!rawInput.trim()) {
     return {
       amount: null,
@@ -47,8 +48,8 @@ export function parseInput(rawInput: string): ParsedTransaction {
   // 收入识别（关键词命中则为收入），先于分类匹配以选用对应分类集
   const type: 'expense' | 'income' = detectIncome(normalized) ? 'income' : 'expense'
 
-  // 阶段 4：分类匹配（按 type 在对应分类集中匹配）
-  const categoryResult = matchCategory(normalized, type)
+  // 阶段 4：匹配链（学习规则 → 关键词自定义+内置）
+  const categoryResult = await classifyWithChain(normalized, type)
 
   // 阶段 5：备注清理
   const note = cleanNote(normalized, dateResult.matchedText, amountResult.matchedText)
@@ -125,4 +126,13 @@ export function mergeLLMResult(
     merged.categoryConfidence === 'low'
 
   return merged
+}
+
+// LLM 高置信度分类结果沉淀为学习规则
+export async function recordLLMLearning(parsed: ParsedTransaction, rawInput?: string): Promise<void> {
+  if (parsed.categoryConfidence !== 'high' || parsed.category === 'other') return
+  if (!parsed.note && !rawInput) return
+  const merchant = parsed.note || rawInput || ''
+  if (!merchant.trim()) return
+  await recordLearning(merchant, parsed.category, 'llm', parsed.categoryConfidence === 'high' ? 0.9 : 0.7)
 }

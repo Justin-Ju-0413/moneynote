@@ -74,8 +74,8 @@ function toParsed(t: LLMParseResult, rawInput: string): ParsedTransaction {
 }
 
 // AI 未启用时的本地回退:仅 record(本地 NLP)+ 提示
-function localNlpFallback(content: string): ChatIntentResult {
-  const p = parseInput(content)
+async function localNlpFallback(content: string): Promise<ChatIntentResult> {
+  const p = await parseInput(content)
   if (p.amount !== null) {
     return {
       intent: 'record',
@@ -120,7 +120,7 @@ export function useChat() {
         intentResult = r.result
         errorMsg = r.error
       } else {
-        intentResult = localNlpFallback(content)
+        intentResult = await localNlpFallback(content)
       }
 
       const assistantMsg = buildAssistantMessage(content, intentResult, errorMsg, context)
