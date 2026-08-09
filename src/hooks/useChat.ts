@@ -5,6 +5,7 @@ import { db } from '@/db'
 import { runChat } from '@/llm/service'
 import type { ChatContext, ChatIntentResult } from '@/llm/chatPrompt'
 import { parseInput } from '@/nlp'
+import { recordLearning } from '@/nlp/learningRules'
 import { useLLMSettings } from './useLLMSettings'
 import type { ChatMessage, ChatCard, ParsedTransaction } from '@/db/types'
 import type { LLMParseResult } from '@/llm/types'
@@ -157,6 +158,11 @@ export function useChat() {
         createdAt: now,
         updatedAt: now,
       })
+      // 学习：用户确认的解析结果沉淀为 manual 规则
+      const merchant = p.note || p.rawInput || ''
+      if (merchant.trim()) {
+        await recordLearning(merchant, p.category, 'manual', 1)
+      }
     } else if (card.kind === 'modify' && card.txId !== undefined && card.changes) {
       await db.transactions.update(card.txId, { ...card.changes, updatedAt: now })
     } else if (card.kind === 'delete' && card.txId !== undefined) {
