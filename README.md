@@ -100,7 +100,7 @@ npm test
 
 ## 💾 数据层
 
-Dexie schema 演进至 **v11**，升级自动迁移：
+Dexie schema 演进至 **v12**，升级自动迁移：
 
 | 版本 | 内容 |
 |---|---|
@@ -111,6 +111,7 @@ Dexie schema 演进至 **v11**，升级自动迁移：
 | v9 | `auditCache`（AI 审计结果缓存） |
 | v10 | `billTemplates` 增加 `importCount` 索引（修复设置页 orderBy 白屏） |
 | v11 | `chatMessages`（首页对话历史持久化） |
+| v12 | `learningRules`（AI 学习规则：商户→分类映射，本地识别进化） |
 
 ## ❓ 常见问题
 

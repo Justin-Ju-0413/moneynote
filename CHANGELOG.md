@@ -2,12 +2,18 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 规范,版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [1.3.0] - 2026-08-05
+## [1.3.0] - 2026-08-11
 
 ### Added
 
-- Playwright E2E 覆盖核心流:聊天记账(record/modify/delete)、账单导入、AI 工作台审计、智能查重;LLM 请求经 page.route 拦截 mock,零生产代码改动,本地 `npm run test:e2e` 运行
-- 单测补齐:backup(8)、import(6)、db CRUD(7)、templateMatcher(9)、NLP 子模块(19),共 +49 用例
+- **AI 学习进化本地识别**：新增 `learningRules` 表（DB v12）沉淀商户→分类映射，本地识别越来越准、LLM 调用越来越少
+  - 匹配链服务：学习规则（manual 优先于 llm）→ 分类关键词（内置+自定义）→ LLM 统一入口
+  - 4 个学习触发点：聊天确认记录、明细改分类、AI 工作台采纳建议、LLM 高置信度结果
+  - 关键词提炼：manual ≥1 次 / llm ≥3 次、≥2 字、剥离渠道前缀后自动写入分类关键词
+  - 设置页学习规则管理 UI（查看来源/命中次数/删除）
+  - 修复 `matchCategory` 自定义分类关键词编辑不生效的 bug
+- Playwright E2E 覆盖核心流:聊天记账(record/modify/delete)、账单导入、AI 工作台审计、智能查重、学习规则管理;LLM 请求经 page.route 拦截 mock,零生产代码改动,本地 `npm run test:e2e` 运行
+- 单测补齐:backup(8)、import(6)、db CRUD(7)、templateMatcher(9)、NLP 子模块(19)、learningRules/匹配链,共 +49 用例
 
 ### Changed
 
