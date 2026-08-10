@@ -5,6 +5,8 @@ import { db } from '@/db'
 import { runChat } from '@/llm/service'
 import type { ChatContext, ChatIntentResult } from '@/llm/chatPrompt'
 import { parseInput } from '@/nlp'
+import { recordLearning } from '@/nlp/learningRules'
+import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import type { ChatMessage, ChatCard, ParsedTransaction } from '@/db/types'
 import type { LLMParseResult } from '@/llm/types'
@@ -74,8 +76,8 @@ function toParsed(t: LLMParseResult, rawInput: string): ParsedTransaction {
 }
 
 // AI 未启用时的本地回退:仅 record(本地 NLP)+ 提示
-function localNlpFallback(content: string): ChatIntentResult {
-  const p = parseInput(content)
+async function localNlpFallback(content: string): Promise<ChatIntentResult> {
+  const p = await parseInput(content)
   if (p.amount !== null) {
     return {
       intent: 'record',
@@ -120,7 +122,7 @@ export function useChat() {
         intentResult = r.result
         errorMsg = r.error
       } else {
-        intentResult = localNlpFallback(content)
+        intentResult = await localNlpFallback(content)
       }
 
       const assistantMsg = buildAssistantMessage(content, intentResult, errorMsg, context)
@@ -157,6 +159,15 @@ export function useChat() {
         createdAt: now,
         updatedAt: now,
       })
+      // 学习：用户确认的解析结果沉淀为 manual 规则（失败仅告警，不得阻断入账/卡片状态流转）
+      const merchant = p.note || p.rawInput || ''
+      if (merchant.trim()) {
+        try {
+          await recordLearning(merchant, p.category, 'manual', 1)
+        } catch (err) {
+          log.warn('学习规则写入失败（聊天确认）', err)
+        }
+      }
     } else if (card.kind === 'modify' && card.txId !== undefined && card.changes) {
       await db.transactions.update(card.txId, { ...card.changes, updatedAt: now })
     } else if (card.kind === 'delete' && card.txId !== undefined) {

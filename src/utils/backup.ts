@@ -7,6 +7,7 @@ import type { BackupRecord } from '@/db/types'
 const BACKUP_TABLES = [
   'transactions', 'budgets', 'settings', 'categories',
   'billTemplates', 'aiSuggestions', 'dedupStrategies', 'dedupRecords',
+  'learningRules',
 ] as const
 
 const MAX_AUTO_BACKUPS = 10

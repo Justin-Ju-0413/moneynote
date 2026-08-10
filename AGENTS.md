@@ -35,7 +35,7 @@ npm run test:e2e:ui  # Playwright UI 模式
 
 ## 目录要点
 
-- `src/db/` Dexie schema v11，升级自动迁移
+- `src/db/` Dexie schema v12，升级自动迁移
 - `src/nlp/` 本地解析管线（amountExtractor / dateParser / noteCleaner / categoryMatcher）
 - `src/bill-analyzer/` 模板自适应解析
 - `src/llm/` LLM 客户端（API Key AES-GCM 本地加密，请求脱敏）

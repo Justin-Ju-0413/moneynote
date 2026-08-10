@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from './index'
 
-// schema 契约单测:用 fake-indexeddb 在 node 环境验证 DB 打开、13 张表存在、
+// schema 契约单测:用 fake-indexeddb 在 node 环境验证 DB 打开、14 张表存在、
 // transactions CRUD、以及 [type+date] 复合索引的范围查询(月收支聚合依赖)。
 // 为未来 upgrade() 数据迁移提供测试地基(ROADMAP P1-6)。
 describe('schema 契约', () => {
@@ -10,7 +10,7 @@ describe('schema 契约', () => {
     await db.transactions.clear()
   })
 
-  it('db 打开并具备全部 13 张表', () => {
+  it('db 打开并具备全部 14 张表', () => {
     expect(db.transactions).toBeDefined()
     expect(db.categories).toBeDefined()
     expect(db.budgets).toBeDefined()
@@ -24,6 +24,7 @@ describe('schema 契约', () => {
     expect(db.backups).toBeDefined()
     expect(db.auditCache).toBeDefined()
     expect(db.chatMessages).toBeDefined()
+    expect(db.learningRules).toBeDefined()
   })
 
   it('transactions CRUD', async () => {
@@ -77,5 +78,18 @@ describe('schema 契约', () => {
     expect(all).toHaveLength(1)
     expect(all[0].id).toBe(id)
     await db.chatMessages.clear()
+  })
+
+  it('learningRules 表可增删改查', async () => {
+    const id = await db.learningRules.add({
+      merchant: '格林豪泰', category: 'housing', source: 'manual',
+      hitCount: 1, confidence: 1, createdAt: 1, updatedAt: 1,
+    })
+    const row = await db.learningRules.get(id)
+    expect(row?.category).toBe('housing')
+    const byMerchant = await db.learningRules.where('merchant').equals('格林豪泰').toArray()
+    expect(byMerchant).toHaveLength(1)
+    await db.learningRules.delete(id)
+    expect(await db.learningRules.count()).toBe(0)
   })
 })

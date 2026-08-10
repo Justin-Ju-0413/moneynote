@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-08-11
+
+### AI 学习进化本地识别（learningRules + 匹配链 + 关键词提炼）
+
+> 让 LLM 判断和用户纠正沉淀为本地规则（learningRules 表），本地识别越来越准、LLM 调用越来越少。9 任务全完成，见 `docs/superpowers/plans/2026-08-10-ai-learning-rules.md`；随 v1.3.0 发布。
+
+- **feat(db)** `learningRules` 表（DB v12 + 类型 + 备份）——商户→分类映射，manual 优先于 llm
+- **feat(nlp)** `learningRules` 核心服务：读写 / 优先级 manual>llm / hitCount 累加 / 关键词提炼（manual≥1、llm≥3、≥2 字、剥离渠道前缀）
+- **fix(nlp)** `matchCategory` 接入 `db.categories.keywords`（修复分类关键词编辑不生效）
+- **feat(nlp)** 匹配链 `classifyWithChain`：学习规则精确匹配 → 关键词（自定义+内置）→ low 交由 LLM 的统一入口
+- **feat(nlp)** 聊天解析接入匹配链 + LLM 高置信度结果沉淀学习规则（`parseInput` async 化）
+- **feat(import)** 账单导入接入匹配链 + LLM 分类结果沉淀（`learningCount` 计数）
+- **feat(hooks)** 3 处用户纠正触发学习：聊天确认 / EditDialog 改分类 / AI 工作台采纳建议
+- **feat(ui)** 设置页学习规则管理（可见来源/命中次数/可删除）+ E2E `learning.spec.ts`
+- **fix** 学习规则失败隔离 + 删死导出 + 关键词剥离后缀取核心词
+- **发布**：squash 合并 PR #10，tag v1.3.0（含 08-05 E2E 迭代，此前未发 release）
+
+---
+
 ## 2026-08-05
 
 ### P1-7 测试补齐 + Playwright E2E
@@ -157,7 +176,7 @@
 | P1-4 bill-analyzer 并入 llm 层 | ⬜ |
 | P1-5 Repository / 状态层 | ⬜ |
 | P1-6 Dexie 迁移框架 | ✅ |
-| P1-7 测试补齐(单测 + E2E) | ⬜ |
+| P1-7 测试补齐(单测 + E2E) | ✅ |
 | P1-8 结构化输出 | ⬜ |
 | P1-9 加密审计 | ⬜ |
 

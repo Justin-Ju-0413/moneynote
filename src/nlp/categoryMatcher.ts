@@ -78,8 +78,19 @@ const BUILTIN_KEYWORDS_INCOME: Record<string, string[]> = {
   income_other: ['红包', '奖金', '中奖', '报销', '津贴', '补贴', '收款'],
 }
 
-export function matchCategory(text: string, type: 'expense' | 'income' = 'expense'): CategoryResult {
-  const dict = type === 'income' ? BUILTIN_KEYWORDS_INCOME : BUILTIN_KEYWORDS
+export function matchCategory(
+  text: string,
+  type: 'expense' | 'income' = 'expense',
+  extraKeywords?: Record<string, string[]>,
+): CategoryResult {
+  const dict = { ...(type === 'income' ? BUILTIN_KEYWORDS_INCOME : BUILTIN_KEYWORDS) }
+  if (extraKeywords) {
+    for (const [cat, words] of Object.entries(extraKeywords)) {
+      if (!dict[cat]) dict[cat] = []
+      // 先复制数组再追加，避免浅拷贝共享引用污染 BUILTIN_KEYWORDS 内置词典
+      dict[cat] = [...dict[cat], ...words.filter((w) => w && !dict[cat].includes(w))]
+    }
+  }
   const fallback = type === 'income' ? 'income_other' : 'other'
   const lowerText = text.toLowerCase()
   const scores: Record<string, { score: number; keyword: string }> = {}

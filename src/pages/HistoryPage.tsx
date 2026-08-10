@@ -10,6 +10,8 @@ import { useDedup } from '@/hooks/useDedup'
 import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/components/ui/toast-context'
 import { db } from '@/db'
+import { recordLearning } from '@/nlp/learningRules'
+import * as log from '@/utils/log'
 import type { Transaction, DedupRecord } from '@/db/types'
 
 const EMPTY_TRANSACTIONS: Transaction[] = []
@@ -102,7 +104,19 @@ export function HistoryPage() {
   }, [isFiltering, transactions.length, visibleCount])
 
   const handleSave = async (id: number, data: Partial<Transaction>) => {
+    const old = editTransaction
     await updateTransaction(id, data)
+    // 学习：用户改分类（category 变化且有效）沉淀为 manual 规则（失败仅告警，不得阻断保存）
+    if (old && data.category && data.category !== old.category) {
+      const merchant = (data.note ?? old.note ?? '') || old.rawInput || ''
+      if (merchant.trim()) {
+        try {
+          await recordLearning(merchant, data.category, 'manual', 1)
+        } catch (err) {
+          log.warn('学习规则写入失败（改分类）', err)
+        }
+      }
+    }
     showToast('已更新')
   }
 

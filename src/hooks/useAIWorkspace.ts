@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db'
+import { recordLearning } from '@/nlp/learningRules'
+import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import { runLLMAudit } from '@/llm/service'
 import { hashKey } from '@/utils/hash'
@@ -131,10 +133,19 @@ export function useAIWorkspace() {
     if (suggestion.id === undefined) return
 
     if (suggestion.type === 'category' && suggestion.transactionIds.length > 0) {
+      const tx = await db.transactions.get(suggestion.transactionIds[0])
       await db.transactions.update(suggestion.transactionIds[0], {
         category: suggestion.result,
         updatedAt: Date.now(),
       })
+      // 学习：用户采纳 AI 分类建议沉淀为 manual 规则（失败仅告警，不得阻断建议应用）
+      if (tx?.note?.trim()) {
+        try {
+          await recordLearning(tx.note, suggestion.result, 'manual', 1)
+        } catch (err) {
+          log.warn('学习规则写入失败（采纳建议）', err)
+        }
+      }
     } else if (suggestion.type === 'duplicate' && suggestion.transactionIds.length > 1) {
       const [, ...rest] = suggestion.transactionIds
       await db.transactions.bulkDelete(rest)

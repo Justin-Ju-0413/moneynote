@@ -2,7 +2,8 @@ import type { Transaction, BillTemplate } from '@/db/types'
 import type { RawBillRow } from './import'
 import { SOURCE_LABELS } from './import'
 import type { LLMConfig } from '@/llm/types'
-import { matchCategory } from '@/nlp/categoryMatcher'
+import { classifyWithChain } from '@/nlp/matchChain'
+import { recordLearning } from '@/nlp/learningRules'
 import { callLLMBatch } from '@/llm/service'
 import { db } from '@/db'
 import * as log from '@/utils/log'
@@ -16,6 +17,7 @@ export interface ClassifyResult {
   llmUsedCount: number
   llmFailedCount: number
   cacheHitCount: number
+  learningCount: number
   llmErrorDetail?: string
 }
 
@@ -83,6 +85,7 @@ export async function classifyBillRows(
   let llmUsedCount = 0
   let llmFailedCount = 0
   let cacheHitCount = 0
+  let learningCount = 0
   let llmErrorDetail: string | undefined
 
   // ── 阶段 1: 本地分类（支付宝映射 + 关键词匹配）──
@@ -128,13 +131,13 @@ export async function classifyBillRows(
       }
     }
 
-    // 第二级：关键词匹配
+    // 第二级：匹配链（学习规则 → 关键词自定义+内置；低置信度 → 标记需要 LLM）
+    // 注：rule 命中恒为 high（matchChain 契约），confidence 非 low 即采用，无需再判 rule
     if (tx.category === 'other') {
-      const matchResult = matchCategory(classifyText, tx.type)
-      if (matchResult.confidence !== 'low') {
-        tx.category = matchResult.category
+      const chainResult = await classifyWithChain(classifyText, tx.type)
+      if (chainResult.confidence !== 'low') {
+        tx.category = chainResult.category
       } else {
-        // 低置信度 → 标记需要 LLM
         needsLLM.push({ index: transactions.length, classifyText })
       }
     }
@@ -181,6 +184,13 @@ export async function classifyBillRows(
                 llmUsedCount++
                 // 写入缓存
                 await writeCache(batch[j].classifyText, r.category, r.confidence)
+                // LLM 高置信度结果沉淀为学习规则（失败仅告警，不得让整批计为失败）
+                try {
+                  await recordLearning(batch[j].classifyText, r.category, 'llm', r.confidence)
+                  learningCount++
+                } catch (err) {
+                  log.warn('学习规则写入失败（账单导入）', err)
+                }
               } else {
                 llmFailedCount++
               }
@@ -201,7 +211,7 @@ export async function classifyBillRows(
     }
   }
 
-  return { transactions, skippedCount, skipReasons, llmUsedCount, llmFailedCount, cacheHitCount, llmErrorDetail }
+  return { transactions, skippedCount, skipReasons, llmUsedCount, llmFailedCount, cacheHitCount, learningCount, llmErrorDetail }
 }
 
 // 过滤规则（有模板时已由 parser 过滤，仅做兜底）

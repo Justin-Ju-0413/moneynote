@@ -192,6 +192,18 @@ export interface ChatMessage {
   card?: ChatCard
 }
 
+// AI 学习规则（用户纠正/LLM 判断沉淀，本地识别进化）
+export interface LearningRule {
+  id?: number
+  merchant: string      // 商户/备注文本（学习键）
+  category: string      // 沉淀的分类
+  source: 'llm' | 'manual'  // manual（用户纠正）优先于 llm
+  hitCount: number      // 累计学习/命中次数
+  confidence: number    // 来源置信度
+  createdAt: number
+  updatedAt: number
+}
+
 export interface AppDBSchema {
   transactions: EntityTable<Transaction, 'id'>
   categories: EntityTable<Category, 'id'>
@@ -206,6 +218,7 @@ export interface AppDBSchema {
   backups: EntityTable<BackupRecord, 'id'>
   auditCache: EntityTable<AuditCache, 'cacheKey'>
   chatMessages: EntityTable<ChatMessage, 'id'>
+  learningRules: EntityTable<LearningRule, 'id'>
 }
 
 // NLP 解析结果

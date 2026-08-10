@@ -11,6 +11,7 @@ import { useBillTemplateLearning } from '@/hooks/useBillTemplateLearning'
 import { ColumnMappingDialog } from '@/components/input/ColumnMappingDialog'
 import { TemplateDetailDialog } from '@/components/input/TemplateDetailDialog'
 import { CategoryManager } from '@/components/settings/CategoryManager'
+import { LearningRulesManager } from '@/components/settings/LearningRulesManager'
 import { LLM_PRESETS } from '@/llm/types'
 import { db, bulkImportTransactions } from '@/db'
 import type { BillTemplate, ColumnMapping, BackupRecord } from '@/db/types'
@@ -432,6 +433,9 @@ export function SettingsPage() {
             <p className="text-[10px] text-text-placeholder">导入新格式账单时将自动学习</p>
           )}
         </Card>
+
+        {/* AI 学习规则 */}
+        <LearningRulesManager />
 
         {/* 分类管理 */}
         <CategoryManager />
