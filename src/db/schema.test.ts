@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from './index'
 
-// schema 契约单测:用 fake-indexeddb 在 node 环境验证 DB 打开、13 张表存在、
+// schema 契约单测:用 fake-indexeddb 在 node 环境验证 DB 打开、14 张表存在、
 // transactions CRUD、以及 [type+date] 复合索引的范围查询(月收支聚合依赖)。
 // 为未来 upgrade() 数据迁移提供测试地基(ROADMAP P1-6)。
 describe('schema 契约', () => {

@@ -5,7 +5,6 @@ import { extractAmount } from './amountExtractor'
 import { parseDate } from './dateParser'
 import { cleanNote } from './noteCleaner'
 import { classifyWithChain } from './matchChain'
-import { recordLearning } from './learningRules'
 
 // 收入关键词：命中则 type='income'（默认 expense）
 const INCOME_KEYWORDS = [
@@ -126,13 +125,4 @@ export function mergeLLMResult(
     merged.categoryConfidence === 'low'
 
   return merged
-}
-
-// LLM 高置信度分类结果沉淀为学习规则
-export async function recordLLMLearning(parsed: ParsedTransaction, rawInput?: string): Promise<void> {
-  if (parsed.categoryConfidence !== 'high' || parsed.category === 'other') return
-  if (!parsed.note && !rawInput) return
-  const merchant = parsed.note || rawInput || ''
-  if (!merchant.trim()) return
-  await recordLearning(merchant, parsed.category, 'llm', parsed.categoryConfidence === 'high' ? 0.9 : 0.7)
 }

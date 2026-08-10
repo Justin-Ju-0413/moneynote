@@ -6,6 +6,7 @@ import { runChat } from '@/llm/service'
 import type { ChatContext, ChatIntentResult } from '@/llm/chatPrompt'
 import { parseInput } from '@/nlp'
 import { recordLearning } from '@/nlp/learningRules'
+import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import type { ChatMessage, ChatCard, ParsedTransaction } from '@/db/types'
 import type { LLMParseResult } from '@/llm/types'
@@ -158,10 +159,14 @@ export function useChat() {
         createdAt: now,
         updatedAt: now,
       })
-      // 学习：用户确认的解析结果沉淀为 manual 规则
+      // 学习：用户确认的解析结果沉淀为 manual 规则（失败仅告警，不得阻断入账/卡片状态流转）
       const merchant = p.note || p.rawInput || ''
       if (merchant.trim()) {
-        await recordLearning(merchant, p.category, 'manual', 1)
+        try {
+          await recordLearning(merchant, p.category, 'manual', 1)
+        } catch (err) {
+          log.warn('学习规则写入失败（聊天确认）', err)
+        }
       }
     } else if (card.kind === 'modify' && card.txId !== undefined && card.changes) {
       await db.transactions.update(card.txId, { ...card.changes, updatedAt: now })

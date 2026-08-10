@@ -63,12 +63,35 @@ export async function deleteLearningRule(id: number): Promise<void> {
   await db.learningRules.delete(id)
 }
 
-// 提炼门槛：manual ≥1 次；llm ≥3 次。提炼词 ≥2 字，剔除渠道前缀后写入分类 keywords（去重）
+// 分类通用后缀词典：提炼关键词时循环剥离末尾后缀，保留品牌核心词（如「汉庭酒店住宿」→「汉庭」）
+const SUFFIX_DICT: Record<string, string[]> = {
+  housing: ['酒店', '住宿', '公寓', '宾馆', '民宿', '客栈'],
+  entertainment: ['酒店', '民宿'],
+  food: ['餐厅', '饭店', '小馆', '小吃', '快餐'],
+  transport: ['租车', '打车', '出行', '公司'],
+  shopping: ['商场', '超市', '便利店', '商店', '旗舰店'],
+}
+
+// 提炼门槛：manual ≥1 次；llm ≥3 次。提炼词 ≥2 字，先剥渠道前缀再按分类剥通用后缀取核心词，
+// 写入分类 keywords（去重）；剥完只剩后缀词本身（如「酒店」）或核心词 <2 字则不提炼
 export async function promoteToKeyword(rule: LearningRule): Promise<boolean> {
   const threshold = rule.source === 'manual' ? 1 : 3
   if (rule.hitCount < threshold) return false
 
-  const core = stripChannelPrefix(rule.merchant)
+  let core = stripChannelPrefix(rule.merchant)
+  const suffixes = SUFFIX_DICT[rule.category] ?? []
+  // 循环剥（每剥一次从头重查）：「汉庭酒店住宿」→ 剥「住宿」→ 剥「酒店」→「汉庭」
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const suffix of suffixes) {
+      if (core.endsWith(suffix)) {
+        core = core.slice(0, -suffix.length).trim()
+        changed = true
+        break
+      }
+    }
+  }
   if (core.length < 2) return false
 
   const cat = await db.categories.get(rule.category)

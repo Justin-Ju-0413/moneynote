@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import 'fake-indexeddb/auto'
 import { db } from '@/db'
-import { parseInput, recordLLMLearning, extractAmount, cleanNote } from './index'
-import { matchLearningRule } from './learningRules'
+import { parseInput, extractAmount, cleanNote } from './index'
 
 beforeEach(async () => {
   await db.learningRules.clear()
@@ -38,19 +37,6 @@ describe('parseInput 匹配链', () => {
     const p = await parseInput('格林豪泰酒店576')
     expect(p.category).toBe('housing')
     expect(p.categoryConfidence).toBe('high')
-  })
-})
-
-describe('recordLLMLearning', () => {
-  it('LLM 高置信度结果写入学习规则', async () => {
-    await recordLLMLearning({
-      amount: 15, amountConfidence: 'high', category: 'food',
-      categoryConfidence: 'high', date: '2026-08-10', time: null,
-      note: '星巴克咖啡', rawInput: '星巴克15', type: 'expense', needsReview: false,
-    })
-    const rule = await matchLearningRule('星巴克咖啡')
-    expect(rule?.category).toBe('food')
-    expect(rule?.source).toBe('llm')
   })
 })
 

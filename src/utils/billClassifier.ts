@@ -132,12 +132,11 @@ export async function classifyBillRows(
     }
 
     // 第二级：匹配链（学习规则 → 关键词自定义+内置；低置信度 → 标记需要 LLM）
+    // 注：rule 命中恒为 high（matchChain 契约），confidence 非 low 即采用，无需再判 rule
     if (tx.category === 'other') {
       const chainResult = await classifyWithChain(classifyText, tx.type)
       if (chainResult.confidence !== 'low') {
         tx.category = chainResult.category
-      } else if (chainResult.rule) {
-        tx.category = chainResult.rule.category
       } else {
         needsLLM.push({ index: transactions.length, classifyText })
       }
@@ -185,9 +184,13 @@ export async function classifyBillRows(
                 llmUsedCount++
                 // 写入缓存
                 await writeCache(batch[j].classifyText, r.category, r.confidence)
-                // LLM 高置信度结果沉淀为学习规则
-                await recordLearning(batch[j].classifyText, r.category, 'llm', r.confidence)
-                learningCount++
+                // LLM 高置信度结果沉淀为学习规则（失败仅告警，不得让整批计为失败）
+                try {
+                  await recordLearning(batch[j].classifyText, r.category, 'llm', r.confidence)
+                  learningCount++
+                } catch (err) {
+                  log.warn('学习规则写入失败（账单导入）', err)
+                }
               } else {
                 llmFailedCount++
               }

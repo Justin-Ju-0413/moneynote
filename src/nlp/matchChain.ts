@@ -33,7 +33,7 @@ export async function classifyWithChain(text: string, type: 'expense' | 'income'
       .filter((r) => r.merchant.length > 0 && text.includes(r.merchant))
       .toArray()
     if (candidates.length > 0) {
-      // 最长 merchant 最具体；learningRules 的 merchant 由 recordLearning 保证唯一，同长必同条
+      // 最长 merchant 最具体；按长度降序稳定排序，等长时保持索引序，结果确定
       candidates.sort((a, b) => b.merchant.length - a.merchant.length)
       rule = candidates[0]
     }

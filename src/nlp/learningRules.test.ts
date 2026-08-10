@@ -99,4 +99,52 @@ describe('promoteToKeyword', () => {
     expect(ok2).toBe(false)
     expect(cat2!.keywords).toHaveLength(len + 1)
   })
+
+  it('剥离分类后缀取核心词（汉庭酒店住宿 → 汉庭）', async () => {
+    await db.categories.bulkPut(defaultCategories.filter(c => c.id === 'housing'))
+    const ok = await promoteToKeyword({
+      id: 1, merchant: '汉庭酒店住宿', category: 'housing', source: 'manual',
+      hitCount: 1, confidence: 1, createdAt: 1, updatedAt: 1,
+    })
+    expect(ok).toBe(true)
+    const cat = await db.categories.get('housing')
+    expect(cat!.keywords).toContain('汉庭')
+    expect(cat!.keywords).not.toContain('汉庭酒店住宿')
+  })
+
+  it('无后缀 merchant 原样提炼（瑞幸）', async () => {
+    await db.categories.bulkPut(defaultCategories.filter(c => c.id === 'food'))
+    const ok = await promoteToKeyword({
+      id: 1, merchant: '瑞幸', category: 'food', source: 'manual',
+      hitCount: 1, confidence: 1, createdAt: 1, updatedAt: 1,
+    })
+    expect(ok).toBe(true)
+    const cat = await db.categories.get('food')
+    expect(cat!.keywords).toContain('瑞幸')
+  })
+
+  it('剥完只剩后缀词本身不提炼（酒店/民宿）', async () => {
+    await db.categories.bulkPut(defaultCategories.filter(c => c.id === 'housing'))
+    const before = (await db.categories.get('housing'))!.keywords
+    const base = { id: 1, category: 'housing' as const, source: 'manual' as const, confidence: 1, createdAt: 1, updatedAt: 1, hitCount: 1 }
+    expect(await promoteToKeyword({ ...base, merchant: '酒店' })).toBe(false)
+    expect(await promoteToKeyword({ ...base, merchant: '民宿' })).toBe(false)
+    const cat = await db.categories.get('housing')
+    expect(cat!.keywords).toHaveLength(before.length)
+    expect(cat!.keywords).not.toContain('酒店')
+    expect(cat!.keywords).not.toContain('民宿')
+  })
+
+  it('剥离后剩余 <2 字不提炼（大饭店 → 大）', async () => {
+    await db.categories.bulkPut(defaultCategories.filter(c => c.id === 'food'))
+    const before = (await db.categories.get('food'))!.keywords
+    const ok = await promoteToKeyword({
+      id: 1, merchant: '大饭店', category: 'food', source: 'manual',
+      hitCount: 1, confidence: 1, createdAt: 1, updatedAt: 1,
+    })
+    expect(ok).toBe(false)
+    const cat = await db.categories.get('food')
+    expect(cat!.keywords).toHaveLength(before.length)
+    expect(cat!.keywords).not.toContain('大饭店')
+  })
 })
