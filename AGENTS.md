@@ -17,7 +17,7 @@ npm run test:e2e     # build + Playwright E2E（会 mock LLM）
 npm run test:e2e:ui  # Playwright UI 模式
 ```
 
-提交前必须保证 `npm run lint` + `npm test` + `npm run build` 通过（CI `quality` 检查同款：node 20 + npm ci + lint + test + build）。
+提交前必须保证 `npm run lint` + `npm test` + `npm run build` + `npm run test:e2e` 通过（CI `quality` + `e2e` 双 job：node 20 + npm ci + lint + test + build + Playwright chromium，mock LLM 无 secret）。
 
 ## Git 工作流
 
@@ -30,7 +30,7 @@ npm run test:e2e:ui  # Playwright UI 模式
 ## 测试约定
 
 - 单测：`src/**/*.test.ts`，vitest + fake-indexeddb；DB 契约、解析器、去重、备份均有覆盖（~169 用例）。
-- E2E：`e2e/specs/*.spec.ts`，Playwright + mock LLM 拦截，不消耗真实 API。
+- E2E：`e2e/specs/*.spec.ts`，Playwright + mock LLM 拦截，不消耗真实 API；CI `e2e` job 自动运行，失败上传 `playwright-report/`。
 - 新增功能必须带测试（DB 层契约单测 + 关键路径 E2E）。
 
 ## 目录要点

@@ -116,7 +116,7 @@
 - Modify: `.github/workflows/ci.yml`、`playwright.config.ts`、`AGENTS.md`
 - Delete: `e2e/specs/learning.spec 2.ts`（游离重复副本）
 
-- [ ] **Step 1: ci.yml 新增 e2e job**
+- [x] **Step 1: ci.yml 新增 e2e job**
   ```yaml
   e2e:
     runs-on: ubuntu-latest
@@ -138,10 +138,10 @@
           if-no-files-found: ignore
           retention-days: 7
   ```
-- [ ] **Step 2: playwright.config.ts** `reuseExistingServer: !process.env.CI`
-- [ ] **Step 3: 删 `e2e/specs/learning.spec 2.ts`**；AGENTS.md「测试约定」更新（E2E 进 CI，原「不进 CI」删除）
-- [ ] **Step 4: 本地验证** `npm run test:e2e`（6 spec 全绿）
-- [ ] **Step 5: 提交** 勾选本 Task + ROADMAP A1
+- [x] **Step 2: playwright.config.ts** `reuseExistingServer: !process.env.CI`
+- [x] **Step 3: 删 `e2e/specs/learning.spec 2.ts`**（与同步冲突副本一并清理）；AGENTS.md「测试约定」更新（E2E 进 CI，原「不进 CI」删除）
+- [x] **Step 4: 本地验证** `npm run test:e2e`（6 spec 全绿）
+- [x] **Step 5: 提交** 勾选本 Task + ROADMAP A1
   ```bash
   git add .github/workflows/ci.yml playwright.config.ts AGENTS.md e2e/specs/
   git commit -m "ci: E2E 进 CI（playwright job + 失败产物上传）"
