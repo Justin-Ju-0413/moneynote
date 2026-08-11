@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import 'fake-indexeddb/auto'
 import { db } from '@/db'
-import { recordLearning, matchLearningRule, listLearningRules, deleteLearningRule } from './learningRules'
+import { recordLearning, matchLearningRule, listLearningRules, deleteLearningRule, recordRuleHit } from './learningRules'
 import { promoteToKeyword, stripChannelPrefix } from './learningRules'
 import { defaultCategories } from '@/db/seed'
 
@@ -146,5 +146,30 @@ describe('promoteToKeyword', () => {
     const cat = await db.categories.get('food')
     expect(cat!.keywords).toHaveLength(before.length)
     expect(cat!.keywords).not.toContain('大饭店')
+  })
+})
+
+describe('recordRuleHit（B3 命中计量）', () => {
+  it('命中后 matchCount 累加、lastHitAt 更新', async () => {
+    await recordLearning('格林豪泰', 'housing', 'manual', 1)
+    let rule = (await matchLearningRule('格林豪泰'))!
+    expect(rule.matchCount).toBeUndefined()
+
+    await recordRuleHit(rule)
+    rule = (await matchLearningRule('格林豪泰'))!
+    expect(rule.matchCount).toBe(1)
+    expect(rule.lastHitAt).toBeGreaterThan(0)
+
+    await recordRuleHit(rule)
+    rule = (await matchLearningRule('格林豪泰'))!
+    expect(rule.matchCount).toBe(2)
+  })
+
+  it('matchCount 起始为 0（?? 兜底，不产生 NaN）', async () => {
+    await recordLearning('如家', 'housing', 'manual', 1)
+    const rule = (await matchLearningRule('如家'))!
+    await recordRuleHit(rule)
+    const after = (await matchLearningRule('如家'))!
+    expect(after.matchCount).toBe(1)
   })
 })

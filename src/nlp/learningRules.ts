@@ -1,5 +1,6 @@
 import { db } from '@/db'
 import type { LearningRule } from '@/db/types'
+import * as log from '@/utils/log'
 
 // 渠道前缀剔除（提炼关键词用）：从商户文本中剥离支付渠道前缀
 const CHANNEL_PREFIXES = [
@@ -53,6 +54,16 @@ export async function matchLearningRule(merchant: string): Promise<LearningRule 
   // 注意必须 await 后再 ?? null：直接 return promise ?? null 时 promise 为 truthy，
   // ?? 不生效，未命中会返回 undefined 而非 null（违反接口契约）
   return (await db.learningRules.where('merchant').equals(key).first()) ?? null
+}
+
+// 命中计量（B3）：matchCount+1 / lastHitAt=now。失败仅告警，不得打断识别链路
+export async function recordRuleHit(rule: LearningRule): Promise<void> {
+  try {
+    await db.learningRules.update(rule.id!, {
+      matchCount: (rule.matchCount ?? 0) + 1,
+      lastHitAt: Date.now(),
+    })
+  } catch (err) { log.warn('规则命中计量失败', err) }
 }
 
 export async function listLearningRules(): Promise<LearningRule[]> {
