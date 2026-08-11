@@ -25,6 +25,7 @@ dist-ssr
 
 # 工具/部署产物
 .qoder
+.zcode
 .vercel-tmp
 
 # Playwright 测试产物（本地 E2E 生成，不入库）

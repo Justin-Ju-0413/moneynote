@@ -22,6 +22,16 @@
 - **发布**：squash 合并 PR #10，tag v1.3.0（含 08-05 E2E 迭代，此前未发 release）
 - **docs**：ROADMAP v2 刷新——基于代码级审计重排任务（A 巩固质量 / B 学习规则进化 / C 规模化与架构 / D 北极星），单测基线更新为 196 用例
 
+### A 层 · 巩固质量（4 任务全完成）
+
+> 见 `docs/superpowers/plans/2026-08-11-a-layer-quality.md`。单测 196 → 212，E2E 6 spec 全绿。
+
+- **feat(llm)** P1-4：`aiMapper` 并入 llm 层——`mappingTask` 描述符（`src/llm/mapping.ts`）+ prompt 搬家 `mappingPrompt.ts`，删 `bill-analyzer/aiMapper.ts` + `aiPrompt.ts`，对外 API 零变化（+9 单测）
+- **feat(llm)** P1-3：Prompt 版本化——`PROMPT_VERSIONS`（parse/batch/audit/chat/mapping）+ `promptVersionKey`；classificationCache（`::v{batch}`）与 auditCache（`::v{audit}`）键入版本，改 prompt 自动失效（+7 单测）
+- **ci** E2E 进 CI——`e2e` job（build → playwright install chromium → test），失败上传 playwright-report；`reuseExistingServer: !process.env.CI`；删游离副本 `learning.spec 2.ts`
+- **feat(scripts)** 发布自动化 `scripts/release.mjs`（bump → 双处版本同步 → CHANGELOG 校验 → tag → gh release，`--dry-run` 预览）；修复破损 tag ref `refs/tags/v1.3.0 2`（全零 id）
+- **chore** `.gitignore` 补 `.zcode`（工具目录）；清理 10 个「 2」后缀 iCloud 同步冲突副本（逐字节相同的未跟踪文件）
+
 ---
 
 ## 2026-08-05
