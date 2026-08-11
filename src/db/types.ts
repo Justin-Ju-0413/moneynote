@@ -198,10 +198,12 @@ export interface LearningRule {
   merchant: string      // 商户/备注文本（学习键）
   category: string      // 沉淀的分类
   source: 'llm' | 'manual'  // manual（用户纠正）优先于 llm
-  hitCount: number      // 累计学习/命中次数
+  hitCount: number      // 累计学习次数（recordLearning 累加；manual 覆盖后重置为 1）
   confidence: number    // 来源置信度
   createdAt: number
   updatedAt: number
+  matchCount?: number   // 累计命中次数（B3 计量，classifyWithChain 命中时 +1；旧数据 undefined）
+  lastHitAt?: number    // 最近命中时间戳（B3 计量；旧数据 undefined）
 }
 
 export interface AppDBSchema {

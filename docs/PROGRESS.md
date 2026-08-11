@@ -32,6 +32,17 @@
 - **feat(scripts)** 发布自动化 `scripts/release.mjs`（bump → 双处版本同步 → CHANGELOG 校验 → tag → gh release，`--dry-run` 预览）；修复破损 tag ref `refs/tags/v1.3.0 2`（全零 id）
 - **chore** `.gitignore` 补 `.zcode`（工具目录）；清理 10 个「 2」后缀 iCloud 同步冲突副本（逐字节相同的未跟踪文件）
 
+### B 层 · 学习规则进化（4 任务全完成）
+
+> 见 `docs/superpowers/plans/2026-08-11-b-learning-rules.md`。单测 212 → 230，E2E 6 spec 全绿。
+
+- **feat(nlp)** B1 匹配增强——包含匹配补归一化（规则剥渠道前缀后参与 `text.includes(core)`）+ 核心词 ≥2 字下限（防单字误命中）+ 核心词长度优先
+- **feat(nlp)** B3 命中计量——`LearningRule` 加 `matchCount`/`lastHitAt`（无 DB 迁移）；`classifyWithChain` 命中即计量，失败隔离不打断识别
+- **feat(nlp)** B2 冲突与衰减——`deriveCoreWord`/`revokeKeyword`（删规则/改判时从分类 keywords 撤回提炼词，防残留冲突）；llm→manual 升级 hitCount 重置 1（语义=用户确认次数）；`cleanupColdRules` 手动清理 180 天未命中规则
+- **feat(ui)** B3 可视化——统计条「N 条规则 · 累计命中 X 次 · 约节省 X 次 LLM 调用」+ 行内命中次数/最近命中时间 + 冷清理入口（ConfirmDialog）
+- **feat(nlp)** B4 独立导出/导入——`exportLearningRules`/`importLearningRules`（JSON v1，merchant 已存在**跳过**，非法行跳过计数）；设置页导出/导入按钮 + 隐私提示
+- **fix(e2e)** 新增 JSON 导入 input 与 CSV 导入 input 选择器二义性，import.spec 定位器按 accept 收窄
+
 ---
 
 ## 2026-08-05
