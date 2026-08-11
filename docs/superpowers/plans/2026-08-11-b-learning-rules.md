@@ -105,15 +105,15 @@
 - Modify: `src/components/settings/LearningRulesManager.tsx`
 - Test: `e2e/specs/learning.spec.ts`
 
-- [ ] **Step 1: 统计条**（Card 内标题下）：
+- [x] **Step 1: 统计条**（Card 内标题下）：
   ```tsx
   const total = rules.length
   const hits = rules.reduce((s, r) => s + (r.matchCount ?? 0), 0)
   // 「N 条规则 · 累计命中 X 次 · 约节省 X 次 LLM 调用」（命中一次即避免一次 LLM/低置信度 Review，近似口径）
   ```
-- [ ] **Step 2: 行渲染**补：`{r.matchCount ?? 0} 次命中` + 最近命中时间 `new Date(r.lastHitAt ?? r.updatedAt).toLocaleString()`（对齐备份列表 L613 写法）
-- [ ] **Step 3: 冷规则清理按钮**：「清理 180 天未命中规则」→ ConfirmDialog（组件内 state + 复用 `src/components/ui/ConfirmDialog`）→ `cleanupColdRules()` → toast「已清理 N 条冷规则」
-- [ ] **Step 4: E2E** `learning.spec.ts`：进入设置页后断言 `getByText(/条规则/)` 可见
+- [x] **Step 2: 行渲染**补：`{r.matchCount ?? 0} 次命中` + 最近命中时间 `new Date(r.lastHitAt ?? r.updatedAt).toLocaleString()`（对齐备份列表 L613 写法）
+- [x] **Step 3: 冷规则清理按钮**：「清理 180 天未命中规则」→ ConfirmDialog（组件内 state + 复用 `src/components/ui/ConfirmDialog`）→ `cleanupColdRules()` → toast「已清理 N 条冷规则」
+- [x] **Step 4: E2E** `learning.spec.ts`：进入设置页后断言 `getByText(/条规则/)` 可见
 - [x] **Step 5: 验证 + 提交**：`npm test` + lint + build + `npm run test:e2e` → commit `feat: B3 学习效果可视化（统计条 + 命中次数 + 冷规则清理入口）`，勾选本 Task
 
 ---
@@ -139,7 +139,7 @@
   - 「导入」按钮 → 隐藏 file input（accept=".json"）→ `file.text()` → `importLearningRules` → toast「导入 N 条，跳过 M 条」（失败 toast error）
   - 卡片描述补隐私提示：「规则含消费习惯，导出文件请妥善保管」
 - [ ] **Step 3: 测试** `learningRulesExport.test.ts` +4：roundtrip 保真（导出→清空→导入→字段一致）；已存在跳过（imported/skipped 计数）；非法 JSON 抛错；version 不符抛错
-- [ ] **Step 4: E2E** 补「导出触发下载」：点击导出按钮 → `page.waitForEvent('download')` → 断言 suggestedFilename 含 `learning-rules`
+- [x] **Step 4: E2E** 补「导出触发下载」：点击导出按钮 → `page.waitForEvent('download')` → 断言 suggestedFilename 含 `learning-rules`
 - [x] **Step 5: 验证 + 提交**：`npm test` + lint + build + `npm run test:e2e` → commit `feat: B4 学习规则独立导出/导入（跳过已存在）`，勾选本 Task + ROADMAP B4
 
 ---

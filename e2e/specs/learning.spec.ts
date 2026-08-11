@@ -17,6 +17,10 @@ test.describe('AI 学习规则', () => {
     await expect(page.getByText('测试商户奶茶')).toBeVisible()
     await expect(page.getByText('手动')).toBeVisible()
 
+    // B3 统计条：规则数 + 命中计量口径可见
+    await expect(page.getByText(/1 条规则/)).toBeVisible()
+    await expect(page.getByText(/累计命中/)).toBeVisible()
+
     // 删除规则（限定在规则行内，避免命中分类管理的删除按钮）
     const ruleRow = page.locator('div.flex.items-center.justify-between', { hasText: '测试商户奶茶' })
     await ruleRow.getByRole('button', { name: '删除' }).click()
