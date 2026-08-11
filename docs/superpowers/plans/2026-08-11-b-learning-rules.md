@@ -126,7 +126,7 @@
 
 **用户已确认**：导入冲突策略 = 跳过已存在（按 merchant）。
 
-- [ ] **Step 1: 导出/导入服务**（learningRules.ts）：
+- [x] **Step 1: 导出/导入服务**（learningRules.ts）：
   ```ts
   export interface LearningRulesExport { version: 1; exportedAt: number; rules: LearningRule[] }
   export async function exportLearningRules(): Promise<string>       // JSON.stringify({version:1, exportedAt, rules})
@@ -134,11 +134,11 @@
   // 解析：非法 JSON / 非对象 / version !== 1 → throw；逐条：merchant trim 空跳过；已存在（where('merchant').equals）跳过；
   // 新增行复制字段（不含 id），source 非法值兜底 'manual'？——不，非法 source 跳过
   ```
-- [ ] **Step 2: UI**（LearningRulesManager 内）：
+- [x] **Step 2: UI**（LearningRulesManager 内）：
   - 「导出」按钮 → `downloadFile(await exportLearningRules(), `moneynote-learning-rules_${date}.json`, 'application/json')`（复用 `src/utils/export.ts` downloadFile）
   - 「导入」按钮 → 隐藏 file input（accept=".json"）→ `file.text()` → `importLearningRules` → toast「导入 N 条，跳过 M 条」（失败 toast error）
   - 卡片描述补隐私提示：「规则含消费习惯，导出文件请妥善保管」
-- [ ] **Step 3: 测试** `learningRulesExport.test.ts` +4：roundtrip 保真（导出→清空→导入→字段一致）；已存在跳过（imported/skipped 计数）；非法 JSON 抛错；version 不符抛错
+- [x] **Step 3: 测试** `learningRulesExport.test.ts` +4：roundtrip 保真（导出→清空→导入→字段一致）；已存在跳过（imported/skipped 计数）；非法 JSON 抛错；version 不符抛错
 - [x] **Step 4: E2E** 补「导出触发下载」：点击导出按钮 → `page.waitForEvent('download')` → 断言 suggestedFilename 含 `learning-rules`
 - [x] **Step 5: 验证 + 提交**：`npm test` + lint + build + `npm run test:e2e` → commit `feat: B4 学习规则独立导出/导入（跳过已存在）`，勾选本 Task + ROADMAP B4
 

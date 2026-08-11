@@ -97,6 +97,64 @@ export async function cleanupColdRules(days = 180): Promise<number> {
   return removed
 }
 
+// ── B4 独立导出/导入（迁移习惯用；导入冲突策略：merchant 已存在则跳过）──
+
+export interface LearningRulesExport {
+  version: 1
+  exportedAt: number
+  rules: LearningRule[]
+}
+
+export async function exportLearningRules(): Promise<string> {
+  const rules = await listLearningRules()
+  const payload: LearningRulesExport = { version: 1, exportedAt: Date.now(), rules }
+  return JSON.stringify(payload, null, 2)
+}
+
+export async function importLearningRules(
+  json: string,
+): Promise<{ imported: number; skipped: number }> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    throw new Error('文件不是有效的 JSON')
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('导入文件格式不正确')
+  }
+  const payload = parsed as Partial<LearningRulesExport>
+  if (payload.version !== 1 || !Array.isArray(payload.rules)) {
+    throw new Error('不支持的导入文件版本')
+  }
+
+  let imported = 0
+  let skipped = 0
+  for (const row of payload.rules) {
+    if (typeof row !== 'object' || row === null) { skipped++; continue }
+    const merchant = typeof row.merchant === 'string' ? row.merchant.trim() : ''
+    const category = typeof row.category === 'string' ? row.category.trim() : ''
+    if (!merchant || !category || (row.source !== 'llm' && row.source !== 'manual')) { skipped++; continue }
+    const existing = await db.learningRules.where('merchant').equals(merchant).first()
+    if (existing) { skipped++; continue }
+
+    const now = Date.now()
+    await db.learningRules.add({
+      merchant,
+      category,
+      source: row.source,
+      hitCount: typeof row.hitCount === 'number' ? row.hitCount : 1,
+      confidence: typeof row.confidence === 'number' ? row.confidence : 1,
+      createdAt: typeof row.createdAt === 'number' ? row.createdAt : now,
+      updatedAt: typeof row.updatedAt === 'number' ? row.updatedAt : now,
+      matchCount: typeof row.matchCount === 'number' ? row.matchCount : 0,
+      lastHitAt: typeof row.lastHitAt === 'number' ? row.lastHitAt : undefined,
+    })
+    imported++
+  }
+  return { imported, skipped }
+}
+
 // 分类通用后缀词典：提炼关键词时循环剥离末尾后缀，保留品牌核心词（如「汉庭酒店住宿」→「汉庭」）
 const SUFFIX_DICT: Record<string, string[]> = {
   housing: ['酒店', '住宿', '公寓', '宾馆', '民宿', '客栈'],
