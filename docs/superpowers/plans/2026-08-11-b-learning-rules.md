@@ -79,7 +79,7 @@
 - Modify: `src/nlp/learningRules.ts`
 - Test: `src/nlp/learningRules.test.ts`
 
-- [ ] **Step 1: 抽 `deriveCoreWord`**（promoteToKeyword 的核心词计算独立出来，promote/revoke 共用）：
+- [x] **Step 1: 抽 `deriveCoreWord`**（promoteToKeyword 的核心词计算独立出来，promote/revoke 共用）：
   ```ts
   export function deriveCoreWord(merchant: string, category: string): string {
     let core = stripChannelPrefix(merchant)
@@ -89,8 +89,8 @@
     return core
   }
   ```
-- [ ] **Step 2: `revokeKeyword(rule): Promise<boolean>`** —— deriveCoreWord 结果在 `category.keywords` 中则移除（updateCategory 式 update），不存在返回 false
-- [ ] **Step 3: 行为改造**
+- [x] **Step 2: `revokeKeyword(rule): Promise<boolean>`** —— deriveCoreWord 结果在 `category.keywords` 中则移除（updateCategory 式 update），不存在返回 false
+- [x] **Step 3: 行为改造**
   - `deleteLearningRule(id)`：先 `get(id)` → 删除 → `revokeKeyword`（有规则才撤回）
   - `recordLearning`：manual 且 `existing.category !== category` → 先从旧分类 `revokeKeyword({...existing, category: existing.category})`，再 promoteToKeyword(merged)；**llm→manual 升级时 `hitCount: 1`**（语义 = 用户确认次数；测试未锁定旧值，安全）
   - 新增 `cleanupColdRules(days = 180): Promise<number>` —— `listLearningRules()` 过滤 `lastHitAt && lastHitAt < Date.now() - days*86400e3`，逐条 delete（无 lastHitAt 不删，保守）；返回删除数

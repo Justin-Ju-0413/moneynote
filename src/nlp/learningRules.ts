@@ -29,10 +29,16 @@ export async function recordLearning(
   if (existing) {
     // manual 优先：llm 结果不覆盖 manual；manual 可覆盖 llm 并升级
     if (existing.source === 'manual' && source === 'llm') return
+    // manual 覆盖（升级或改判）= 用户新确认，hitCount 重置为 1（计数语义 = 用户确认次数）
+    const isManualOverwrite = source === 'manual' && (existing.source !== 'manual' || category !== existing.category)
+    // 改判：先从旧分类撤回已提炼的关键词，避免关键词残留造成分类冲突
+    if (isManualOverwrite && category !== existing.category) {
+      await revokeKeyword(existing)
+    }
     const updates: Partial<LearningRule> = {
       category: source === 'manual' ? category : existing.category,
       source: source === 'manual' ? 'manual' : existing.source,
-      hitCount: existing.hitCount + 1,
+      hitCount: isManualOverwrite ? 1 : existing.hitCount + 1,
       confidence: Math.max(existing.confidence, confidence),
       updatedAt: Date.now(),
     }
@@ -71,7 +77,24 @@ export async function listLearningRules(): Promise<LearningRule[]> {
 }
 
 export async function deleteLearningRule(id: number): Promise<void> {
+  const rule = await db.learningRules.get(id)
   await db.learningRules.delete(id)
+  // 顺带撤回该规则提炼进分类 keywords 的核心词（规则删除后关键词不再有来源）
+  if (rule) await revokeKeyword(rule)
+}
+
+// 清理冷规则：删除 lastHitAt 早于 cutoff 的规则（无 lastHitAt 的旧数据不删，保守）；返回删除数
+export async function cleanupColdRules(days = 180): Promise<number> {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+  const rules = await listLearningRules()
+  let removed = 0
+  for (const r of rules) {
+    if (r.lastHitAt && r.lastHitAt < cutoff) {
+      await deleteLearningRule(r.id!)
+      removed++
+    }
+  }
+  return removed
 }
 
 // 分类通用后缀词典：提炼关键词时循环剥离末尾后缀，保留品牌核心词（如「汉庭酒店住宿」→「汉庭」）
@@ -89,8 +112,22 @@ export async function promoteToKeyword(rule: LearningRule): Promise<boolean> {
   const threshold = rule.source === 'manual' ? 1 : 3
   if (rule.hitCount < threshold) return false
 
-  let core = stripChannelPrefix(rule.merchant)
-  const suffixes = SUFFIX_DICT[rule.category] ?? []
+  const core = deriveCoreWord(rule.merchant, rule.category)
+  if (core.length < 2) return false
+
+  const cat = await db.categories.get(rule.category)
+  if (!cat) return false
+  if (cat.keywords.includes(core)) return false
+
+  const keywords = [...cat.keywords, core]
+  await db.categories.update(cat.id!, { keywords })
+  return true
+}
+
+// 核心词提取（promote/revoke 共用）：剥渠道前缀 → 按分类循环剥通用后缀 → 剩余即核心词
+export function deriveCoreWord(merchant: string, category: string): string {
+  let core = stripChannelPrefix(merchant)
+  const suffixes = SUFFIX_DICT[category] ?? []
   // 循环剥（每剥一次从头重查）：「汉庭酒店住宿」→ 剥「住宿」→ 剥「酒店」→「汉庭」
   let changed = true
   while (changed) {
@@ -103,13 +140,16 @@ export async function promoteToKeyword(rule: LearningRule): Promise<boolean> {
       }
     }
   }
+  return core
+}
+
+// 撤回提炼词（B2）：核心词若在该分类 keywords 中则移除（规则删除/改判时防关键词残留冲突）
+export async function revokeKeyword(rule: LearningRule): Promise<boolean> {
+  const core = deriveCoreWord(rule.merchant, rule.category)
   if (core.length < 2) return false
-
   const cat = await db.categories.get(rule.category)
-  if (!cat) return false
-  if (cat.keywords.includes(core)) return false
-
-  const keywords = [...cat.keywords, core]
+  if (!cat || !cat.keywords.includes(core)) return false
+  const keywords = cat.keywords.filter((k) => k !== core)
   await db.categories.update(cat.id!, { keywords })
   return true
 }

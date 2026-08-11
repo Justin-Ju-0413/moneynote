@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import 'fake-indexeddb/auto'
 import { db } from '@/db'
-import { recordLearning, matchLearningRule, listLearningRules, deleteLearningRule, recordRuleHit } from './learningRules'
+import { recordLearning, matchLearningRule, listLearningRules, deleteLearningRule, recordRuleHit, cleanupColdRules, revokeKeyword } from './learningRules'
 import { promoteToKeyword, stripChannelPrefix } from './learningRules'
 import { defaultCategories } from '@/db/seed'
 
@@ -171,5 +171,79 @@ describe('recordRuleHit（B3 命中计量）', () => {
     await recordRuleHit(rule)
     const after = (await matchLearningRule('如家'))!
     expect(after.matchCount).toBe(1)
+  })
+})
+
+describe('revokeKeyword / 删除撤回（B2）', () => {
+  beforeEach(async () => {
+    await db.categories.bulkPut(defaultCategories.filter(c => ['housing', 'food'].includes(c.id)))
+  })
+
+  it('deleteLearningRule 撤回已提炼的关键词', async () => {
+    await recordLearning('格林豪泰', 'housing', 'manual', 1)
+    let cat = await db.categories.get('housing')
+    expect(cat!.keywords).toContain('格林豪泰')
+
+    const rule = (await matchLearningRule('格林豪泰'))!
+    await deleteLearningRule(rule.id!)
+    cat = await db.categories.get('housing')
+    expect(cat!.keywords).not.toContain('格林豪泰')
+    expect(await listLearningRules()).toHaveLength(0)
+  })
+
+  it('manual 改判：撤回旧分类关键词 + 新分类提炼', async () => {
+    await recordLearning('如家', 'housing', 'manual', 1)
+    await recordLearning('如家', 'food', 'manual', 1)
+
+    const rule = (await matchLearningRule('如家'))!
+    expect(rule.category).toBe('food')
+    expect(rule.hitCount).toBe(1)
+    const housing = await db.categories.get('housing')
+    expect(housing!.keywords).not.toContain('如家')
+    const food = await db.categories.get('food')
+    expect(food!.keywords).toContain('如家')
+  })
+
+  it('llm→manual 升级时 hitCount 重置为 1', async () => {
+    await recordLearning('星巴克', 'food', 'llm', 0.9)
+    await recordLearning('星巴克', 'food', 'manual', 1)
+    const rule = (await matchLearningRule('星巴克'))!
+    expect(rule.source).toBe('manual')
+    expect(rule.hitCount).toBe(1)
+  })
+
+  it('revokeKeyword：分类无该词时 noop（返回 false）', async () => {
+    await recordLearning('美团', 'food', 'manual', 1)
+    const rule = (await matchLearningRule('美团'))!
+    const ok = await revokeKeyword({ ...rule, category: 'housing' }) // 词在 food，不在 housing
+    expect(ok).toBe(false)
+  })
+})
+
+describe('cleanupColdRules（B2 冷规则清理）', () => {
+  beforeEach(async () => {
+    await db.categories.bulkPut(defaultCategories.filter(c => c.id === 'housing'))
+  })
+
+  it('删除 lastHitAt 早于 180 天的规则', async () => {
+    await recordLearning('格林豪泰', 'housing', 'manual', 1)
+    const rule = (await matchLearningRule('格林豪泰'))!
+    await db.learningRules.update(rule.id!, { lastHitAt: Date.now() - 200 * 24 * 60 * 60 * 1000 })
+
+    const removed = await cleanupColdRules(180)
+    expect(removed).toBe(1)
+    expect(await listLearningRules()).toHaveLength(0)
+  })
+
+  it('保留新命中与无 lastHitAt 的旧数据（保守）', async () => {
+    await recordLearning('格林豪泰', 'housing', 'manual', 1)
+    await recordLearning('如家', 'housing', 'manual', 1)
+    const fresh = (await matchLearningRule('格林豪泰'))!
+    await db.learningRules.update(fresh.id!, { lastHitAt: Date.now() - 1 * 24 * 60 * 60 * 1000 })
+    // 如家：无 lastHitAt（旧数据形态），不删
+
+    const removed = await cleanupColdRules(180)
+    expect(removed).toBe(0)
+    expect(await listLearningRules()).toHaveLength(2)
   })
 })
