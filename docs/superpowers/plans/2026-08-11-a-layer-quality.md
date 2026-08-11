@@ -156,14 +156,14 @@
 - Modify: `AGENTS.md`（工作流补发布命令）
 - 修复破损 ref：`git update-ref -d "refs/tags/v1.3.0 2"`
 
-- [ ] **Step 1: 修复破损 tag ref**（全零 id 的 `refs/tags/v1.3.0 2`，`git show-ref --tags` 会 fatal）
-- [ ] **Step 2: 实现 `scripts/release.mjs`**（风格对齐 generate-icons.mjs：ESM、顶部中文注释、✓ 输出、零新依赖）：
+- [x] **Step 1: 修复破损 tag ref**（全零 id 的 `refs/tags/v1.3.0 2`，`git show-ref --tags` 会 fatal）—— `git update-ref -d` 已删，show-ref 恢复正常
+- [x] **Step 2: 实现 `scripts/release.mjs`**（风格对齐 generate-icons.mjs：ESM、顶部中文注释、✓ 输出、零新依赖）：
   - `node scripts/release.mjs [patch|minor|major|<1.4.0>] [--dry-run]`
   - 流程：校验 git 干净 + 在 main → 计算新版本（SemVer）→ 同步 package.json version + constants.ts APP_VERSION → 校验 CHANGELOG 含 `## [v] - YYYY-MM-DD` 段（缺失则报错）→ 自动 commit（chore: version bump 1.x.y→1.x.z）→ `git tag -a vX.Y.Z` + push → 从 CHANGELOG 段提取 notes 调 `gh release create`（title 统一 = tag 名）
   - `--dry-run` 只打印将执行步骤，不做任何变更
-- [ ] **Step 3: AGENTS.md 工作流** 补「发布：`node scripts/release.mjs <patch|minor|major>`（或手动）」
-- [ ] **Step 4: 验证** `node --check scripts/release.mjs` + `node scripts/release.mjs patch --dry-run`
-- [ ] **Step 5: 提交** 勾选本 Task + ROADMAP A4
+- [x] **Step 3: AGENTS.md 工作流** 补「发布：`node scripts/release.mjs <patch|minor|major>`（或手动）」
+- [x] **Step 4: 验证** `node --check scripts/release.mjs` + `node scripts/release.mjs patch --dry-run`（干净树 + 无 CHANGELOG 段 → 正确中止并给出提示）
+- [x] **Step 5: 提交** 勾选本 Task + ROADMAP A4
   ```bash
   git add scripts/release.mjs AGENTS.md
   git commit -m "feat: 发布自动化脚本（release.mjs：bump→CHANGELOG 校验→tag→release）"

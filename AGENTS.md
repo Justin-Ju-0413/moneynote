@@ -24,7 +24,7 @@ npm run test:e2e:ui  # Playwright UI 模式
 - `main` 为稳定入口，**受保护，禁止直接 push**。
 - 所有代码变更走「分支 + PR」：`git checkout -b <scope/描述>` → 开发 → 提交 → `gh pr create --base main --head <分支>` → 等 CI `quality` 通过 → squash 合并。
 - 合并后删除本地与远端分支，保持远端干净。
-- 版本 SemVer，同步更新 `CHANGELOG.md` 与 GitHub Release；未来方向见 `docs/ROADMAP.md`。
+- 版本 SemVer，同步更新 `CHANGELOG.md` 与 GitHub Release；发布用 `node scripts/release.mjs <patch|minor|major>`（bump → CHANGELOG 校验 → tag → gh release，`--dry-run` 可预览），也可手动；未来方向见 `docs/ROADMAP.md`。
 - 文档类变更（README/docs）也走 PR，与代码同规则。
 
 ## 测试约定
