@@ -38,7 +38,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 目标:补齐回归防线与残留结构债,全部低风险高收益,不做架构改动。
 
 - [ ] **A1 E2E 进 CI** —— 6 spec 目前仅本地跑。CI 加 Playwright job(`npx playwright install --with-deps chromium`,复用 mock LLM 拦截),回归防线自动化
-- [ ] **A2 P1-4 bill-analyzer 并入 llm 层** —— `aiMapper` 迁移为 `mappingTask` 描述符(`task.ts` 已留铺垫注释),消除唯一结构性重复,顺带统一错误文案
+- [x] **A2 P1-4 bill-analyzer 并入 llm 层** —— `aiMapper` 迁移为 `mappingTask` 描述符(`task.ts` 已留铺垫注释),消除唯一结构性重复,顺带统一错误文案
 - [ ] **A3 P1-3 Prompt 版本化** —— `promptVersion` 常量(parse/batch/audit 各一)并入 `generateCacheKey`,改 prompt 自动失效旧缓存,支持灰度迭代
 - [ ] **A4 发布自动化** —— 教训:v1.3.0 tag 曾落在孤儿提交上(双副本整合期遗留)。补 `scripts/release.mjs`(版本 bump → CHANGELOG 校验 → tag → release notes)或接入 release-please
 

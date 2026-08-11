@@ -1,6 +1,7 @@
 import type { ColumnRole } from '@/db/types'
 
 // ── AI 列映射 System Prompt ──
+// P1-3: 改动本 prompt 时 bump MAPPING_PROMPT_VERSION，旧缓存自动失效
 
 const MAPPING_SYSTEM_PROMPT = `你是一个账单文件列映射识别引擎。给定一个表格的表头和样本数据行，你需要识别每列的语义角色。
 
@@ -23,6 +24,9 @@ const MAPPING_SYSTEM_PROMPT = `你是一个账单文件列映射识别引擎。�
 
 ## 输出格式
 [{"role":"date","confidence":0.95},{"role":"amount","confidence":0.9},...]`
+
+/** 列映射 prompt 版本（P1-3：并入缓存键，改 prompt 自动失效） */
+export const MAPPING_PROMPT_VERSION = 1
 
 // ── 构建消息 ──
 
