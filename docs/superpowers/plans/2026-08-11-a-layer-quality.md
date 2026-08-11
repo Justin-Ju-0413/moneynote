@@ -84,11 +84,11 @@
 - Modify: `src/utils/billClassifier.ts`（lookupCache/writeCache 键带版本）、`src/hooks/useAIWorkspace.ts`（audit cacheKey 带版本）
 - Test: `src/utils/billClassifier.test.ts`（版本失效语义）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
   - `promptVersion.test.ts`：`promptVersionKey('星巴克', 'batch') === '星巴克::v1'`；版本 bump 后键变化（改对象值模拟）
   - `billClassifier.test.ts` 追加：写缓存后同版本命中；版本变更后未命中（构造不同版本 key 验证失效）
 
-- [ ] **Step 2: 实现**
+- [x] **Step 2: 实现**
   1. `src/llm/promptVersion.ts`：
      ```ts
      // 各任务 system prompt 版本：改 prompt 时 bump 对应值 → 旧缓存自动失效（P1-3）
@@ -100,9 +100,9 @@
   2. `billClassifier.ts`：`lookupCache`/`writeCache` 用 `promptVersionKey(merchant, 'batch')`
   3. `useAIWorkspace.ts:71`：`hashKey(promptVersionKey(`${task}|${sig}`, 'audit'))`
 
-- [ ] **Step 3: 运行确认通过** `npm test` + `npm run lint`
+- [x] **Step 3: 运行确认通过** `npm test` + `npm run lint`
 
-- [ ] **Step 4: 提交** 勾选本 Task + ROADMAP A3
+- [x] **Step 4: 提交** 勾选本 Task + ROADMAP A3
   ```bash
   git add src/llm/promptVersion.ts src/llm/promptVersion.test.ts src/utils/billClassifier.ts src/hooks/useAIWorkspace.ts
   git commit -m "feat: P1-3 prompt 版本化（classificationCache/auditCache 键入版本）"
