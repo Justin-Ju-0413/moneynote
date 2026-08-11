@@ -5,6 +5,7 @@ import { recordLearning } from '@/nlp/learningRules'
 import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import { runLLMAudit } from '@/llm/service'
+import { promptVersionKey } from '@/llm/promptVersion'
 import { hashKey } from '@/utils/hash'
 import type { AuditTask, AiSuggestion } from '@/llm/types'
 
@@ -67,10 +68,11 @@ export function useAIWorkspace() {
         return
       }
 
-      // 审计缓存：按 task + 流水签名命中，避免重复调 API
-      const cacheKey = hashKey(
+      // 审计缓存：按 task + 流水签名命中，避免重复调 API；键入 prompt 版本（P1-3，改 prompt 自动失效）
+      const cacheKey = hashKey(promptVersionKey(
         `${task}|${txs.map((t) => `${t.id}:${t.updatedAt}:${t.amount}:${t.category}`).sort().join('|')}`,
-      )
+        'audit',
+      ))
       if (!useForce) {
         const cached = await db.auditCache.get(cacheKey)
         if (cached) {

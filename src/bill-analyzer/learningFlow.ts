@@ -8,7 +8,7 @@ import {
   generateFingerprint,
   parseFileToGrid,
 } from './analyzer'
-import { aiAssistColumnMapping } from './aiMapper'
+import { aiAssistColumnMapping } from '@/llm/mapping'
 import { previewParse } from './universalParser'
 
 // ── 学习上下文（传递给 UI 确认）──

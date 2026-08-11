@@ -5,6 +5,7 @@ import type { LLMConfig } from '@/llm/types'
 import { classifyWithChain } from '@/nlp/matchChain'
 import { recordLearning } from '@/nlp/learningRules'
 import { callLLMBatch } from '@/llm/service'
+import { promptVersionKey } from '@/llm/promptVersion'
 import { db } from '@/db'
 import * as log from '@/utils/log'
 
@@ -59,7 +60,7 @@ const CACHE_TTL_MS = 90 * 24 * 60 * 60 * 1000 // 90 天
 
 async function lookupCache(merchant: string): Promise<{ category: string; confidence: number } | null> {
   try {
-    const entry = await db.classificationCache.get(merchant)
+    const entry = await db.classificationCache.get(promptVersionKey(merchant, 'batch'))
     if (entry && Date.now() - entry.updatedAt < CACHE_TTL_MS) {
       return { category: entry.category, confidence: entry.confidence }
     }
@@ -69,7 +70,7 @@ async function lookupCache(merchant: string): Promise<{ category: string; confid
 
 async function writeCache(merchant: string, category: string, confidence: number): Promise<void> {
   try {
-    await db.classificationCache.put({ merchant, category, confidence, updatedAt: Date.now() })
+    await db.classificationCache.put({ merchant: promptVersionKey(merchant, 'batch'), category, confidence, updatedAt: Date.now() })
   } catch (err) { log.warn('分类缓存写入失败', err) }
 }
 

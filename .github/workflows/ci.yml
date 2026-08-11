@@ -15,3 +15,26 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  # E2E：build + Playwright（mock LLM 拦截，零真实 API 调用，无需 secret）
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build          # webServer 是 vite preview，依赖 dist/
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

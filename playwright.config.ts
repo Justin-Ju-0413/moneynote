@@ -13,6 +13,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview -- --port 4173',
     port: 4173,
-    reuseExistingServer: true,
+    // 本地复用常驻 preview 省时；CI 强制新起，避免串到残留服务
+    reuseExistingServer: !process.env.CI,
   },
 })
