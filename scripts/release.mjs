@@ -117,7 +117,9 @@ if (!notes) {
 // ── 5–7. commit（仅全流程）→ tag → push → release ──
 
 // tag 防重：已存在则中止（避免重复打 tag 或覆盖旧 tag）
-if (run(`git rev-parse -q --verify refs/tags/v${target}`)) {
+// 注：rev-parse -q 在 tag 不存在时 exit 1，需 || true 兜底（这是预期分支）
+const existingTag = run(`git rev-parse -q --verify refs/tags/v${target} || true`)
+if (existingTag) {
   throw new Error(`tag v${target} 已存在（指向 ${run(`git rev-parse --short refs/tags/v${target}`)}），如需重发请先删除远端 tag`)
 }
 
