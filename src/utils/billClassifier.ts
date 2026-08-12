@@ -6,6 +6,7 @@ import { classifyWithChain } from '@/nlp/matchChain'
 import { recordLearning } from '@/nlp/learningRules'
 import { callLLMBatch } from '@/llm/service'
 import { promptVersionKey } from '@/llm/promptVersion'
+import { runPool, LLM_CONCURRENCY } from '@/utils/pool'
 import { db } from '@/db'
 import * as log from '@/utils/log'
 
@@ -161,33 +162,39 @@ export async function classifyBillRows(
       }
     }
 
-    // 2b: 未命中缓存的 → 按 BATCH_SIZE 分组批量调用 LLM
+    // 2b: 未命中缓存的 → 按 BATCH_SIZE 分组批量调用 LLM（C2-a 并发池，结果按下标回写）
     if (uncachedItems.length > 0) {
       if (options.onProgress) {
         options.onProgress({ phase: 'llm_batch', current: 0, total: uncachedItems.length })
       }
 
+      const batches: Array<{ items: Array<{ index: number; classifyText: string }> }> = []
       for (let batchStart = 0; batchStart < uncachedItems.length; batchStart += BATCH_SIZE) {
-        const batch = uncachedItems.slice(batchStart, batchStart + BATCH_SIZE)
-        const texts = batch.map(b => b.classifyText)
+        batches.push({ items: uncachedItems.slice(batchStart, batchStart + BATCH_SIZE) })
+      }
+
+      let done = 0
+      await runPool(batches, LLM_CONCURRENCY, async (batch) => {
+        const texts = batch.items.map(b => b.classifyText)
 
         try {
           const batchResult = await callLLMBatch(options.llmConfig!, texts)
 
           if (batchResult.error) {
             llmErrorDetail = batchResult.error
-            llmFailedCount += batch.length
+            llmFailedCount += batch.items.length
           } else {
-            for (let j = 0; j < batch.length; j++) {
+            for (let j = 0; j < batch.items.length; j++) {
               const r = batchResult.results[j]
+              const item = batch.items[j]
               if (r && r.confidence >= 0.7) {
-                transactions[batch[j].index].category = r.category
+                transactions[item.index].category = r.category
                 llmUsedCount++
                 // 写入缓存
-                await writeCache(batch[j].classifyText, r.category, r.confidence)
+                await writeCache(item.classifyText, r.category, r.confidence)
                 // LLM 高置信度结果沉淀为学习规则（失败仅告警，不得让整批计为失败）
                 try {
-                  await recordLearning(batch[j].classifyText, r.category, 'llm', r.confidence)
+                  await recordLearning(item.classifyText, r.category, 'llm', r.confidence)
                   learningCount++
                 } catch (err) {
                   log.warn('学习规则写入失败（账单导入）', err)
@@ -198,17 +205,18 @@ export async function classifyBillRows(
             }
           }
         } catch {
-          llmFailedCount += batch.length
+          llmFailedCount += batch.items.length
         }
 
+        done++
         if (options.onProgress) {
           options.onProgress({
             phase: 'llm_batch',
-            current: Math.min(batchStart + BATCH_SIZE, uncachedItems.length),
+            current: Math.min(done * BATCH_SIZE, uncachedItems.length),
             total: uncachedItems.length,
           })
         }
-      }
+      })
     }
   }
 

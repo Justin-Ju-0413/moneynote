@@ -140,4 +140,35 @@ describe('classificationCache prompt 版本化', () => {
     expect(result.cacheHitCount).toBe(0)
     expect(result.transactions[0].category).toBe('transport')
   })
+
+  it('并发池下 LLM 结果按位置正确回写（15 行 → 2 批次）', async () => {
+    // 15 行（BATCH_SIZE=10 → 2 批次）；AAA 商户 → food，BBB 商户 → transport
+    const rows: Array<{ source: 'alipay'; fields: Record<string, string> }> = []
+    for (let i = 0; i < 15; i++) {
+      const tag = i < 10 ? 'AAA' : 'BBB'
+      rows.push(...llmNeedingRow(`zzz商户${tag}${i}`))
+    }
+    // mock 按请求体内的文本内容逐项返回分类（不依赖调用顺序）
+    const textAwareFetch: FetchLike = (async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body))
+      const userMsg = body.messages[1].content as string
+      const items = userMsg.match(/"([^"]+)"/g)?.map((m: string) => m.slice(1, -1)) ?? []
+      const results = items.map((t: string) => ({
+        category: t.includes('AAA') ? 'food' : 'transport',
+        confidence: 0.9,
+      }))
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify(results) } }] }),
+      }
+    }) as unknown as FetchLike
+    reset = __setLLMTransport(textAwareFetch)
+
+    const result = await classifyBillRows(rows, { llmEnabled: true, llmConfig })
+    expect(result.llmUsedCount).toBe(15)
+    for (let i = 0; i < 15; i++) {
+      expect(result.transactions[i].category).toBe(i < 10 ? 'food' : 'transport')
+    }
+  })
 })

@@ -6,6 +6,7 @@ import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import { runLLMAudit } from '@/llm/service'
 import { promptVersionKey } from '@/llm/promptVersion'
+import { runPool, LLM_CONCURRENCY } from '@/utils/pool'
 import { hashKey } from '@/utils/hash'
 import type { AuditTask, AiSuggestion } from '@/llm/types'
 
@@ -98,23 +99,27 @@ export function useAIWorkspace() {
       }
       setProgress({ current: 0, total: chunks.length })
 
-      const all: AiSuggestion[] = []
+      // C2-a：并发池并行调 LLM（结果按下标回写，输出与串行一致；并发 2 避免限流风暴）
+      const all: AiSuggestion[][] = []
       let lastErr: string | undefined
-      for (let i = 0; i < chunks.length; i++) {
-        const { suggestions, error: err } = await runLLMAudit(config, chunks[i], task)
-        all.push(...suggestions)
+      let done = 0
+      await runPool(chunks, LLM_CONCURRENCY, async (chunk, i) => {
+        const { suggestions, error: err } = await runLLMAudit(config, chunk, task)
+        all[i] = suggestions
         if (err) lastErr = err
-        setProgress({ current: i + 1, total: chunks.length })
-      }
+        done++
+        setProgress({ current: done, total: chunks.length })
+      })
+      const flat = all.flat()
 
-      if (all.length > 0) {
-        await db.aiSuggestions.bulkAdd(all)
-        setLastCount(all.length)
+      if (flat.length > 0) {
+        await db.aiSuggestions.bulkAdd(flat)
+        setLastCount(flat.length)
         // 写缓存
         await db.auditCache.put({
           cacheKey,
           task,
-          suggestions: JSON.stringify(all),
+          suggestions: JSON.stringify(flat),
           txCount: txs.length,
           createdAt: Date.now(),
         })

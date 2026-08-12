@@ -51,15 +51,15 @@
 - Modify: `src/hooks/useAIWorkspace.ts`、`src/utils/billClassifier.ts`
 - Test: `src/utils/billClassifier.test.ts`
 
-- [ ] **Step 1: `src/utils/pool.ts`**：
+- [x] **Step 1: `src/utils/pool.ts`**：
   ```ts
   export async function runPool<T>(items: T[], concurrency: number, worker: (item: T, index: number) => Promise<void>): Promise<void>
   // 限流：最多 concurrency 个在飞；保序：worker 收到 index；单 worker 异常向上抛（调用方处理），其余继续；空数组直接返回
   ```
-- [ ] **Step 2: useAIWorkspace.ts** chunks 顺序循环 → `runPool(chunks, LLM_CONCURRENCY, ...)`（常量 2）；`all[i] = suggestions` 下标写回；进度按完成数
-- [ ] **Step 3: billClassifier.ts** 批次循环 → `runPool(batches, LLM_CONCURRENCY, ...)`；下标写回不变；进度按完成数
-- [ ] **Step 4: 测试** pool.test.ts（最大并发不超限 / 保序 / 单 worker 抛错不阻塞其余 / 空数组）；billClassifier.test.ts +1（并发下结果按位置正确回写）
-- [ ] **Step 5: 验证 + 提交** → commit `feat: C2-a LLM 并发池（runPool + AI 工作台/账单导入并行化）`，勾选本 Task + ROADMAP C2
+- [x] **Step 2: useAIWorkspace.ts** chunks 顺序循环 → `runPool(chunks, LLM_CONCURRENCY, ...)`（常量 2）；`all[i] = suggestions` 下标写回；进度按完成数
+- [x] **Step 3: billClassifier.ts** 批次循环 → `runPool(batches, LLM_CONCURRENCY, ...)`；下标写回不变；进度按完成数
+- [x] **Step 4: 测试** pool.test.ts（最大并发不超限 / 保序 / 单 worker 抛错不阻塞其余 / 空数组）；billClassifier.test.ts +1（并发下结果按位置正确回写）
+- [x] **Step 5: 验证 + 提交** → commit `feat: C2-a LLM 并发池（runPool + AI 工作台/账单导入并行化）`，勾选本 Task + ROADMAP C2
 
 ---
 
