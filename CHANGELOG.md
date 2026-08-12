@@ -2,6 +2,29 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 规范,版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.4.0] - 2026-08-12
+
+### Added
+
+- **AI 学习规则进化**（B 层）：
+  - 匹配增强：规则剥离渠道前缀后参与包含匹配（「财付通-美团」可命中「美团外卖」），单字规则防误命中，核心词最长优先
+  - 命中计量与效果可视化：每条规则记录累计命中/最近命中时间；设置页统计条「N 条规则 · 累计命中 X 次 · 约节省 X 次 LLM 调用」
+  - 冲突自愈：删除规则或改判分类时自动撤回已提炼的分类关键词；llm→manual 升级后学习计数重置为 1
+  - 冷规则清理：一键清理 180 天未命中的规则（确认后执行）
+  - 规则独立导出/导入：JSON 文件迁移学习习惯，导入跳过已存在规则（含隐私提示）
+- **E2E 进 CI**：quality + e2e 双 job，Playwright 失败自动上传报告
+- **发布自动化**：`node scripts/release.mjs`（版本 bump → CHANGELOG 校验 → tag → GitHub Release，`--publish` 支持保护分支）
+
+### Changed
+
+- **P1-4 AI 列映射并入 LLM 抽象层**：bill-analyzer 手写管道收敛为 mappingTask 描述符，对外 API 不变
+- **P1-3 Prompt 版本化**：分类/审计缓存键纳入 prompt 版本，改 prompt 自动失效旧缓存
+
+### Fixed
+
+- 学习规则删除/改判后分类关键词残留导致的分类冲突
+- 单字学习规则（如「餐」）误命中任意含该字文本
+
 ## [1.3.0] - 2026-08-11
 
 ### Added
