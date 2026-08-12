@@ -69,8 +69,8 @@
 - Modify: `src/utils/billClassifier.ts`
 - Test: `src/utils/billClassifier.test.ts`
 
-- [ ] **Step 1: 删 `ALIPAY_CATEGORY_MAP`**（L31-54，21 条重复，真源在 builtinTemplates.sourceCategoryMap）
-- [ ] **Step 2: 通用模板驱动分支**：替换 alipay 硬编码分支 + 死代码分支：
+- [x] **Step 1: 删 `ALIPAY_CATEGORY_MAP`**（L31-54，21 条重复，真源在 builtinTemplates.sourceCategoryMap）
+- [x] **Step 2: 通用模板驱动分支**：替换 alipay 硬编码分支 + 死代码分支：
   ```ts
   // 第一级：模板 sourceCategoryMap（来源方自带分类标签 → 内部分类，数据驱动）
   const scm = options.template?.sourceCategoryMap
@@ -81,8 +81,8 @@
   }
   ```
   template 缺失时退化走匹配链（'其他' → other 与现状等价）
-- [ ] **Step 3: 测试** +3（带 sourceCategoryMap 模板时映射生效 / 无 template 退化走匹配链 / columnIndex→normalizedHeader 解析正确）
-- [ ] **Step 4: 验证 + 提交** → commit `feat: C6 分类规则收敛（删 ALIPAY_CATEGORY_MAP 重复 + 修复死代码分支）`，勾选本 Task + ROADMAP C6
+- [x] **Step 3: 测试** +3（带 sourceCategoryMap 模板时映射生效 / 无 template 退化走匹配链 / columnIndex→normalizedHeader 解析正确）
+- [x] **Step 4: 验证 + 提交** → commit `feat: C6 分类规则收敛（删 ALIPAY_CATEGORY_MAP 重复 + 修复死代码分支）`，勾选本 Task + ROADMAP C6
 
 ---
 

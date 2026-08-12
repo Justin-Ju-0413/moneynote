@@ -60,7 +60,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 - [x] **C3 成本可观测**(原 P2 项) —— `llmChat` 返回补 usage → `aiUsage` 表(任务/模型/token/时间)→ 设置页月度消耗。流式 + 成本控制的前提
 - [ ] **C4 P1-8 结构化输出** —— batch/audit 已用 `json_object`,升级 `json_schema`(DeepSeek/OpenAI 均支持)消灭 `prompt.ts` 三层 fallback 解析损耗
 - [ ] **C5 P1-9 加密审计** —— 明确威胁模型:现 passphrase 硬编码 + 盐存 localStorage,防明文泄露够用、防本机读取不足。规划用户密码派生迁移(`decryptApiKey` 兼容分支可复用,渐进重加密)
-- [ ] **C6 分类规则收敛**(原 P2 项) —— 合并 `categoryMatcher` 与 `sourceCategoryMap` 两套规则;`filterRules` 暴露到 UI
+- [x] **C6 分类规则收敛**(原 P2 项，本批：删 ALIPAY_CATEGORY_MAP 重复 + 修复死代码分支；filterRules UI 记档后续批) —— 合并 `categoryMatcher` 与 `sourceCategoryMap` 两套规则;`filterRules` 暴露到 UI
 - [ ] **C7 泛化账单来源 + OCR 导入**(原 P2 项) —— `BillSource` 改 string + 内置模板数据驱动;`parseFileToGrid` 加 PDF/截图 OCR 分支,一次解决「导入来源硬编码」结构债
 
 ## D 层 · 北极星(长期,P3,愿景 v1.0)

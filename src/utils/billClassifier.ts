@@ -29,31 +29,6 @@ export type ClassifyProgress = {
   total: number
 }
 
-// 支付宝交易分类 → 内部分类映射
-const ALIPAY_CATEGORY_MAP: Record<string, string> = {
-  '餐饮美食': 'food',
-  '交通出行': 'transport',
-  '日用百货': 'shopping',
-  '服饰装扮': 'shopping',
-  '数码电器': 'shopping',
-  '美容美发': 'entertainment',
-  '运动健身': 'entertainment',
-  '休闲娱乐': 'entertainment',
-  '文化休闲': 'entertainment',
-  '酒店旅游': 'entertainment',
-  '住房缴费': 'housing',
-  '居家生活': 'housing',
-  '医疗健康': 'medical',
-  '教育培训': 'education',
-  '母婴亲子': 'shopping',
-  '商业服务': 'other',
-  '信用借还': 'other',
-  '转账红包': 'other',
-  '充值缴费': 'other',
-  '投资理财': 'other',
-  '其他': 'other',
-}
-
 const BATCH_SIZE = 10
 const CACHE_TTL_MS = 90 * 24 * 60 * 60 * 1000 // 90 天
 
@@ -119,15 +94,12 @@ export async function classifyBillRows(
 
     const classifyText = buildClassifyText(row, options.template)
 
-    // 第一级：支付宝交易分类映射（内置模板或模板的 sourceCategoryMap）
-    if (row.source === 'alipay') {
-      const alipayCat = row.fields['交易分类']
-      if (alipayCat && ALIPAY_CATEGORY_MAP[alipayCat]) {
-        tx.category = ALIPAY_CATEGORY_MAP[alipayCat]
-      }
-    } else if (options.template?.sourceCategoryMap) {
-      const scm = options.template.sourceCategoryMap
-      const catVal = row.fields[scm.columnIndex.toString()] || ''
+    // 第一级：模板 sourceCategoryMap（来源方自带分类标签 → 内部分类，数据驱动，C6 单一真源）
+    // 通用化：columnIndex → columnMappings 查 normalizedHeader → row.fields[header]（修复原死代码按列索引取值恒 undefined）
+    const scm = options.template?.sourceCategoryMap
+    if (scm && tx.category === 'other') {
+      const header = options.template?.columnMappings.find((m) => m.columnIndex === scm.columnIndex)?.normalizedHeader
+      const catVal = header ? row.fields[header] : ''
       if (catVal && scm.mapping[catVal]) {
         tx.category = scm.mapping[catVal]
       }
