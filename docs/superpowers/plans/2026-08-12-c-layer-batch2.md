@@ -78,11 +78,11 @@
 
 **背景**：crypto.ts `decryptApiKey` catch-all 返回 `''`（L77-85）；useLLMSettings.ts:29 无 try/catch——密文损坏时 API Key 静默清空且 UI 无从感知。测试锁定：legacy Base64 兼容（L34-39）、空串直返（L29-32）、encrypt 失败抛错（L41-45）。
 
-- [ ] **Step 1: 文档** `docs/specs/2026-08-12-crypto-threat-model.md`：威胁模型（硬编码 passphrase + 设备盐 localStorage 的防护边界——防明文泄露 ✓ / 防本机读取 ✗ / 防导库重放部分保护）+ D5 用户密码派生迁移路线（双密钥渐进重加密）
-- [ ] **Step 2: crypto.ts**：`decryptApiKey` 非 legacy 解密失败**抛错**（legacy atob 失败同样抛错）；空串直返保持；legacy 兼容分支保持
-- [ ] **Step 3: useLLMSettings.ts**：loadConfig 的 decrypt 包 try/catch → 失败时 `apiKey: ''` + `log.warn`（不卡 loading、可观测）
-- [ ] **Step 4: 测试** crypto.test.ts +2（损坏密文抛错 / 非 base64 抛错）；既有 6 用例全保持
-- [ ] **Step 5: 验证 + 提交** → commit `feat: C5 加密审计（威胁模型文档 + decrypt 失败显式化）`，勾选本 Task + ROADMAP C5
+- [x] **Step 1: 文档** `docs/specs/2026-08-12-crypto-threat-model.md`：威胁模型（硬编码 passphrase + 设备盐 localStorage 的防护边界——防明文泄露 ✓ / 防本机读取 ✗ / 防导库重放部分保护）+ D5 用户密码派生迁移路线（双密钥渐进重加密）
+- [x] **Step 2: crypto.ts**：`decryptApiKey` 非 legacy 解密失败**抛错**（legacy atob 失败同样抛错）；空串直返保持；legacy 兼容分支保持
+- [x] **Step 3: useLLMSettings.ts**：loadConfig 的 decrypt 包 try/catch → 失败时 `apiKey: ''` + `log.warn`（不卡 loading、可观测）
+- [x] **Step 4: 测试** crypto.test.ts +2（损坏密文抛错 / 非 base64 抛错）；既有 6 用例全保持
+- [x] **Step 5: 验证 + 提交** → commit `feat: C5 加密审计（威胁模型文档 + decrypt 失败显式化）`，勾选本 Task + ROADMAP C5
 
 ---
 
