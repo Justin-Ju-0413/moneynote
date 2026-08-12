@@ -129,3 +129,47 @@ describe('detectDuplicates', () => {
     expect(exact?.similarity).toBe(1)
   })
 })
+
+// ── C2-b 分桶优化 + 防御性同号守卫 ──
+
+describe('detectDuplicates 分桶与剪枝（C2-b）', () => {
+  it('跨零场景正确性锁定：正负金额混合时达标对仍发出（不变式文档化）', () => {
+    const txs = [
+      tx({ id: 1, amount: -2, note: '同备注', date: '2026-07-01' }),
+      tx({ id: 2, amount: 8, note: '同备注', date: '2026-07-01' }),
+      tx({ id: 3, amount: 10, note: '同备注', date: '2026-07-01' }),
+    ]
+    // fields ['amount','date']（n=2）：(8,10) amountSim=0.8 → (0.8+1)/2=0.9 ≥ 0.85
+    const strategy: DedupStrategy = { ...DEFAULT_DEDUP_STRATEGY, matchFields: ['amount', 'date'] }
+    const pairs = detectDuplicates(txs, strategy)
+    const pair = pairs.find((p) => p.entryAId === 2 && p.entryBId === 3)
+    expect(pair).toBeDefined()
+    expect(pair!.similarity).toBeCloseTo(0.9, 5)
+  })
+
+  it('SAME_MONTH 分桶：跨月对不比较，同月精确对发出', () => {
+    const txs = [
+      tx({ id: 1, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 2, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 3, amount: 28, note: '星巴克', date: '2026-08-01' }),
+    ]
+    const pairs = detectDuplicates(txs, DEFAULT_DEDUP_STRATEGY)
+    // (1,2) 同月三字段全等 → ①精确对发出；(3) 跨月不与任何比较
+    expect(pairs).toHaveLength(1)
+    expect(pairs[0].entryAId).toBe(1)
+    expect(pairs[0].entryBId).toBe(2)
+    expect(pairs[0].similarity).toBe(1)
+  })
+
+  it('null 窗口不分桶：跨月对也参与比较', () => {
+    const txs = [
+      tx({ id: 1, amount: 28, note: '星巴克', date: '2026-07-01' }),
+      tx({ id: 2, amount: 28, note: '星巴克', date: '2026-08-01' }),
+    ]
+    // date 不同 → 默认三字段策略不达标；用 amount+note（n=2）验证跨月比较确实发生
+    const strategy: DedupStrategy = { ...DEFAULT_DEDUP_STRATEGY, matchFields: ['amount', 'note'], timeWindow: null }
+    const pairs = detectDuplicates(txs, strategy)
+    expect(pairs).toHaveLength(1)
+    expect(pairs[0].similarity).toBe(1)
+  })
+})

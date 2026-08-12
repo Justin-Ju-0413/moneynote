@@ -77,11 +77,29 @@ export function calculateSimilarity(a: Transaction, b: Transaction, matchFields:
   return total / matchFields.length
 }
 
+// 时间窗桶键（C2-b 分桶：与 isInSameTimeWindow 语义一致；null 窗口返回空串 = 单桶全比较）
+function bucketKey(t: Transaction, window: DedupTimeWindow | null): string {
+  switch (window) {
+    case 'SAME_DAY': return t.date
+    case 'SAME_MONTH': return t.date.slice(0, 7)
+    case 'SAME_WEEK': {
+      const d = new Date(t.date)
+      return `${d.getFullYear()}-w${getWeekNumber(d)}`
+    }
+    case 'SAME_QUARTER': {
+      const d = new Date(t.date)
+      return `${d.getFullYear()}-q${Math.floor(d.getMonth() / 3) + 1}`
+    }
+    case 'SAME_YEAR': return t.date.slice(0, 4)
+    default: return ''
+  }
+}
+
 // 检测疑似重复对（纯逻辑，不写库）
 // 两阶段：① 硬去重快速路径 O(n)：按 amount|date|note 哈希分组，三字段全等的交易
 //           无论策略如何算相似度都是 1.0，直接成对发出，不进 O(n²) 模糊比较。
-//         ② 模糊去重 O(n²)：当 amount 参与匹配时按 amount 升序+提前剪枝，
-//           把 O(n²) 降到接近 O(n·桶)；并跳过已在①发出的精确重复对。
+//         ② 模糊去重：按时间窗键分桶（同窗口内才可能重复），桶内 amount 升序 + 同号剪枝，
+//           把 O(n²) 降到接近 O(Σ桶内²)；并跳过已在①发出的精确重复对。
 export function detectDuplicates(
   transactions: Transaction[],
   strategy: DedupStrategy = DEFAULT_DEDUP_STRATEGY,
@@ -116,38 +134,50 @@ export function detectDuplicates(
     }
   }
 
-  // ② 模糊去重：O(n²)，跳过精确重复对
-  const sorted = useAmountPrune
-    ? [...transactions].sort((a, b) => a.amount - b.amount)
-    : transactions
+  // ② 模糊去重：按时间窗分桶，桶内 amount 升序 + 同号剪枝，跳过精确重复对
+  const buckets = new Map<string, Transaction[]>()
+  for (const t of transactions) {
+    const key = bucketKey(t, strategy.timeWindow)
+    const bucket = buckets.get(key)
+    if (bucket) bucket.push(t)
+    else buckets.set(key, [t])
+  }
 
-  for (let i = 0; i < sorted.length; i++) {
-    for (let j = i + 1; j < sorted.length; j++) {
-      const a = sorted[i]
-      const b = sorted[j]
-      if (a.id === undefined || b.id === undefined) continue
+  for (const bucket of buckets.values()) {
+    const sorted = useAmountPrune
+      ? [...bucket].sort((a, b) => a.amount - b.amount)
+      : bucket
 
-      if (useAmountPrune) {
-        const amountSim = fieldSimilarity(a, b, 'amount')
-        // 即使其余字段全取 1 也达不到阈值 -> 跳过；amount 升序，后续差距更大，可提前终止
-        if ((amountSim + (n - 1)) / n < strategy.similarityThreshold) break
-      }
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        const a = sorted[i]
+        const b = sorted[j]
+        if (a.id === undefined || b.id === undefined) continue
 
-      // 精确重复已在①发出，跳过避免重复计算/重复发出
-      if (a.amount === b.amount && a.date === b.date && (a.note ?? '') === (b.note ?? '')) continue
+        if (useAmountPrune) {
+          const amountSim = fieldSimilarity(a, b, 'amount')
+          // 即使其余字段全取 1 也达不到阈值 -> 跳过。
+          // 同号守卫：仅同号区间 |a-b| 随升序单调（剪枝安全）；跨零/含 0 时 V 形非单调，
+          // 提前终止会漏掉本应达标的对（如 a=10, b=-2 触发 break 会漏掉后续 b'=8）
+          if (a.amount * b.amount > 0 && (amountSim + (n - 1)) / n < strategy.similarityThreshold) break
+        }
 
-      if (!isInSameTimeWindow(a.date, b.date, strategy.timeWindow)) continue
+        // 精确重复已在①发出，跳过避免重复计算/重复发出
+        if (a.amount === b.amount && a.date === b.date && (a.note ?? '') === (b.note ?? '')) continue
 
-      const similarity = calculateSimilarity(a, b, fields)
-      if (similarity >= strategy.similarityThreshold) {
-        pairs.push({
-          entryAId: a.id,
-          entryBId: b.id,
-          similarity,
-          status: 'PENDING',
-          action: null,
-          detectTime,
-        })
+        if (!isInSameTimeWindow(a.date, b.date, strategy.timeWindow)) continue
+
+        const similarity = calculateSimilarity(a, b, fields)
+        if (similarity >= strategy.similarityThreshold) {
+          pairs.push({
+            entryAId: a.id,
+            entryBId: b.id,
+            similarity,
+            status: 'PENDING',
+            action: null,
+            detectTime,
+          })
+        }
       }
     }
   }
