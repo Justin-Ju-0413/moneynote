@@ -53,3 +53,23 @@ describe('encryptApiKey / decryptApiKey', () => {
     expect(await decryptApiKey(b)).toBe(plain)
   })
 })
+
+// ── C5 加固：解密失败显式化 ──
+
+describe('decryptApiKey 失败显式化（C5）', () => {
+  beforeEach(() => store.clear())
+
+  it('非法 Base64 密文抛错(不再静默返回空串)', async () => {
+    await expect(decryptApiKey('!!!not-base64!!!')).rejects.toThrow('解密失败')
+  })
+
+  it('合法 Base64 但为 legacy 数据时仍兼容(legacy 优先于抛错)', async () => {
+    // 合法 Base64 一律按 legacy 裸明文读取（AES-GCM 失败的兜底契约，测试锁定）
+    const legacy = btoa('sk-legacy-key-2')
+    expect(await decryptApiKey(legacy)).toBe('sk-legacy-key-2')
+  })
+
+  it('空串仍直返(不抛错)', async () => {
+    expect(await decryptApiKey('')).toBe('')
+  })
+})

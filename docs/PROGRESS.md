@@ -52,6 +52,14 @@
 - **feat(import)** C6 分类规则收敛——删 `ALIPAY_CATEGORY_MAP`（与模板 sourceCategoryMap 逐字节重复）；通用模板驱动分支修复死代码（columnIndex → columnMappings 查 normalizedHeader → fields 取值），无模板时退化走匹配链
 - **记档后续批**：C1 Repository / C2-b（去重分桶、明细搜索分页）/ C4 json_schema（DeepSeek 不支持，需 provider 能力开关）/ C5 加密审计 / C7（BillSource string + OCR）
 
+### C 层第二批 · 去重与搜索性能 + 加密审计（C2-b + C5）
+
+> 见 `docs/superpowers/plans/2026-08-12-c-layer-batch2.md`。单测 247 → 258，E2E 6 spec 全绿。
+
+- **refactor(dedup)** C2-b-1 时间窗分桶——`detectDuplicates` 模糊阶段按窗口键分桶（O(n²)→桶内，SAME_DAY/MONTH/WEEK/QUARTER/YEAR/null）；防御性同号剪枝守卫（跨零保守继续比较）。**设计核查**：计划初稿「跨零漏对 bug」经数值验证为误报（j>i 不变式保证 b≥a，|b-a| 线性单调），已诚实修正定位为分桶优化 + 防御守卫
+- **feat(history)** C2-b-2 明细页筛选态分页 + 搜索防抖——`filterTransactions` 纯函数抽取（+5 单测）；筛选态 `.slice(0, visibleCount)` + 触底加载；300ms 防抖（输入即时渲染）
+- **feat(security)** C5 加密审计——威胁模型文档 `docs/specs/2026-08-12-crypto-threat-model.md`（防明文泄露 ✓ / 防本机读取 ✗ / 损坏显式化）+ D5 用户密码派生迁移路线；`decryptApiKey` 非法密文**抛错**（不再静默返回 ''），`useLLMSettings` try/catch 告警不卡 loading（+3 单测）
+
 ---
 
 ## 2026-08-05

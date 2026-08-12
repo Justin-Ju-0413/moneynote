@@ -80,7 +80,9 @@ export async function decryptApiKey(encryptedKey: string): Promise<string> {
     try {
       return atob(encryptedKey)
     } catch {
-      return ''
+      // C5 加固:解密失败显式化——不再静默返回 ''(静默会导致 API Key 丢失且用户无从感知),
+      // 由调用方(useLLMSettings)捕获并告警,引导重新输入
+      throw new Error('API Key 解密失败,请重新输入')
     }
   }
 }

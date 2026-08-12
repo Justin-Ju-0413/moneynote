@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db'
 import { encryptApiKey, decryptApiKey } from '@/llm/crypto'
 import { testLLMConnection } from '@/llm/service'
+import * as log from '@/utils/log'
 import type { LLMConfig } from '@/llm/types'
 
 export function useLLMSettings() {
@@ -26,7 +27,16 @@ export function useLLMSettings() {
       const privacyMode = map.get('llm.privacyMode') !== false // 默认 true
       const batchSize = (map.get('llm.batchSize') as number) || 30
 
-      const apiKey = encryptedKey ? await decryptApiKey(encryptedKey) : ''
+      // C5：解密失败显式化——捕获抛错（非法密文/盐丢失），apiKey 置空并告警，
+      // 不卡 loading（原 decrypt 静默返回 '' 会让用户无感知丢失 Key）
+      let apiKey = ''
+      if (encryptedKey) {
+        try {
+          apiKey = await decryptApiKey(encryptedKey)
+        } catch (err) {
+          log.warn('API Key 解密失败,请重新输入', err)
+        }
+      }
 
       setConfig({ enabled, endpoint, apiKey, model, maxTokens, temperature, timeout, privacyMode, batchSize })
       setIsLoading(false)
