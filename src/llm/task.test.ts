@@ -1,4 +1,6 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach } from 'vitest'
+import 'fake-indexeddb/auto'
+import { db } from '@/db'
 import { __setLLMTransport } from './client'
 import { runTask, type TaskDescriptor, type TaskContext } from './task'
 import type { LLMConfig } from './types'
@@ -141,5 +143,63 @@ describe('runTask', () => {
     reset = __setLLMTransport(contentFetch('ok'))
     await runTask(task, 'hi', { config, privacyMode: false })
     expect(seenPrivacy).toBe(false)
+  })
+})
+
+// ── C3 成本可观测：usage 透出 + 用量落表 ──
+
+describe('runTask usage（C3）', () => {
+  let reset: (() => void) | undefined
+  beforeEach(async () => {
+    await db.llmUsage.clear()
+  })
+  afterEach(() => { if (reset) { reset(); reset = undefined } })
+
+  const echoTask: TaskDescriptor<string, string> = {
+    name: 'echo',
+    buildMessages: (input) => [{ role: 'user', content: input }],
+    chatOptions: { maxTokens: 50, timeout: 1000 },
+    parse: (content) => content || null,
+  }
+
+  function usageFetch(usage?: Record<string, number>): FetchLike {
+    return (async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ message: { content: 'ok' } }],
+        ...(usage ? { usage } : {}),
+      }),
+    })) as unknown as FetchLike
+  }
+
+  it('usage 透出到 TaskRunResult', async () => {
+    reset = __setLLMTransport(usageFetch({ prompt_tokens: 7, completion_tokens: 3, total_tokens: 10 }))
+    const r = await runTask(echoTask, 'hi', ctx)
+    expect(r.result).toBe('ok')
+    expect(r.usage).toEqual({ promptTokens: 7, completionTokens: 3, totalTokens: 10 })
+  })
+
+  it('用量落表（task + model 记录正确）', async () => {
+    reset = __setLLMTransport(usageFetch({ prompt_tokens: 7, completion_tokens: 3, total_tokens: 10 }))
+    await runTask({ ...echoTask, name: 'audit' }, 'hi', ctx)
+    const rows = await db.llmUsage.toArray()
+    expect(rows).toHaveLength(1)
+    expect(rows[0].task).toBe('audit')
+    expect(rows[0].model).toBe('m')
+    expect(rows[0].totalTokens).toBe(10)
+    expect(rows[0].createdAt).toBeGreaterThan(0)
+  })
+
+  it('无 usage 时不落表（旧 provider 零影响）', async () => {
+    reset = __setLLMTransport(usageFetch())
+    await runTask(echoTask, 'hi', ctx)
+    expect(await db.llmUsage.count()).toBe(0)
+  })
+
+  it('errorKind 时不落表', async () => {
+    reset = __setLLMTransport(errorFetch(401))
+    await runTask(echoTask, 'hi', ctx)
+    expect(await db.llmUsage.count()).toBe(0)
   })
 })

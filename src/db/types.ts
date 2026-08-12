@@ -206,6 +206,17 @@ export interface LearningRule {
   lastHitAt?: number    // 最近命中时间戳（B3 计量；旧数据 undefined）
 }
 
+// LLM token 用量记录（C3 成本可观测）
+export interface LlmUsage {
+  id?: number
+  task: string          // 任务名（parse/batch/audit/chat/mapping）
+  model: string         // 模型名
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  createdAt: number
+}
+
 export interface AppDBSchema {
   transactions: EntityTable<Transaction, 'id'>
   categories: EntityTable<Category, 'id'>
@@ -221,6 +232,7 @@ export interface AppDBSchema {
   auditCache: EntityTable<AuditCache, 'cacheKey'>
   chatMessages: EntityTable<ChatMessage, 'id'>
   learningRules: EntityTable<LearningRule, 'id'>
+  llmUsage: EntityTable<LlmUsage, 'id'>
 }
 
 // NLP 解析结果

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from './index'
 
-// schema 契约单测:用 fake-indexeddb 在 node 环境验证 DB 打开、14 张表存在、
+// schema 契约单测:用 fake-indexeddb 在 node 环境验证 DB 打开、15 张表存在、
 // transactions CRUD、以及 [type+date] 复合索引的范围查询(月收支聚合依赖)。
 // 为未来 upgrade() 数据迁移提供测试地基(ROADMAP P1-6)。
 describe('schema 契约', () => {
@@ -10,7 +10,7 @@ describe('schema 契约', () => {
     await db.transactions.clear()
   })
 
-  it('db 打开并具备全部 14 张表', () => {
+  it('db 打开并具备全部 15 张表', () => {
     expect(db.transactions).toBeDefined()
     expect(db.categories).toBeDefined()
     expect(db.budgets).toBeDefined()
@@ -25,6 +25,21 @@ describe('schema 契约', () => {
     expect(db.auditCache).toBeDefined()
     expect(db.chatMessages).toBeDefined()
     expect(db.learningRules).toBeDefined()
+    expect(db.llmUsage).toBeDefined()
+  })
+
+  it('llmUsage 表可增删改查（C3 成本可观测）', async () => {
+    const id = await db.llmUsage.add({
+      task: 'audit', model: 'deepseek-v4-flash',
+      promptTokens: 10, completionTokens: 5, totalTokens: 15,
+      createdAt: 1000,
+    })
+    const row = await db.llmUsage.get(id)
+    expect(row?.totalTokens).toBe(15)
+    const byTime = await db.llmUsage.where('createdAt').between(0, 2000, true, true).toArray()
+    expect(byTime).toHaveLength(1)
+    await db.llmUsage.delete(id)
+    expect(await db.llmUsage.count()).toBe(0)
   })
 
   it('transactions CRUD', async () => {

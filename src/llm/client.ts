@@ -19,6 +19,8 @@ export interface LLMChatResult {
   errorKind?: LLMErrorKind
   /** 仅 errorKind === 'http' 时有值 */
   errorMessage?: string
+  /** token 用量(C3 成本可观测;provider 未返回 usage 时为 undefined) */
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
 }
 
 type FetchLike = typeof fetch
@@ -89,7 +91,12 @@ export async function llmChat(config: LLMConfig, opts: LLMChatOptions): Promise<
 
     const data = await response.json()
     const content = data.choices?.[0]?.message?.content
-    return { content: content ?? null }
+    // C3: 透出 token 用量(OpenAI 兼容响应含 usage;缺失则 undefined,零影响)
+    const u = data.usage
+    const usage = u && typeof u.prompt_tokens === 'number' && typeof u.completion_tokens === 'number'
+      ? { promptTokens: u.prompt_tokens, completionTokens: u.completion_tokens, totalTokens: u.total_tokens ?? u.prompt_tokens + u.completion_tokens }
+      : undefined
+    return { content: content ?? null, usage }
   } catch (err) {
     if (err instanceof DOMException && err.name === 'TimeoutError') {
       return { content: null, errorKind: 'timeout' }

@@ -153,3 +153,38 @@ describe('normalizeEndpoint', () => {
     expect(normalizeEndpoint('https://api.x.com///')).toBe('https://api.x.com')
   })
 })
+
+// ── C3 成本可观测：usage 透传 ──
+
+describe('llmChat usage（C3）', () => {
+  let reset: (() => void) | undefined
+  afterEach(() => { if (reset) { reset(); reset = undefined } })
+
+  it('响应含 usage 时解析到 LLMChatResult', async () => {
+    reset = __setLLMTransport(mockFetch({
+      body: {
+        choices: [{ message: { content: '{}' } }],
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+      },
+    }))
+    const r = await llmChat(config, { messages: [] })
+    expect(r.usage).toEqual({ promptTokens: 10, completionTokens: 5, totalTokens: 15 })
+  })
+
+  it('响应无 usage 时为 undefined（旧 provider 零影响）', async () => {
+    reset = __setLLMTransport(mockFetch({ body: { choices: [{ message: { content: '{}' } }] } }))
+    const r = await llmChat(config, { messages: [] })
+    expect(r.usage).toBeUndefined()
+  })
+
+  it('usage 缺 completion_tokens 时用总数回退', async () => {
+    reset = __setLLMTransport(mockFetch({
+      body: {
+        choices: [{ message: { content: '{}' } }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      },
+    }))
+    const r = await llmChat(config, { messages: [] })
+    expect(r.usage?.totalTokens).toBe(15)
+  })
+})
