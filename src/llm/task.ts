@@ -4,6 +4,7 @@
 import { llmChat, llmErrorMessage } from './client'
 import type { LLMChatOptions } from './client'
 import type { LLMConfig } from './types'
+import { recordLLMUsage } from './usage'
 
 type Message = { role: string; content: string }
 
@@ -36,6 +37,8 @@ export interface TaskDescriptor<I, O> {
 export interface TaskRunResult<O> {
   result: O | null
   error?: string
+  /** token 用量（C3 成本可观测；provider 未返回时为 undefined） */
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
 }
 
 export async function runTask<I, O>(
@@ -43,10 +46,13 @@ export async function runTask<I, O>(
   input: I,
   ctx: TaskContext,
 ): Promise<TaskRunResult<O>> {
-  const { content, errorKind, errorMessage } = await llmChat(ctx.config, {
+  const { content, errorKind, errorMessage, usage } = await llmChat(ctx.config, {
     messages: task.buildMessages(input, ctx),
     ...task.chatOptions,
   })
+
+  // C3 成本可观测：统一咽喉记录 token 用量（usage 为空 / 失败均内部隔离，零影响）
+  await recordLLMUsage(task.name, ctx.config.model, usage)
 
   // 1. 传输/配置/HTTP 错误 -> 回退(带 error)或上报 error
   if (errorKind) {
@@ -73,5 +79,5 @@ export async function runTask<I, O>(
       ? { result: task.fallback(input, ctx) }
       : { result: null, error: empty ? 'empty' : 'parse' }
   }
-  return { result: parsed }
+  return { result: parsed, usage }
 }

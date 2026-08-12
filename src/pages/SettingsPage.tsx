@@ -12,6 +12,7 @@ import { ColumnMappingDialog } from '@/components/input/ColumnMappingDialog'
 import { TemplateDetailDialog } from '@/components/input/TemplateDetailDialog'
 import { CategoryManager } from '@/components/settings/CategoryManager'
 import { LearningRulesManager } from '@/components/settings/LearningRulesManager'
+import { LLMUsage } from '@/components/settings/LLMUsage'
 import { LLM_PRESETS } from '@/llm/types'
 import { db, bulkImportTransactions } from '@/db'
 import type { BillTemplate, ColumnMapping, BackupRecord } from '@/db/types'
@@ -580,6 +581,9 @@ export function SettingsPage() {
               </p>
             </div>
           )}
+
+          {/* C3 成本可观测：本月 LLM 用量（本地记录） */}
+          <LLMUsage />
         </Card>
 
         {/* 数据备份 */}

@@ -16,6 +16,7 @@ export class AppDB extends Dexie {
   auditCache!: AppDBSchema['auditCache']
   chatMessages!: AppDBSchema['chatMessages']
   learningRules!: AppDBSchema['learningRules']
+  llmUsage!: AppDBSchema['llmUsage']
 
   constructor() {
     super('MoneyNoteDB')
@@ -83,6 +84,11 @@ export class AppDB extends Dexie {
     // updatedAt 索引供 listLearningRules() 按最近更新排序（管理 UI 用）
     this.version(12).stores({
       learningRules: '++id, merchant, updatedAt',
+    })
+
+    // v13: LLM token 用量记录（C3 成本可观测；runTask 统一写入，设置页月度聚合）
+    this.version(13).stores({
+      llmUsage: '++id, createdAt',
     })
 
     // ── 迁移框架说明 ──
