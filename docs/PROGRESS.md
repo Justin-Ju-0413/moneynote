@@ -43,6 +43,15 @@
 - **feat(nlp)** B4 独立导出/导入——`exportLearningRules`/`importLearningRules`（JSON v1，merchant 已存在**跳过**，非法行跳过计数）；设置页导出/导入按钮 + 隐私提示
 - **fix(e2e)** 新增 JSON 导入 input 与 CSV 导入 input 选择器二义性，import.spec 定位器按 accept 收窄
 
+### C 层第一批 · AI 效率与成本（C3 + C2-a + C6）
+
+> 见 `docs/superpowers/plans/2026-08-12-c-layer-efficiency.md`。单测 230 → 247，E2E 6 spec 全绿。
+
+- **feat(llm)** C3 成本可观测——`llmChat` 解析 `data.usage` 透传；`llmUsage` 表（DB v13）；`runTask` 统一咽喉记录（parse/batch/audit/chat/mapping 全覆盖，usage 缺失零影响）；设置页「本月 LLM 用量」展示（调用次数/输入/输出 tokens）+ 90 天惰性清理
+- **feat(perf)** C2-a LLM 并发池——`runPool` 工具（限流 2 + 保序回调 + 异常隔离）；AI 工作台分块与账单导入批次并行化（结果按下标回写，输出与串行一致）
+- **feat(import)** C6 分类规则收敛——删 `ALIPAY_CATEGORY_MAP`（与模板 sourceCategoryMap 逐字节重复）；通用模板驱动分支修复死代码（columnIndex → columnMappings 查 normalizedHeader → fields 取值），无模板时退化走匹配链
+- **记档后续批**：C1 Repository / C2-b（去重分桶、明细搜索分页）/ C4 json_schema（DeepSeek 不支持，需 provider 能力开关）/ C5 加密审计 / C7（BillSource string + OCR）
+
 ---
 
 ## 2026-08-05
