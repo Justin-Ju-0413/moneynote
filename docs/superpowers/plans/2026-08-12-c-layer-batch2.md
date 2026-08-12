@@ -50,7 +50,7 @@
 
 **背景**：HistoryPage.tsx:54-75 筛选态全量 toArray + 内存 filter **不 limit**；L93-104 IntersectionObserver 仅无筛选态启用；每键全量重扫。
 
-- [ ] **Step 1: `src/utils/transactionFilter.ts`**：
+- [x] **Step 1: `src/utils/transactionFilter.ts`**：
   ```ts
   export interface FilterOptions {
     search?: string
@@ -60,12 +60,12 @@
   export function filterTransactions(txs: Transaction[], opts: FilterOptions): Transaction[]
   // note 子串 / 分类名 / 金额字符串匹配（大小写归一）；search 空 + category 空 → 全量
   ```
-- [ ] **Step 2: `HistoryPage.tsx`**：
+- [x] **Step 2: `HistoryPage.tsx`**：
   - 筛选态：`filterTransactions(all, { search, category: filterCategory, getCategoryName: (id) => getInfo(id).name }).slice(0, visibleCount)`
   - IntersectionObserver：isFiltering 分支同样启用（终止约定 `transactions.length >= visibleCount` 复用）
   - 搜索防抖：`searchInput` state（输入框即时渲染）→ 300ms debounce（useRef 定时器）→ `setSearch` + `setVisibleCount(PAGE_SIZE)`
-- [ ] **Step 3: 测试** `transactionFilter.test.ts` +5（note 子串 / 分类名 / 金额 / 分类过滤 / 空搜索全量）
-- [ ] **Step 4: 验证 + 提交** → commit `feat: C2-b 明细页筛选态分页 + 搜索防抖（纯函数过滤）`，勾选本 Task
+- [x] **Step 3: 测试** `transactionFilter.test.ts` +5（note 子串 / 分类名 / 金额 / 分类过滤 / 空搜索全量）
+- [x] **Step 4: 验证 + 提交** → commit `feat: C2-b 明细页筛选态分页 + 搜索防抖（纯函数过滤）`，勾选本 Task
 
 ---
 

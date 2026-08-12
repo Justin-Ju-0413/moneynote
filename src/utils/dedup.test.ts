@@ -6,7 +6,7 @@ import {
   detectDuplicates,
   DEFAULT_DEDUP_STRATEGY,
 } from './dedup'
-import type { Transaction } from '@/db/types'
+import type { DedupStrategy, Transaction } from '@/db/types'
 
 function tx(over: Partial<Transaction> & { id: number }): Transaction {
   return { amount: 10, category: 'food', date: '2026-07-01', type: 'expense', createdAt: 0, updatedAt: 0, ...over }
