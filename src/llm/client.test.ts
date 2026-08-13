@@ -143,6 +143,12 @@ describe('normalizeEndpoint', () => {
     expect(normalizeEndpoint('https://dashscope.aliyuncs.com/compatible-mode/v1'))
       .toBe('https://dashscope.aliyuncs.com/compatible-mode')
   })
+  it('OpenCode Go 多段路径 + /v1 归一化后拼回正确 chat/completions', () => {
+    // 预设 endpoint https://opencode.ai/zen/go/v1 → 归一化 → 拼 /v1/chat/completions
+    expect(normalizeEndpoint('https://opencode.ai/zen/go/v1')).toBe('https://opencode.ai/zen/go')
+    expect(`${normalizeEndpoint('https://opencode.ai/zen/go/v1')}/v1/chat/completions`)
+      .toBe('https://opencode.ai/zen/go/v1/chat/completions')
+  })
   it('trim 首尾空白', () => {
     expect(normalizeEndpoint('  https://api.x.com  ')).toBe('https://api.x.com')
   })

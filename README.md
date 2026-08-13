@@ -80,7 +80,7 @@ npm run lint
 npm test
 ```
 
-> AI 配置在「设置」页：选服务商预设（DeepSeek / OpenAI / 通义千问 / 自定义），填 API Key 与模型。
+> AI 配置在「设置」页：选服务商预设（DeepSeek / OpenAI / 通义千问 / OpenCode Go / 自定义），填 API Key 与模型。
 > 未配置时 AI 工作台自动回退到本地启发式规则，不影响基础使用。
 
 ### No-API-Key demo / 无 Key 演示
