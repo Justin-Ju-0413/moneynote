@@ -7,6 +7,8 @@ import { Dialog } from '@/components/ui/Dialog'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useToast } from '@/components/ui/toast-context'
 import { useCategories } from '@/hooks/useCategories'
+import { getTransactionsByTypeInRange } from '@/db/repos/transactions'
+import { computeRangeStats } from '@/db/repos/stats'
 import { db } from '@/db'
 import dayjs from 'dayjs'
 
@@ -19,16 +21,16 @@ export function BudgetPage() {
   const budgets = useLiveQuery(() => db.budgets.toArray())
   const { expenseCategories, getInfo } = useCategories()
 
-  // 本月各分类支出
-  const monthSpending = useLiveQuery(async () => {
+  // 本月各分类支出（走 [type+date] 索引 + 纯函数聚合）
+  const monthSpending = useLiveQuery(async (): Promise<Record<string, number>> => {
     const start = dayjs().startOf('month').format('YYYY-MM-DD')
     const end = dayjs().endOf('month').format('YYYY-MM-DD')
-    const txs = await db.transactions.where('date').between(start, end, true, true).toArray()
-    return txs.filter(t => t.type === 'expense').reduce<Record<string, number>>((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount
-      acc['total'] = (acc['total'] || 0) + t.amount
-      return acc
-    }, {} as Record<string, number>)
+    const txs = await getTransactionsByTypeInRange('expense', start, end)
+    const byCategory = computeRangeStats(txs).byCategory
+    return {
+      ...byCategory,
+      total: txs.reduce((s, t) => s + t.amount, 0),
+    }
   })
 
   const budgetsList = budgets || []

@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db'
 import type { DedupAction, DedupRecord, Transaction } from '@/db/types'
 import { detectDuplicates, DEFAULT_DEDUP_STRATEGY } from '@/utils/dedup'
+import { getAllTransactions } from '@/db/repos/transactions'
 
 // 模糊去重审核 hook
 export function useDedup() {
@@ -11,7 +12,7 @@ export function useDedup() {
   ) ?? []) as DedupRecord[]
 
   // 所有交易 id -> Transaction 映射（供 UI 展示重复对）
-  const transactions = (useLiveQuery(() => db.transactions.toArray()) ?? []) as Transaction[]
+  const transactions = (useLiveQuery(() => getAllTransactions()) ?? []) as Transaction[]
   const txMap = new Map(transactions.map((t) => [t.id as number, t]))
 
   // 确保默认策略存在
@@ -26,7 +27,7 @@ export function useDedup() {
   // 运行查重：清掉旧 PENDING，写入新检测到的重复对
   const detect = useCallback(async (): Promise<number> => {
     await ensureDefaultStrategy()
-    const allTxs = await db.transactions.toArray()
+    const allTxs = await getAllTransactions()
     const records = detectDuplicates(allTxs)
 
     await db.transaction('rw', db.dedupRecords, async () => {

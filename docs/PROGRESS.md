@@ -60,6 +60,16 @@
 - **feat(history)** C2-b-2 明细页筛选态分页 + 搜索防抖——`filterTransactions` 纯函数抽取（+5 单测）；筛选态 `.slice(0, visibleCount)` + 触底加载；300ms 防抖（输入即时渲染）
 - **feat(security)** C5 加密审计——威胁模型文档 `docs/specs/2026-08-12-crypto-threat-model.md`（防明文泄露 ✓ / 防本机读取 ✗ / 损坏显式化）+ D5 用户密码派生迁移路线；`decryptApiKey` 非法密文**抛错**（不再静默返回 ''），`useLLMSettings` try/catch 告警不卡 loading（+3 单测）
 
+### C1 · Repository / 状态层（C 层最后一批）
+
+> 见 `docs/superpowers/plans/2026-08-12-c1-repository.md`。单测 258 → 267，E2E 6 spec 全绿。
+
+- **feat(db)** repository 层 `src/db/repos/`：transactions（recent/date range/全量/type+date range/add/update/delete/countByCategory）+ categories + stats 纯函数（`computeRangeStats` 从 useStats useMemo 提取、`sumAmount`），+9 单测
+- **refactor(hooks)** 6 hook 收口：useTransactions（删死代码 `getTransactionsByDateRange`，repo 保留）/ useStats / useCategories / useChat buildContext（5 次 db 访问 → repo）/ useDedup / useAIWorkspace 全表改调 `getAllTransactions`
+- **refactor(pages)** 4 页面收口：BudgetPage（type+date 索引 + 纯函数聚合，删页面内重复 reduce）/ HistoryPage / AIWorkspacePage / SettingsPage
+- **净效果**：transactions 全量 toArray 6 处 → repo 单入口；月收支统计 4 份重复实现 → `computeRangeStats` 单一真源；为 D 层同步提供统一数据访问边界
+- **记档**：C7（BillSource string + OCR）；budgets/settings/chatMessages 等单 hook 专属表 repo 化留待 D 层同步时统一
+
 ---
 
 ## 2026-08-05

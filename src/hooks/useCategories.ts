@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/db'
+import { getCategories, addCategory, updateCategory, deleteCategory } from '@/db/repos/categories'
+import { countTransactionsByCategory } from '@/db/repos/transactions'
 import type { Category } from '@/db/types'
 import { CATEGORY_MAP } from '@/utils/constants'
 
@@ -15,7 +16,7 @@ const EMPTY_CATEGORIES: Category[] = []
 // 分类统一入口：从 db.categories 动态读取，库未就绪时回退 CATEGORY_MAP 兜底，避免白屏。
 // 阶段 2 用此 hook 替换散落各处的 CATEGORY_MAP 直接访问，使自定义分类全局生效。
 export function useCategories() {
-  const categories = useLiveQuery(() => db.categories.toArray(), [], EMPTY_CATEGORIES) as Category[]
+  const categories = useLiveQuery(() => getCategories(), [], EMPTY_CATEGORIES) as Category[]
 
   const byId = useMemo(() => {
     const map = new Map<string, Category>()
@@ -40,21 +41,21 @@ export function useCategories() {
     [categories],
   )
 
-  const addCategory = useCallback(async (data: Omit<Category, 'isBuiltIn'>) => {
-    return db.categories.add({ ...data, isBuiltIn: false } as Category)
+  const add = useCallback(async (data: Omit<Category, 'isBuiltIn'>) => {
+    return addCategory(data)
   }, [])
 
-  const updateCategory = useCallback(async (id: string, data: Partial<Category>) => {
-    return db.categories.update(id, data)
+  const update = useCallback(async (id: string, data: Partial<Category>) => {
+    return updateCategory(id, data)
   }, [])
 
-  const deleteCategory = useCallback(async (id: string) => {
-    return db.categories.delete(id)
+  const remove = useCallback(async (id: string) => {
+    await deleteCategory(id)
   }, [])
 
   // 该分类是否被交易在用（删除前检查）
   const isCategoryInUse = useCallback(async (id: string) => {
-    const count = await db.transactions.where('category').equals(id).count()
+    const count = await countTransactionsByCategory(id)
     return count > 0
   }, [])
 
@@ -64,9 +65,9 @@ export function useCategories() {
     getInfo,
     expenseCategories,
     incomeCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
+    addCategory: add,
+    updateCategory: update,
+    deleteCategory: remove,
     isCategoryInUse,
   }
 }
