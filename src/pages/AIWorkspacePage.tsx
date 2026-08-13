@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/toast-context'
 import { useAIWorkspace } from '@/hooks/useAIWorkspace'
 import { useLLMSettings } from '@/hooks/useLLMSettings'
 import { db } from '@/db'
+import { getAllTransactions } from '@/db/repos/transactions'
 import type { Transaction } from '@/db/types'
 import { useCategories } from '@/hooks/useCategories'
 import type { AuditTask, AiSuggestion, SuggestionType } from '@/llm/types'
@@ -57,7 +58,7 @@ export function AIWorkspacePage() {
     privacyMode,
   } = useAIWorkspace()
 
-  const transactions = useLiveQuery(() => db.transactions.toArray()) ?? EMPTY_TRANSACTIONS
+  const transactions = useLiveQuery(() => getAllTransactions()) ?? EMPTY_TRANSACTIONS
   const txCount = transactions.length
   const txMap = useMemo(
     () => new Map(transactions.map((t) => [t.id as number, t])),

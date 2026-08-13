@@ -63,10 +63,10 @@
 
 **Files:** Modify: `BudgetPage.tsx`、`HistoryPage.tsx`、`AIWorkspacePage.tsx`、`SettingsPage.tsx`
 
-- [ ] **Step 1: BudgetPage**：monthSpending 改调 `getTransactionsByTypeInRange` + `computeRangeStats(txs).byCategory`（删页面内重复聚合）
-- [ ] **Step 2: HistoryPage**：分页 live 改调 repo（筛选态 `getAllTransactions` / 非筛选 `getRecentTransactions(visibleCount)`）
-- [ ] **Step 3: AIWorkspacePage**：全表 live 改调 `getAllTransactions`
-- [ ] **Step 4: SettingsPage**：导出用全表 live 改调 `getAllTransactions`
+- [x] **Step 1: BudgetPage**：monthSpending 改调 `getTransactionsByTypeInRange` + `computeRangeStats(txs).byCategory`（删页面内重复聚合）
+- [x] **Step 2: HistoryPage**：分页 live 改调 repo（筛选态 `getAllTransactions` / 非筛选 `getRecentTransactions(visibleCount)`）
+- [x] **Step 3: AIWorkspacePage**：全表 live 改调 `getAllTransactions`
+- [x] **Step 4: SettingsPage**：导出用全表 live 改调 `getAllTransactions`
 - [x] **Step 5: 验证 + 提交** → commit `refactor: C1 页面收口 repository（4 页面去直接 db 访问）`，勾选本 Task + ROADMAP C1
 
 ---

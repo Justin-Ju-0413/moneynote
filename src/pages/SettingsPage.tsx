@@ -15,6 +15,7 @@ import { LearningRulesManager } from '@/components/settings/LearningRulesManager
 import { LLMUsage } from '@/components/settings/LLMUsage'
 import { LLM_PRESETS } from '@/llm/types'
 import { db, bulkImportTransactions } from '@/db'
+import { getAllTransactions } from '@/db/repos/transactions'
 import type { BillTemplate, ColumnMapping, BackupRecord } from '@/db/types'
 import { exportToCSV, exportToJSON, downloadFile } from '@/utils/export'
 import { parseBillFile, SOURCE_LABELS } from '@/utils/import'
@@ -75,7 +76,7 @@ export function SettingsPage() {
     setFormInitialized(true)
   }
 
-  const transactions = useLiveQuery(() => db.transactions.toArray()) || []
+  const transactions = useLiveQuery(() => getAllTransactions()) || []
   const transactionCount = transactions.length
   const cacheCount = useLiveQuery(() => db.classificationCache.count()) ?? 0
   const parseCacheCount = useLiveQuery(() => db.parseCache.count()) ?? 0

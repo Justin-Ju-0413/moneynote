@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/toast-context'
 import { db } from '@/db'
 import { recordLearning } from '@/nlp/learningRules'
 import { filterTransactions } from '@/utils/transactionFilter'
+import { getAllTransactions, getRecentTransactions } from '@/db/repos/transactions'
 import * as log from '@/utils/log'
 import type { Transaction, DedupRecord } from '@/db/types'
 
@@ -59,14 +60,14 @@ export function HistoryPage() {
   const transactions = useLiveQuery(
     async () => {
       if (isFiltering) {
-        const all = await db.transactions.orderBy('date').reverse().toArray()
+        const all = await getAllTransactions()
         return filterTransactions(all, {
           search,
           category: filterCategory,
           getCategoryName: (id) => getInfo(id).name,
         }).slice(0, visibleCount)
       }
-      return db.transactions.orderBy('date').reverse().limit(visibleCount).toArray()
+      return getRecentTransactions(visibleCount)
     },
     [isFiltering, search, filterCategory, visibleCount, getInfo],
   ) ?? EMPTY_TRANSACTIONS
