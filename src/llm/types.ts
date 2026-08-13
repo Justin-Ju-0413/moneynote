@@ -57,10 +57,11 @@ export interface AiSuggestion {
 }
 
 export const LLM_PRESETS: ProviderPreset[] = [
-  { name: 'openai',   endpoint: 'https://api.openai.com',                          models: ['gpt-4.1-nano', 'gpt-4o-mini', 'gpt-4o'], label: 'OpenAI' },
-  { name: 'deepseek', endpoint: 'https://api.deepseek.com',                        models: ['deepseek-v4-flash', 'deepseek-v4-pro'], label: 'DeepSeek' },
-  { name: 'qwen',     endpoint: 'https://dashscope.aliyuncs.com/compatible-mode',  models: ['qwen3.5-flash', 'qwen-turbo', 'qwen-plus'], label: '通义千问' },
-  { name: 'custom',   endpoint: '',                                                models: [],                                  label: '自定义' },
+  { name: 'openai',      endpoint: 'https://api.openai.com',                          models: ['gpt-4.1-nano', 'gpt-4o-mini', 'gpt-4o'], label: 'OpenAI' },
+  { name: 'deepseek',    endpoint: 'https://api.deepseek.com',                        models: ['deepseek-v4-flash', 'deepseek-v4-pro'], label: 'DeepSeek' },
+  { name: 'qwen',        endpoint: 'https://dashscope.aliyuncs.com/compatible-mode',  models: ['qwen3.5-flash', 'qwen-turbo', 'qwen-plus'], label: '通义千问' },
+  { name: 'opencode-go', endpoint: 'https://opencode.ai/zen/go/v1',                   models: ['opencode-go/deepseek-v4-flash', 'opencode-go/deepseek-v4-pro', 'opencode-go/kimi-k3', 'opencode-go/qwen3.8-max'], label: 'OpenCode Go' },
+  { name: 'custom',      endpoint: '',                                                models: [],                                  label: '自定义' },
 ]
 
 // 合法分类白名单：支出与收入分开，category 必须与 transaction.type 匹配
