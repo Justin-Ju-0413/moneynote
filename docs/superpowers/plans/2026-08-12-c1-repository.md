@@ -50,12 +50,12 @@
 
 **Files:** Modify: `useTransactions.ts`、`useStats.ts`、`useCategories.ts`、`useChat.ts`、`useDedup.ts`、`useAIWorkspace.ts`
 
-- [ ] **Step 1: useTransactions**：live 改调 repo（recent(10) / type+date×3）；写改调 repo；hook 不再暴露死代码 `getTransactionsByDateRange`
-- [ ] **Step 2: useStats**：live 改调 `getTransactionsByDateRange`；useMemo 换 `computeRangeStats`
-- [ ] **Step 3: useCategories**：live 改调 `getCategories`；写 + `isCategoryInUse` 改调 repo
-- [ ] **Step 4: useChat**：`buildContext` 5 次 db 访问改调 repo
-- [ ] **Step 5: useDedup / useAIWorkspace**：全表改调 `getAllTransactions`
-- [ ] **Step 6: 验证 + 提交** → commit `refactor: C1 hook 收口 repository（6 hook 去直接 db 访问）`，勾选本 Task
+- [x] **Step 1: useTransactions**：live 改调 repo（recent(10) / type+date×3）；写改调 repo；hook 不再暴露死代码 `getTransactionsByDateRange`
+- [x] **Step 2: useStats**：live 改调 `getTransactionsByDateRange`；useMemo 换 `computeRangeStats`
+- [x] **Step 3: useCategories**：live 改调 `getCategories`；写 + `isCategoryInUse` 改调 repo
+- [x] **Step 4: useChat**：`buildContext` 5 次 db 访问改调 repo
+- [x] **Step 5: useDedup / useAIWorkspace**：全表改调 `getAllTransactions`
+- [x] **Step 6: 验证 + 提交** → commit `refactor: C1 hook 收口 repository（6 hook 去直接 db 访问）`，勾选本 Task
 
 ---
 

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/db'
+import { getTransactionsByDateRange } from '@/db/repos/transactions'
+import { computeRangeStats } from '@/db/repos/stats'
 import dayjs from 'dayjs'
 import type { PeriodType } from '@/utils/constants'
 
@@ -22,47 +23,13 @@ export function useStats() {
   const transactions = useLiveQuery(
     async () => {
       const [start, end] = dateRange
-      return db.transactions.where('date').between(start, end, true, true).toArray()
+      return getTransactionsByDateRange(start, end)
     },
     [dateRange[0], dateRange[1]],
     [],
   )
 
-  const stats = useMemo(() => {
-    const expenses = transactions.filter(t => t.type === 'expense')
-    const incomes = transactions.filter(t => t.type === 'income')
-    const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0)
-    const totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0)
-
-    // 按分类统计（支出）
-    const byCategory = expenses.reduce<Record<string, number>>((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount
-      return acc
-    }, {})
-
-    // 按分类统计（收入）
-    const byCategoryIncome = incomes.reduce<Record<string, number>>((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount
-      return acc
-    }, {})
-
-    // 按日期统计（支出趋势）
-    const byDate = expenses.reduce<Record<string, number>>((acc, t) => {
-      acc[t.date] = (acc[t.date] || 0) + t.amount
-      return acc
-    }, {})
-
-    return {
-      totalExpense,
-      totalIncome,
-      netIncome: totalIncome - totalExpense,
-      byCategory,
-      byCategoryIncome,
-      byDate,
-      count: expenses.length,
-      incomeCount: incomes.length,
-    }
-  }, [transactions])
+  const stats = useMemo(() => computeRangeStats(transactions), [transactions])
 
   const navigateDate = (direction: number) => {
     setCurrentDate(prev => {

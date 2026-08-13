@@ -6,6 +6,8 @@ import { runChat } from '@/llm/service'
 import type { ChatContext, ChatIntentResult } from '@/llm/chatPrompt'
 import { parseInput } from '@/nlp'
 import { recordLearning } from '@/nlp/learningRules'
+import { getRecentTransactions, getTransactionsByTypeInRange } from '@/db/repos/transactions'
+import { getCategories } from '@/db/repos/categories'
 import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import type { ChatMessage, ChatCard, ParsedTransaction } from '@/db/types'
@@ -22,16 +24,13 @@ async function buildContext(): Promise<ChatContext> {
   const lastMonthEnd = now.subtract(1, 'month').endOf('month').format('YYYY-MM-DD')
   const today = now.format('YYYY-MM-DD')
 
-  const recent = await db.transactions.orderBy('date').reverse().limit(20).toArray()
-  const cats = await db.categories.toArray()
+  const recent = await getRecentTransactions(20)
+  const cats = await getCategories()
   const categoryMap: Record<string, string> = {}
   for (const c of cats) categoryMap[c.id] = c.name
 
   // 本月支出:一次索引查询同时算月总、分类汇总、今日支出
-  const monthExpenseTx = await db.transactions
-    .where('[type+date]')
-    .between(['expense', monthStart], ['expense', monthEnd], true, true)
-    .toArray()
+  const monthExpenseTx = await getTransactionsByTypeInRange('expense', monthStart, monthEnd)
   let monthExpense = 0
   let todayExpense = 0
   const monthCategorySums: Record<string, number> = {}
@@ -42,18 +41,12 @@ async function buildContext(): Promise<ChatContext> {
   }
 
   // 本月收入
-  const monthIncome = (await db.transactions
-    .where('[type+date]')
-    .between(['income', monthStart], ['income', monthEnd], true, true)
-    .toArray()
-  ).reduce((s, t) => s + t.amount, 0)
+  const monthIncome = (await getTransactionsByTypeInRange('income', monthStart, monthEnd))
+    .reduce((s, t) => s + t.amount, 0)
 
   // 上月支出
-  const lastMonthExpense = (await db.transactions
-    .where('[type+date]')
-    .between(['expense', lastMonthStart], ['expense', lastMonthEnd], true, true)
-    .toArray()
-  ).reduce((s, t) => s + t.amount, 0)
+  const lastMonthExpense = (await getTransactionsByTypeInRange('expense', lastMonthStart, lastMonthEnd))
+    .reduce((s, t) => s + t.amount, 0)
 
   return { recentTransactions: recent, monthExpense, monthIncome, lastMonthExpense, todayExpense, monthCategorySums, categoryMap }
 }

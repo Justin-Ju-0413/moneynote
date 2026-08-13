@@ -7,6 +7,7 @@ import { useLLMSettings } from './useLLMSettings'
 import { runLLMAudit } from '@/llm/service'
 import { promptVersionKey } from '@/llm/promptVersion'
 import { runPool, LLM_CONCURRENCY } from '@/utils/pool'
+import { getAllTransactions } from '@/db/repos/transactions'
 import { hashKey } from '@/utils/hash'
 import type { AuditTask, AiSuggestion } from '@/llm/types'
 
@@ -59,7 +60,7 @@ export function useAIWorkspace() {
     setCachedHit(false)
     setProgress(null)
     try {
-      let txs = await db.transactions.toArray()
+      let txs = await getAllTransactions()
       if (task === 'analyzeMonth') {
         txs = txs.filter((t) => t.date.startsWith(selectedMonth))
       }

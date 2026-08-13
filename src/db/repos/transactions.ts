@@ -33,12 +33,12 @@ export function getTransactionsByTypeInRange(
 
 export async function addTransaction(
   data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>,
-): Promise<number> {
+): Promise<number | undefined> {
   const now = Date.now()
   return db.transactions.add({ ...data, createdAt: now, updatedAt: now })
 }
 
-export async function updateTransaction(id: number, data: Partial<Transaction>): Promise<number> {
+export async function updateTransaction(id: number, data: Partial<Transaction>): Promise<number | undefined> {
   return db.transactions.update(id, { ...data, updatedAt: Date.now() })
 }
 

@@ -73,8 +73,8 @@ describe('repos/transactions', () => {
 
   it('updateTransaction 补 updatedAt', async () => {
     const id = await addTransaction({ amount: 5, date: '2026-07-01', type: 'expense', category: 'food', note: 'x' })
-    await updateTransaction(id, { amount: 8 })
-    const row = await db.transactions.get(id)
+    await updateTransaction(id!, { amount: 8 })
+    const row = await db.transactions.get(id!)
     expect(row?.amount).toBe(8)
     expect(row?.updatedAt).toBeGreaterThanOrEqual(row!.createdAt)
   })
