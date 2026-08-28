@@ -19,7 +19,7 @@
 ChatGPT 式对话记账 · AI 工作台 · 账单导入 · 模糊去重
 <br>数据全部存浏览器 IndexedDB · API Key 本地加密 · AI 请求脱敏
 
-[功能特性](#功能特性) · [快速开始](#快速开始) · [技术栈](#技术栈) · [数据层](#数据层) · [FAQ](#常见问题)
+[功能特性](#功能特性) · [快速开始](#快速开始) · [验证](#verification--验证) · [状态](#current-status--当前状态) · [FAQ](#常见问题)
 
 </div>
 
@@ -112,6 +112,41 @@ Dexie schema 演进至 **v12**，升级自动迁移：
 | v10 | `billTemplates` 增加 `importCount` 索引（修复设置页 orderBy 白屏） |
 | v11 | `chatMessages`（首页对话历史持久化） |
 | v12 | `learningRules`（AI 学习规则：商户→分类映射，本地识别进化） |
+
+## Verification / 验证
+
+```bash
+npm ci
+npm run lint
+npm test
+npm run build
+npm run test:e2e
+```
+
+单元测试使用 `fake-indexeddb`；E2E 使用 mock LLM，不需要真实 API Key。CI 对 Pull Request 执行质量检查和关键路径 E2E。
+
+## Current status / 当前状态
+
+- 当前稳定 Release：`v1.4.0`。
+- 定位：local-first AI personal finance product，基础记账不依赖账号或 API Key。
+- 维护优先级：稳定性、账单导入兼容、AI 记账体验、数据安全、双语文档、Demo 与 Release 质量。
+- 不以无限增加功能作为路线图目标。
+
+## Roadmap / 路线图
+
+1. 提升支付宝、微信支付和银行账单导入兼容性及错误诊断。
+2. 加固备份、恢复、数据库迁移和异常回退。
+3. 改进 AI 建议的可解释性、确认流程与离线回退。
+4. 维持可复现 Demo、截图、Changelog 和 SemVer Release。
+
+## Limitations / 限制
+
+- 数据默认只在当前浏览器或桌面容器的 IndexedDB 中；跨设备迁移依赖导出/导入。
+- 清除站点数据、隐私模式或浏览器存储策略可能导致本地数据丢失，应定期导出备份。
+- 在线 AI 请求会发送到用户配置的第三方 provider；应用会脱敏，但 provider 的处理政策仍由其自身决定。
+- PWA 后台能力受浏览器和操作系统限制，不能替代银行或专业财务系统。
+
+安全边界与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
 ## ❓ 常见问题
 
