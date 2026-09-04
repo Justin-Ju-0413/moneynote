@@ -97,7 +97,7 @@ export function LearningRulesManager() {
                     {new Date(r.lastHitAt ?? r.updatedAt).toLocaleString()}
                   </span>
                 </div>
-                <button className="text-[10px] text-[#c94040] hover:underline shrink-0" onClick={() => handleDelete(r.id!)}>删除</button>
+                <button className="text-[10px] text-danger hover:underline shrink-0" onClick={() => handleDelete(r.id!)}>删除</button>
               </div>
             ))}
           </div>

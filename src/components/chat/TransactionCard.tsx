@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useCategories } from '@/hooks/useCategories'
-import { formatDate } from '@/utils/format'
+import { formatDate, formatAmountSigned } from '@/utils/format'
 import { Button } from '@/components/ui/Button'
 import type { ChatCard } from '@/db/types'
 
@@ -94,8 +94,8 @@ export function TransactionCard({ card, onConfirm, onCancel }: Props) {
             {beforeAmount !== undefined && (
               <span className="text-xs text-text-muted line-through">¥{beforeAmount.toFixed(2)}</span>
             )}
-            <span className={`text-xl font-heading ${income ? 'text-green-600' : 'text-expense'}`}>
-              {income ? '+' : '-'}¥{display.amount.toFixed(2)}
+            <span className={`text-xl font-heading ${income ? 'text-success' : 'text-expense'}`}>
+              {formatAmountSigned(display.amount, display.type)}
             </span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">

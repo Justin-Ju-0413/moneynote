@@ -5,6 +5,7 @@ import { TransactionList } from '@/components/transaction/TransactionList'
 import { EditDialog } from '@/components/transaction/EditDialog'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
+import { Chip } from '@/components/ui/Chip'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useDedup } from '@/hooks/useDedup'
 import { useCategories } from '@/hooks/useCategories'
@@ -12,6 +13,7 @@ import { useToast } from '@/components/ui/toast-context'
 import { db } from '@/db'
 import { recordLearning } from '@/nlp/learningRules'
 import { filterTransactions } from '@/utils/transactionFilter'
+import { formatAmountSigned } from '@/utils/format'
 import { getAllTransactions, getRecentTransactions } from '@/db/repos/transactions'
 import * as log from '@/utils/log'
 import type { Transaction, DedupRecord } from '@/db/types'
@@ -145,36 +147,24 @@ export function HistoryPage() {
         <div className="space-y-2">
           <div className="flex gap-1.5">
             {(['expense', 'income'] as const).map((tab) => (
-              <button
-                key={tab}
-                className={`px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium transition-colors ${
-                  categoryTab === tab ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-                }`}
-                onClick={() => handleTabChange(tab)}
-              >
+              <Chip key={tab} active={categoryTab === tab} onClick={() => handleTabChange(tab)}>
                 {tab === 'expense' ? '支出' : '收入'}
-              </button>
+              </Chip>
             ))}
           </div>
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-            <button
-              className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
-                !filterCategory ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-              }`}
-              onClick={() => handleCategoryChange('')}
-            >
+            <Chip size="touch" active={!filterCategory} onClick={() => handleCategoryChange('')}>
               全部
-            </button>
+            </Chip>
             {tabCategories.map((c) => (
-              <button
+              <Chip
                 key={c.id}
-                className={`px-3 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
-                  filterCategory === c.id ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-                }`}
+                size="touch"
+                active={filterCategory === c.id}
                 onClick={() => handleCategoryChange(filterCategory === c.id ? '' : c.id)}
               >
                 {c.name}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>
@@ -225,16 +215,12 @@ export function HistoryPage() {
                     <div className="border border-primary-200/30 p-2">
                       <p className="text-[10px] text-text-muted">{a.date}</p>
                       <p className="text-[11px] text-text truncate">{a.note || '(无备注)'}</p>
-                      <p className="text-xs font-heading text-text mt-0.5">
-                        {a.type === 'income' ? '+' : '-'}¥{a.amount.toFixed(2)}
-                      </p>
+                      <p className="text-xs font-heading text-text mt-0.5">{formatAmountSigned(a.amount, a.type)}</p>
                     </div>
                     <div className="border border-primary-200/30 p-2">
                       <p className="text-[10px] text-text-muted">{b.date}</p>
                       <p className="text-[11px] text-text truncate">{b.note || '(无备注)'}</p>
-                      <p className="text-xs font-heading text-text mt-0.5">
-                        {b.type === 'income' ? '+' : '-'}¥{b.amount.toFixed(2)}
-                      </p>
+                      <p className="text-xs font-heading text-text mt-0.5">{formatAmountSigned(b.amount, b.type)}</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5">

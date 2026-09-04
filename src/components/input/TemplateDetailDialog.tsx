@@ -107,7 +107,7 @@ export function TemplateDetailDialog({
           {!template.isBuiltIn && onDelete && (
             <Button
               onClick={handleDelete}
-              className="flex-1 !bg-[#c94040] !text-white"
+              className="flex-1 !bg-danger !text-white"
             >
               {confirmDelete ? '确认删除？' : '删除模板'}
             </Button>

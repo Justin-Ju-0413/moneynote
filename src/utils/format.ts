@@ -4,6 +4,11 @@ export function formatAmount(amount: number): string {
   return `¥${amount.toFixed(2)}`
 }
 
+/** 带符号金额：收入 +¥x.xx，支出 -¥x.xx */
+export function formatAmountSigned(amount: number, type: string): string {
+  return `${type === 'income' ? '+' : '-'}¥${amount.toFixed(2)}`
+}
+
 export function formatAmountShort(amount: number): string {
   if (amount >= 10000) {
     return `¥${(amount / 10000).toFixed(1)}w`

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Toggle } from '@/components/ui/Toggle'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/toast-context'
@@ -13,9 +14,10 @@ import { db } from '@/db'
 import { getAllTransactions } from '@/db/repos/transactions'
 import type { Transaction } from '@/db/types'
 import { useCategories } from '@/hooks/useCategories'
+import { formatAmountSigned } from '@/utils/format'
 import type { AuditTask, AiSuggestion, SuggestionType } from '@/llm/types'
 
-const EMPTY_TRANSACTIONS: Transaction[] = []
+const EMPTY_TX_MAP: Map<number, Transaction> = new Map()
 
 const TASKS: { task: AuditTask; label: string; desc: string; icon: string }[] = [
   { task: 'audit', label: '综合审计', desc: '异常 + 重复 + 分类', icon: '🛡' },
@@ -29,10 +31,6 @@ const TYPE_META: Record<SuggestionType, { label: string; color: string }> = {
   duplicate: { label: '疑似重复', color: '#f97316' },
   anomaly: { label: '异常提醒', color: '#ef4444' },
   summary: { label: '月度摘要', color: '#8b5cf6' },
-}
-
-function formatAmount(amount: number, type: string) {
-  return `${type === 'income' ? '+' : '-'}¥${amount.toFixed(2)}`
 }
 
 export function AIWorkspacePage() {
@@ -58,12 +56,16 @@ export function AIWorkspacePage() {
     privacyMode,
   } = useAIWorkspace()
 
-  const transactions = useLiveQuery(() => getAllTransactions()) ?? EMPTY_TRANSACTIONS
-  const txCount = transactions.length
-  const txMap = useMemo(
-    () => new Map(transactions.map((t) => [t.id as number, t])),
-    [transactions],
-  )
+  // 条数走 count()；流水 Map 仅在有建议待审核时才全量加载，避免日常打开反序列化整库
+  const txCount = useLiveQuery(() => db.transactions.count()) ?? 0
+  const txMap = useLiveQuery(
+    async () => {
+      if (pendingSuggestions.length === 0) return EMPTY_TX_MAP
+      const all = await getAllTransactions()
+      return new Map(all.map((t) => [t.id as number, t]))
+    },
+    [pendingSuggestions.length],
+  ) ?? EMPTY_TX_MAP
   const [confirmClear, setConfirmClear] = useState(false)
 
   const handleRun = async (task: AuditTask) => {
@@ -120,13 +122,12 @@ export function AIWorkspacePage() {
                 {hasApiKey ? `已连接 AI · 共 ${txCount} 笔流水` : '未配置 AI · 将使用本地规则回退'}
               </p>
             </div>
-            <button
-              className={`w-10 h-5 rounded-full transition-colors relative ${privacyMode ? 'bg-primary-600' : 'bg-primary-200/50'}`}
-              onClick={handlePrivacyToggle}
+            <Toggle
+              checked={privacyMode}
+              onChange={handlePrivacyToggle}
+              label="发送前脱敏"
               title="发送给 AI 前脱敏手机号/订单号/身份证等"
-            >
-              <span className={`absolute top-0.5 w-4 h-4 bg-bg rounded-full transition-transform ${privacyMode ? 'left-5.5' : 'left-0.5'}`} />
-            </button>
+            />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -166,10 +167,10 @@ export function AIWorkspacePage() {
             </p>
           )}
           {error && (
-            <p className="text-[10px] text-[#c94040] mt-3">提示：{error}</p>
+            <p className="text-[10px] text-danger mt-3">提示：{error}</p>
           )}
           {!running && lastCount > 0 && (
-            <p className={`text-[10px] mt-3 ${cachedHit ? 'text-primary-500' : 'text-green-600'}`}>
+            <p className={`text-[10px] mt-3 ${cachedHit ? 'text-primary-500' : 'text-success'}`}>
               {cachedHit ? `命中缓存，新增 ${lastCount} 条建议（未消耗 API）` : `新增 ${lastCount} 条建议，请在下方审核。`}
             </p>
           )}
@@ -197,7 +198,7 @@ export function AIWorkspacePage() {
                 <button className="text-[10px] text-text-muted hover:text-primary-600" onClick={handleCleanupProcessed}>
                   清除已处理
                 </button>
-                <button className="text-[10px] text-text-muted hover:text-[#c94040]" onClick={handleClear}>
+                <button className="text-[10px] text-text-muted hover:text-danger" onClick={handleClear}>
                   清空
                 </button>
               </div>
@@ -288,7 +289,7 @@ function SuggestionCard({ suggestion, txMap, onApply, onDismiss }: SuggestionCar
           {txs.slice(0, 3).map((t) => (
             <div key={t.id} className="flex items-center justify-between text-[10px] text-text-muted">
               <span className="truncate max-w-[60%]">{t.note || '(无备注)'}</span>
-              <span className="font-heading text-text">{formatAmount(t.amount, t.type)}</span>
+              <span className="font-heading text-text">{formatAmountSigned(t.amount, t.type)}</span>
             </div>
           ))}
           {txs.length > 3 && <p className="text-[10px] text-text-placeholder">等 {txs.length} 笔</p>}
