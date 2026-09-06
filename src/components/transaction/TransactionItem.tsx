@@ -1,6 +1,7 @@
 import type { Transaction } from '@/db/types'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useCategories } from '@/hooks/useCategories'
+import { formatAmountSigned } from '@/utils/format'
 
 interface TransactionItemProps {
   transaction: Transaction
@@ -27,7 +28,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
         )}
       </div>
       <span className={`text-sm md:text-base font-heading ${isExpense ? 'text-expense' : 'text-income'}`}>
-        {isExpense ? '-' : '+'}¥{transaction.amount.toFixed(2)}
+        {formatAmountSigned(transaction.amount, transaction.type)}
       </span>
     </div>
   )

@@ -22,7 +22,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const colors = {
     success: 'bg-primary-600 text-bg',
-    error: 'bg-[#c94040] text-bg',
+    error: 'bg-danger text-bg',
     info: 'bg-code-bg text-code-text',
   }
 

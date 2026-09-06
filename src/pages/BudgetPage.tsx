@@ -90,13 +90,13 @@ export function BudgetPage() {
                   className="h-full transition-all duration-500"
                   style={{
                     width: `${Math.min((totalSpent / totalBudgetAmount) * 100, 100)}%`,
-                    backgroundColor: totalSpent > totalBudgetAmount ? '#c94040' : '#0c4a94',
+                    backgroundColor: totalSpent > totalBudgetAmount ? 'var(--color-danger)' : 'var(--color-expense)',
                   }}
                 />
               </div>
-              <p className="text-[10px] font-mono text-text-muted mt-2">
+              <p className={`text-[10px] font-mono mt-2 ${totalSpent > totalBudgetAmount ? 'text-danger' : 'text-text-muted'}`}>
                 {totalSpent > totalBudgetAmount
-                  ? `已超出 ¥${(totalSpent - totalBudgetAmount).toFixed(0)}`
+                  ? `⚠ 已超出 ¥${(totalSpent - totalBudgetAmount).toFixed(0)}`
                   : `剩余 ¥${(totalBudgetAmount - totalSpent).toFixed(0)}`}
               </p>
             </>
@@ -132,7 +132,7 @@ export function BudgetPage() {
                         className="h-full transition-all duration-500"
                         style={{
                           width: `${Math.min((spent / budgetAmount) * 100, 100)}%`,
-                          backgroundColor: spent > budgetAmount ? '#c94040' : c.color,
+                          backgroundColor: spent > budgetAmount ? 'var(--color-danger)' : c.color,
                         }}
                       />
                     </div>

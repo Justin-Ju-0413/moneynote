@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Chip } from '@/components/ui/Chip'
 import { Dialog } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useCategories } from '@/hooks/useCategories'
@@ -80,7 +81,7 @@ export function CategoryManager() {
       <div className="flex items-center gap-3 shrink-0">
         <button className="text-[10px] text-primary-600 hover:underline" onClick={() => openEdit(c)}>编辑</button>
         <button
-          className="text-[10px] text-[#c94040] hover:underline disabled:opacity-30 disabled:no-underline"
+          className="text-[10px] text-danger hover:underline disabled:opacity-30 disabled:no-underline"
           disabled={c.isBuiltIn}
           onClick={() => handleDelete(c)}
         >删除</button>
@@ -137,8 +138,8 @@ export function CategoryManager() {
               <div>
                 <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">类型</label>
                 <div className="flex gap-1.5">
-                  <button className={`px-3 py-1.5 text-[10px] tracking-widest uppercase ${formType === 'expense' ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted'}`} onClick={() => setFormType('expense')}>支出</button>
-                  <button className={`px-3 py-1.5 text-[10px] tracking-widest uppercase ${formType === 'income' ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted'}`} onClick={() => setFormType('income')}>收入</button>
+                  <Chip active={formType === 'expense'} onClick={() => setFormType('expense')}>支出</Chip>
+                  <Chip active={formType === 'income'} onClick={() => setFormType('income')}>收入</Chip>
                 </div>
               </div>
             )}

@@ -8,9 +8,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary: 'bg-primary-600 text-bg hover:bg-primary-700 active:bg-primary-800',
-  secondary: 'border border-primary-400 text-primary-600 hover:bg-primary-50',
+  secondary: 'border border-primary-400 text-primary-600 hover:bg-primary-50 active:bg-primary-100/60',
   ghost: 'text-primary-600 hover:bg-primary-50/50',
-  danger: 'border border-[#c94040]/40 text-[#c94040] hover:bg-[#c94040]/5',
+  danger: 'border border-danger/40 text-danger hover:bg-danger/5 active:bg-danger/10',
 }
 
 const sizes = {
@@ -28,7 +28,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`font-medium transition-colors ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`font-medium transition-colors active:translate-y-px disabled:pointer-events-none disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}

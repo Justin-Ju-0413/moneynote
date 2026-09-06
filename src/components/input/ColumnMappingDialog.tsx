@@ -138,10 +138,10 @@ export function ColumnMappingDialog({
 
         {/* 必需列检查 */}
         {!hasDate && (
-          <p className="text-[10px] text-[#c94040]">请指定一个「日期」列</p>
+          <p className="text-[10px] text-danger">请指定一个「日期」列</p>
         )}
         {!hasAmount && (
-          <p className="text-[10px] text-[#c94040]">请指定一个「金额」列</p>
+          <p className="text-[10px] text-danger">请指定一个「金额」列</p>
         )}
 
         {/* 预览解析结果 */}
@@ -164,7 +164,7 @@ export function ColumnMappingDialog({
 
         {/* 警告信息 */}
         {warnings.length > 0 && (
-          <div className="text-[10px] text-[#c94040] space-y-0.5">
+          <div className="text-[10px] text-danger space-y-0.5">
             {warnings.map((w, i) => (
               <p key={i}>{w}</p>
             ))}

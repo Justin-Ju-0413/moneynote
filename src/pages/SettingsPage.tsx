@@ -3,6 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Chip } from '@/components/ui/Chip'
+import { Toggle } from '@/components/ui/Toggle'
 import { Dialog } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/toast-context'
@@ -41,6 +43,39 @@ interface ConfirmAction {
   confirmText?: string
   danger?: boolean
   onConfirm: () => Promise<void> | void
+}
+
+interface SettingItem {
+  title: string
+  desc: string
+  action: () => void | Promise<void>
+  danger?: boolean
+}
+
+/** 设置项行：导入账单与 settingItems 共用的点击行样式 */
+function SettingRow({ title, desc, danger, disabled, onClick }: {
+  title: string
+  desc: string
+  danger?: boolean
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <div
+      className={`cursor-pointer hover:bg-primary-50/20 px-4 py-4 md:px-5 md:py-5 transition-colors border-b border-primary-200/30 last:border-b-0 ${
+        disabled ? 'opacity-50 pointer-events-none' : ''
+      }`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className={`text-xs font-medium ${danger ? 'text-danger' : 'text-text'}`}>{title}</p>
+          <p className="text-[10px] text-text-muted mt-0.5">{desc}</p>
+        </div>
+        <span className="text-text-placeholder text-sm">›</span>
+      </div>
+    </div>
+  )
 }
 
 export function SettingsPage() {
@@ -303,8 +338,7 @@ export function SettingsPage() {
       return
     }
     const cats = await db.categories.toArray()
-    const categoryMap: Record<string, string> = {}
-    for (const c of cats) categoryMap[c.id] = c.name
+    const categoryMap = Object.fromEntries(cats.map((c) => [c.id, c.name]))
     const csv = exportToCSV(transactions, categoryMap)
     downloadFile(csv, `moneynote_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8')
     showToast('CSV 导出成功')
@@ -366,7 +400,7 @@ export function SettingsPage() {
       }))
   }
 
-  const settingItems = [
+  const settingItems: SettingItem[] = [
     { title: '导出 CSV', desc: '导出为 Excel 可打开的表格文件', action: handleExportCSV },
     { title: '导出 JSON', desc: '导出为备份文件，可用于恢复', action: handleExportJSON },
     { title: '清除 AI 缓存', desc: `分类缓存 ${cacheCount} 条 + 解析缓存 ${parseCacheCount} 条`, action: handleClearCache },
@@ -421,7 +455,7 @@ export function SettingsPage() {
                   onClick={() => setSelectedTemplate(tmpl)}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${tmpl.isBuiltIn ? 'bg-primary-500' : 'bg-green-500'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${tmpl.isBuiltIn ? 'bg-primary-500' : 'bg-success'}`} />
                     <span className="text-xs text-text">{tmpl.name}</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -449,12 +483,11 @@ export function SettingsPage() {
               <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">AI 智能解析</h3>
               <p className="text-[10px] text-text-muted mt-1">低置信度时使用大模型增强解析</p>
             </div>
-            <button
-              className={`w-10 h-5 rounded-full transition-colors relative ${formEnabled ? 'bg-primary-600' : 'bg-primary-200/50'}`}
-              onClick={() => setFormEnabled(!formEnabled)}
-            >
-              <span className={`absolute top-0.5 w-4 h-4 bg-bg rounded-full transition-transform ${formEnabled ? 'left-5.5' : 'left-0.5'}`} />
-            </button>
+            <Toggle
+              checked={formEnabled}
+              onChange={() => setFormEnabled(!formEnabled)}
+              label="AI 智能解析"
+            />
           </div>
 
           {formEnabled && (
@@ -464,17 +497,13 @@ export function SettingsPage() {
                 <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2 block">服务商</label>
                 <div className="flex gap-1.5 flex-wrap">
                   {LLM_PRESETS.map(preset => (
-                    <button
+                    <Chip
                       key={preset.name}
-                      className={`px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium transition-colors ${
-                        formEndpoint === preset.endpoint && preset.endpoint
-                          ? 'bg-primary-600 text-bg'
-                          : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-                      }`}
+                      active={formEndpoint === preset.endpoint && !!preset.endpoint}
                       onClick={() => handleSelectPreset(preset.name)}
                     >
                       {preset.label}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
               </div>
@@ -518,28 +547,13 @@ export function SettingsPage() {
                   <div className="space-y-2">
                     <div className="flex gap-1.5 flex-wrap">
                       {availableModels.map(model => (
-                        <button
-                          key={model}
-                          className={`px-3 py-1.5 text-[10px] tracking-wider font-medium transition-colors ${
-                            formModel === model
-                              ? 'bg-primary-600 text-bg'
-                              : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-                          }`}
-                          onClick={() => setFormModel(model)}
-                        >
+                        <Chip key={model} active={formModel === model} onClick={() => setFormModel(model)}>
                           {model}
-                        </button>
+                        </Chip>
                       ))}
-                      <button
-                        className={`px-3 py-1.5 text-[10px] tracking-wider font-medium transition-colors ${
-                          isCustomModel
-                            ? 'bg-primary-600 text-bg'
-                            : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
-                        }`}
-                        onClick={() => setFormModel('')}
-                      >
+                      <Chip active={isCustomModel} onClick={() => setFormModel('')}>
                         自定义
-                      </button>
+                      </Chip>
                     </div>
                     {isCustomModel && (
                       <input
@@ -567,7 +581,7 @@ export function SettingsPage() {
                 <Button
                   onClick={handleTest}
                   variant="secondary"
-                  className={`flex-1 transition-colors ${testSuccess ? '!bg-green-600 !text-white' : ''}`}
+                  className={`flex-1 transition-colors ${testSuccess ? '!bg-success !text-white' : ''}`}
                   disabled={isTesting}
                 >
                   {isTesting ? '测试中...' : testSuccess ? '✓ 连接成功' : '测试连接'}
@@ -594,13 +608,12 @@ export function SettingsPage() {
               <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">数据备份</h3>
               <p className="text-[10px] text-text-muted mt-1">自动快照防止数据意外丢失，保留最近 10 份自动备份</p>
             </div>
-            <button
-              className={`w-10 h-5 rounded-full transition-colors relative ${autoBackupOn ? 'bg-primary-600' : 'bg-primary-200/50'}`}
-              onClick={handleToggleAuto}
+            <Toggle
+              checked={autoBackupOn}
+              onChange={handleToggleAuto}
+              label="自动备份"
               title="数据变更 60 秒后自动备份"
-            >
-              <span className={`absolute top-0.5 w-4 h-4 bg-bg rounded-full transition-transform ${autoBackupOn ? 'left-5.5' : 'left-0.5'}`} />
-            </button>
+            />
           </div>
 
           <div className="flex gap-2 mb-4">
@@ -614,13 +627,13 @@ export function SettingsPage() {
               {backups.slice(0, 12).map((b) => (
                 <div key={b.id} className="flex items-center justify-between px-3 py-2 border border-primary-200/30">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-1.5 h-1.5 rounded-full ${b.kind === 'auto' ? 'bg-primary-400' : 'bg-green-500'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${b.kind === 'auto' ? 'bg-primary-400' : 'bg-success'}`} />
                     <span className="text-[10px] text-text truncate">{new Date(b.createdAt).toLocaleString()}</span>
                     <span className="text-[9px] text-text-muted uppercase">{b.kind === 'auto' ? '自动' : '手动'}</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <button className="text-[10px] text-primary-600 hover:underline" onClick={() => handleRestore(b)}>恢复</button>
-                    <button className="text-[10px] text-[#c94040] hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
+                    <button className="text-[10px] text-danger hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
                   </div>
                 </div>
               ))}
@@ -633,36 +646,20 @@ export function SettingsPage() {
         {/* 设置项 */}
         <div className="space-y-0 border-t border-b border-primary-200/30">
           {/* 导入账单：handler 读 fileInputRef，直接挂 onClick 以满足 React Compiler */}
-          <div
-            className={`cursor-pointer hover:bg-primary-50/20 px-4 py-4 md:px-5 md:py-5 transition-colors border-b border-primary-200/30 ${
-              isImporting ? 'opacity-50 pointer-events-none' : ''
-            }`}
+          <SettingRow
+            title="导入账单"
+            desc={isImporting ? (importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 XLSX；旧 XLS 请先另存为 XLSX'}
+            disabled={isImporting}
             onClick={handleImportClick}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-text">导入账单</p>
-                <p className="text-[10px] text-text-muted mt-0.5">{isImporting ? (importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 XLSX；旧 XLS 请先另存为 XLSX'}</p>
-              </div>
-              <span className="text-text-placeholder text-sm">›</span>
-            </div>
-          </div>
-          {settingItems.map((item, i) => (
-            <div
+          />
+          {settingItems.map((item) => (
+            <SettingRow
               key={item.title}
-              className={`cursor-pointer hover:bg-primary-50/20 px-4 py-4 md:px-5 md:py-5 transition-colors ${
-                'disabled' in item && item.disabled ? 'opacity-50 pointer-events-none' : ''
-              } ${i < settingItems.length - 1 ? 'border-b border-primary-200/30' : ''}`}
+              title={item.title}
+              desc={item.desc}
+              danger={item.danger}
               onClick={item.action}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`text-xs font-medium ${'danger' in item && item.danger ? 'text-[#c94040]' : 'text-text'}`}>{item.title}</p>
-                  <p className="text-[10px] text-text-muted mt-0.5">{'disabled' in item && item.disabled ? (importProgress || '导入中...') : item.desc}</p>
-                </div>
-                <span className="text-text-placeholder text-sm">›</span>
-              </div>
-            </div>
+            />
           ))}
         </div>
 
@@ -718,21 +715,21 @@ export function SettingsPage() {
                     )}
                     {cr.cacheHitCount > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 bg-green-500 rounded-full" />
+                        <span className="w-2 h-2 bg-success rounded-full" />
                         <span className="text-text-secondary">缓存命中</span>
                         <span className="font-heading text-text">{cr.cacheHitCount} 笔</span>
                       </div>
                     )}
                     {cr.llmFailedCount > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 bg-[#c94040] rounded-full" />
+                        <span className="w-2 h-2 bg-danger rounded-full" />
                         <span className="text-text-secondary">失败</span>
                         <span className="font-heading text-text">{cr.llmFailedCount} 笔</span>
                       </div>
                     )}
                   </div>
                   {cr.llmErrorDetail && (
-                    <p className="text-[10px] text-[#c94040] mt-2">错误详情: {cr.llmErrorDetail}</p>
+                    <p className="text-[10px] text-danger mt-2">错误详情: {cr.llmErrorDetail}</p>
                   )}
                 </div>
               )}
