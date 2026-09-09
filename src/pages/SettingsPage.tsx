@@ -1,41 +1,24 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Chip } from '@/components/ui/Chip'
-import { Toggle } from '@/components/ui/Toggle'
-import { Dialog } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/toast-context'
-import { useLLMSettings } from '@/hooks/useLLMSettings'
-import { useBillTemplateLearning } from '@/hooks/useBillTemplateLearning'
+import { useLLMForm } from '@/hooks/useLLMForm'
+import { useBillImport } from '@/hooks/useBillImport'
 import { ColumnMappingDialog } from '@/components/input/ColumnMappingDialog'
-import { TemplateDetailDialog } from '@/components/input/TemplateDetailDialog'
 import { CategoryManager } from '@/components/settings/CategoryManager'
 import { LearningRulesManager } from '@/components/settings/LearningRulesManager'
-import { LLMUsage } from '@/components/settings/LLMUsage'
-import { LLM_PRESETS } from '@/llm/types'
-import { db, bulkImportTransactions } from '@/db'
+import { LLMSettingsCard } from '@/components/settings/LLMSettingsCard'
+import { BackupCard } from '@/components/settings/BackupCard'
+import { TemplateListCard } from '@/components/settings/TemplateListCard'
+import { ImportResultDialog } from '@/components/settings/ImportResultDialog'
+import { db } from '@/db'
 import { getAllTransactions } from '@/db/repos/transactions'
-import type { BillTemplate, ColumnMapping, BackupRecord } from '@/db/types'
+import type { BillTemplate } from '@/db/types'
 import { exportToCSV, exportToJSON, downloadFile } from '@/utils/export'
-import { parseBillFile, SOURCE_LABELS } from '@/utils/import'
-import type { ParseResult } from '@/utils/import'
-import { classifyBillRows } from '@/utils/billClassifier'
-import type { ClassifyResult } from '@/utils/billClassifier'
 import { APP_VERSION } from '@/utils/constants'
-import { useCategories } from '@/hooks/useCategories'
-import { getAllTemplates, deleteTemplate } from '@/bill-analyzer/templateMatcher'
-import { createBackup, listBackups, restoreBackup, deleteBackup, setAutoBackupEnabled } from '@/utils/backup'
-
-interface ImportResultDetail {
-  sourceName: string
-  imported: number
-  skipped: number
-  filtered: number
-  classifyResult: ClassifyResult
-}
+import { getAllTemplates } from '@/bill-analyzer/templateMatcher'
 
 interface ConfirmAction {
   title: string
@@ -80,257 +63,17 @@ function SettingRow({ title, desc, danger, disabled, onClick }: {
 
 export function SettingsPage() {
   const { showToast } = useToast()
-  const { getInfo } = useCategories()
-  const { config, isLoading, saveConfig, testConnection } = useLLMSettings()
-  const learning = useBillTemplateLearning()
-  const [showApiKey, setShowApiKey] = useState(false)
-  const [isTesting, setIsTesting] = useState(false)
-  const [testSuccess, setTestSuccess] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [importProgress, setImportProgress] = useState('')
-  const [importResult, setImportResult] = useState<ImportResultDetail | null>(null)
-  const [selectedTemplate, setSelectedTemplate] = useState<BillTemplate | null>(null)
+  const llm = useLLMForm()
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const resolveCallbackRef = useRef<((template: BillTemplate | null) => void) | null>(null)
-
-  // 本地表单状态（避免频繁写 IndexedDB）
-  const [formEndpoint, setFormEndpoint] = useState('')
-  const [formModel, setFormModel] = useState('')
-  const [formApiKey, setFormApiKey] = useState('')
-  const [formEnabled, setFormEnabled] = useState(false)
-  const [formInitialized, setFormInitialized] = useState(false)
-
-  // config 加载后初始化表单（render 期调整状态，避免 effect 级联渲染）
-  if (config && !formInitialized) {
-    setFormEndpoint(config.endpoint)
-    setFormModel(config.model)
-    setFormApiKey(config.apiKey)
-    setFormEnabled(config.enabled)
-    setFormInitialized(true)
-  }
 
   const transactions = useLiveQuery(() => getAllTransactions()) || []
   const transactionCount = transactions.length
   const cacheCount = useLiveQuery(() => db.classificationCache.count()) ?? 0
   const parseCacheCount = useLiveQuery(() => db.parseCache.count()) ?? 0
-  const templates = useLiveQuery(() => getAllTemplates()) ?? []
-  const templateCount = templates.length
+  const templates = (useLiveQuery(() => getAllTemplates()) ?? []) as BillTemplate[]
 
-  // 数据备份
-  const backups = (useLiveQuery(() => listBackups()) ?? []) as BackupRecord[]
-  const autoBackupOn = useLiveQuery(() => db.settings.get('backup.auto'))?.value !== false
-  const [backupBusy, setBackupBusy] = useState(false)
-
-  const handleBackupNow = async () => {
-    setBackupBusy(true)
-    try {
-      await createBackup('manual')
-      showToast('已创建备份', 'success')
-    } catch {
-      showToast('备份失败', 'error')
-    }
-    setBackupBusy(false)
-  }
-
-  const handleToggleAuto = async () => {
-    const next = !autoBackupOn
-    await db.settings.put({ key: 'backup.auto', value: next })
-    setAutoBackupEnabled(next)
-    showToast(next ? '已开启自动备份' : '已关闭自动备份', 'info')
-  }
-
-  const handleRestore = (b: BackupRecord) => {
-    setConfirmAction({
-      title: '恢复备份',
-      message: `确认恢复到 ${new Date(b.createdAt).toLocaleString()} 的备份？当前数据将被覆盖。`,
-      confirmText: '恢复',
-      danger: true,
-      onConfirm: async () => {
-        try {
-          await restoreBackup(b.id as number)
-          showToast('已恢复，刷新页面以生效', 'success')
-        } catch {
-          showToast('恢复失败', 'error')
-        }
-      },
-    })
-  }
-
-  const handleDeleteBackup = async (id: number) => {
-    await deleteBackup(id)
-    showToast('已删除备份')
-  }
-
-  // 当前选中的服务商
-  const currentPreset = useMemo(() => {
-    return LLM_PRESETS.find(p => p.endpoint === formEndpoint && p.endpoint) || null
-  }, [formEndpoint])
-
-  // 当前服务商可用模型
-  const availableModels = currentPreset?.models || []
-  const isCustomModel = availableModels.length > 0 && !availableModels.includes(formModel)
-
-  const handleSelectPreset = (presetName: string) => {
-    const preset = LLM_PRESETS.find(p => p.name === presetName)
-    if (preset) {
-      setFormEndpoint(preset.endpoint)
-      if (preset.models.length > 0) {
-        setFormModel(preset.models[0])
-      }
-    }
-  }
-
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      await saveConfig({
-        enabled: formEnabled,
-        endpoint: formEndpoint,
-        model: formModel,
-        apiKey: formApiKey,
-      })
-      showToast('配置已保存')
-    } catch {
-      showToast('保存失败', 'error')
-    }
-    setIsSaving(false)
-  }
-
-  const handleTest = async () => {
-    setIsTesting(true)
-    setTestSuccess(false)
-    try {
-      await saveConfig({
-        enabled: formEnabled,
-        endpoint: formEndpoint,
-        model: formModel,
-        apiKey: formApiKey,
-      })
-      const result = await testConnection()
-      showToast(result.message, result.success ? 'success' : 'error')
-      if (result.success) {
-        setTestSuccess(true)
-        setTimeout(() => setTestSuccess(false), 2000)
-      }
-    } catch {
-      showToast('保存失败', 'error')
-    }
-    setIsTesting(false)
-  }
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ''
-
-    setIsImporting(true)
-    setImportProgress('解析文件...')
-    try {
-      const llmEnabled = formEnabled && !!formEndpoint && !!formApiKey && !!formModel
-      const llmConfig = llmEnabled ? {
-        enabled: true, endpoint: formEndpoint, model: formModel, apiKey: formApiKey,
-        maxTokens: 512, temperature: 0.1, timeout: 15000,
-      } : undefined
-
-      // 1. 解析文件（含模板匹配 + 学习流程）
-      const parseResult: ParseResult = await parseBillFile(file, {
-        llmConfig,
-        onLearnRequest: async (ctx) => {
-          learning.startLearning(file, ctx)
-          return new Promise<BillTemplate | null>((resolve) => {
-            resolveCallbackRef.current = resolve
-          })
-        },
-      })
-
-      if (parseResult.rows.length === 0) {
-        showToast('文件中没有可导入的记录', 'info')
-        setIsImporting(false)
-        setImportProgress('')
-        return
-      }
-
-      // 查找匹配的模板
-      let matchedTemplate: BillTemplate | undefined
-      if (parseResult.templateId) {
-        matchedTemplate = templates.find(t => t.id === parseResult.templateId)
-      }
-
-      // 2. 分类映射
-      setImportProgress(`本地分类中 (0/${parseResult.rows.length})`)
-      const classifyResult = await classifyBillRows(parseResult.rows, {
-        llmEnabled,
-        llmConfig,
-        template: matchedTemplate,
-        onProgress: (p) => {
-          const label = p.phase === 'llm_batch' ? 'AI 批量分类中' : '本地分类中'
-          setImportProgress(`${label} (${p.current}/${p.total})`)
-        },
-      })
-
-      if (classifyResult.transactions.length === 0) {
-        showToast('所有记录均被过滤，无可导入数据', 'info')
-        setIsImporting(false)
-        setImportProgress('')
-        return
-      }
-
-      // 3. 批量导入（去重）
-      setImportProgress('写入数据库...')
-      const importResult = await bulkImportTransactions(classifyResult.transactions)
-
-      // 4. 结果反馈
-      const sourceName = SOURCE_LABELS[parseResult.source] || parseResult.source
-      showToast(`${sourceName} 导入完成，新增 ${importResult.imported} 笔`, 'success')
-
-      setImportResult({
-        sourceName,
-        imported: importResult.imported,
-        skipped: importResult.skipped,
-        filtered: classifyResult.skippedCount,
-        classifyResult,
-      })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '导入失败'
-      showToast(msg, 'error')
-    }
-    setIsImporting(false)
-    setImportProgress('')
-  }
-
-  // 学习回调：用户在 ColumnMappingDialog 中确认
-  const handleLearningConfirm = async (name: string, mappings: ColumnMapping[]) => {
-    const template = await learning.confirm(name, mappings)
-    if (template && resolveCallbackRef.current) {
-      resolveCallbackRef.current(template)
-      resolveCallbackRef.current = null
-    }
-    learning.reset()
-  }
-
-  const handleLearningCancel = () => {
-    if (resolveCallbackRef.current) {
-      resolveCallbackRef.current(null)
-      resolveCallbackRef.current = null
-    }
-    learning.cancel()
-  }
-
-  const handleDeleteTemplate = async (id: number) => {
-    try {
-      await deleteTemplate(id)
-      showToast('模板已删除')
-      setSelectedTemplate(null)
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : '删除失败', 'error')
-    }
-  }
+  const billImport = useBillImport({ llmConfig: llm.draftLLMConfig, fileInputRef })
 
   const handleExportCSV = async () => {
     if (transactionCount === 0) {
@@ -383,23 +126,6 @@ export function SettingsPage() {
     })
   }
 
-  // 计算分类分布（用于导入结果详情）
-  const getCategoryDistribution = (result: ImportResultDetail) => {
-    const dist: Record<string, number> = {}
-    for (const tx of result.classifyResult.transactions) {
-      dist[tx.category] = (dist[tx.category] || 0) + 1
-    }
-    return Object.entries(dist)
-      .sort((a, b) => b[1] - a[1])
-      .map(([cat, count]) => ({
-        id: cat,
-        name: getInfo(cat).name,
-        icon: getInfo(cat).icon,
-        count,
-        pct: Math.round(count / result.classifyResult.transactions.length * 100),
-      }))
-  }
-
   const settingItems: SettingItem[] = [
     { title: '导出 CSV', desc: '导出为 Excel 可打开的表格文件', action: handleExportCSV },
     { title: '导出 JSON', desc: '导出为备份文件，可用于恢复', action: handleExportJSON },
@@ -411,13 +137,13 @@ export function SettingsPage() {
     <div>
       <PageHeader title="设置" subtitle="个性化你的应用" />
       <div className="px-5 space-y-5 md:px-8 md:space-y-6 lg:px-10 lg:space-y-8">
-        {/* 隐藏的文件选择器 */}
+        {/* 隐藏的文件选择器：ref 由页面持有直接挂载，触发走 billImport.openFilePicker */}
         <input
           ref={fileInputRef}
           type="file"
           accept=".csv,.xlsx"
           className="hidden"
-          onChange={handleFileSelected}
+          onChange={billImport.onFileSelected}
         />
 
         {/* 数据统计 */}
@@ -439,36 +165,7 @@ export function SettingsPage() {
         </Card>
 
         {/* 账单模板管理 */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">账单模板</h3>
-              <p className="text-[10px] text-text-muted mt-1">已学习 {templateCount} 种格式，自动识别导入文件</p>
-            </div>
-          </div>
-          {templates.length > 0 ? (
-            <div className="space-y-1.5">
-              {templates.map(tmpl => (
-                <div
-                  key={tmpl.id || tmpl.fingerprint}
-                  className="flex items-center justify-between px-3 py-2 border border-primary-200/30 hover:bg-primary-50/20 cursor-pointer transition-colors"
-                  onClick={() => setSelectedTemplate(tmpl)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${tmpl.isBuiltIn ? 'bg-primary-500' : 'bg-success'}`} />
-                    <span className="text-xs text-text">{tmpl.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] text-text-muted">{tmpl.importCount} 次</span>
-                    <span className="text-text-placeholder text-sm">›</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[10px] text-text-placeholder">导入新格式账单时将自动学习</p>
-          )}
-        </Card>
+        <TemplateListCard templates={templates} />
 
         {/* AI 学习规则 */}
         <LearningRulesManager />
@@ -477,180 +174,18 @@ export function SettingsPage() {
         <CategoryManager />
 
         {/* AI 智能解析 */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">AI 智能解析</h3>
-              <p className="text-[10px] text-text-muted mt-1">低置信度时使用大模型增强解析</p>
-            </div>
-            <Toggle
-              checked={formEnabled}
-              onChange={() => setFormEnabled(!formEnabled)}
-              label="AI 智能解析"
-            />
-          </div>
-
-          {formEnabled && (
-            <div className={`space-y-4 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-              {/* 服务商快捷选择 */}
-              <div>
-                <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2 block">服务商</label>
-                <div className="flex gap-1.5 flex-wrap">
-                  {LLM_PRESETS.map(preset => (
-                    <Chip
-                      key={preset.name}
-                      active={formEndpoint === preset.endpoint && !!preset.endpoint}
-                      onClick={() => handleSelectPreset(preset.name)}
-                    >
-                      {preset.label}
-                    </Chip>
-                  ))}
-                </div>
-              </div>
-
-              {/* API 地址 */}
-              <div>
-                <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">API 地址</label>
-                <input
-                  type="text"
-                  value={formEndpoint}
-                  onChange={(e) => setFormEndpoint(e.target.value)}
-                  placeholder="https://api.example.com"
-                  className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
-                />
-              </div>
-
-              {/* API Key */}
-              <div>
-                <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">API Key</label>
-                <div className="flex border border-primary-300/50">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={formApiKey}
-                    onChange={(e) => setFormApiKey(e.target.value)}
-                    placeholder="sk-..."
-                    className="flex-1 px-3 py-2 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
-                  />
-                  <button
-                    className="px-3 text-[10px] tracking-widest uppercase text-text-muted hover:text-primary-600"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                  >
-                    {showApiKey ? '隐藏' : '显示'}
-                  </button>
-                </div>
-              </div>
-
-              {/* 模型选择 */}
-              <div>
-                <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">模型</label>
-                {availableModels.length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-1.5 flex-wrap">
-                      {availableModels.map(model => (
-                        <Chip key={model} active={formModel === model} onClick={() => setFormModel(model)}>
-                          {model}
-                        </Chip>
-                      ))}
-                      <Chip active={isCustomModel} onClick={() => setFormModel('')}>
-                        自定义
-                      </Chip>
-                    </div>
-                    {isCustomModel && (
-                      <input
-                        type="text"
-                        value={formModel}
-                        onChange={(e) => setFormModel(e.target.value)}
-                        placeholder="输入自定义模型名称"
-                        className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={formModel}
-                    onChange={(e) => setFormModel(e.target.value)}
-                    placeholder="deepseek-v4-flash / gpt-4.1-nano"
-                    className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
-                  />
-                )}
-              </div>
-
-              {/* 操作按钮 */}
-              <div className="flex gap-2 pt-1">
-                <Button
-                  onClick={handleTest}
-                  variant="secondary"
-                  className={`flex-1 transition-colors ${testSuccess ? '!bg-success !text-white' : ''}`}
-                  disabled={isTesting}
-                >
-                  {isTesting ? '测试中...' : testSuccess ? '✓ 连接成功' : '测试连接'}
-                </Button>
-                <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
-                  {isSaving ? '保存中...' : '保存配置'}
-                </Button>
-              </div>
-
-              <p className="text-[10px] text-text-placeholder leading-relaxed">
-                API Key 仅存储在本地浏览器中，不会上传至任何服务器。
-              </p>
-            </div>
-          )}
-
-          {/* C3 成本可观测：本月 LLM 用量（本地记录） */}
-          <LLMUsage />
-        </Card>
+        <LLMSettingsCard llm={llm} />
 
         {/* 数据备份 */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">数据备份</h3>
-              <p className="text-[10px] text-text-muted mt-1">自动快照防止数据意外丢失，保留最近 10 份自动备份</p>
-            </div>
-            <Toggle
-              checked={autoBackupOn}
-              onChange={handleToggleAuto}
-              label="自动备份"
-              title="数据变更 60 秒后自动备份"
-            />
-          </div>
-
-          <div className="flex gap-2 mb-4">
-            <Button onClick={handleBackupNow} variant="secondary" className="flex-1" disabled={backupBusy}>
-              {backupBusy ? '备份中...' : '立即备份'}
-            </Button>
-          </div>
-
-          {backups.length > 0 ? (
-            <div className="space-y-1.5">
-              {backups.slice(0, 12).map((b) => (
-                <div key={b.id} className="flex items-center justify-between px-3 py-2 border border-primary-200/30">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-1.5 h-1.5 rounded-full ${b.kind === 'auto' ? 'bg-primary-400' : 'bg-success'}`} />
-                    <span className="text-[10px] text-text truncate">{new Date(b.createdAt).toLocaleString()}</span>
-                    <span className="text-[9px] text-text-muted uppercase">{b.kind === 'auto' ? '自动' : '手动'}</span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <button className="text-[10px] text-primary-600 hover:underline" onClick={() => handleRestore(b)}>恢复</button>
-                    <button className="text-[10px] text-danger hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[10px] text-text-placeholder">暂无备份，点击「立即备份」创建第一份</p>
-          )}
-        </Card>
+        <BackupCard />
 
         {/* 设置项 */}
         <div className="space-y-0 border-t border-b border-primary-200/30">
-          {/* 导入账单：handler 读 fileInputRef，直接挂 onClick 以满足 React Compiler */}
           <SettingRow
             title="导入账单"
-            desc={isImporting ? (importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 XLSX；旧 XLS 请先另存为 XLSX'}
-            disabled={isImporting}
-            onClick={handleImportClick}
+            desc={billImport.isImporting ? (billImport.importProgress || '导入中...') : '支持支付宝 CSV、微信/平安银行 XLSX；旧 XLS 请先另存为 XLSX'}
+            disabled={billImport.isImporting}
+            onClick={billImport.openFilePicker}
           />
           {settingItems.map((item) => (
             <SettingRow
@@ -674,111 +209,21 @@ export function SettingsPage() {
         </Card>
       </div>
 
-      {/* 导入结果详情 Dialog */}
-      <Dialog open={!!importResult} onClose={() => setImportResult(null)} title="导入结果">
-        {importResult && (() => {
-          const cr = importResult.classifyResult
-          const dist = getCategoryDistribution(importResult)
-          return (
-            <div className="space-y-5">
-              {/* 基础统计 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="border border-primary-200/50 p-3">
-                  <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">来源</p>
-                  <p className="text-sm font-heading text-text">{importResult.sourceName}</p>
-                </div>
-                <div className="border border-primary-200/50 p-3">
-                  <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">新增</p>
-                  <p className="text-sm font-heading text-primary-600">{importResult.imported} 笔</p>
-                </div>
-                <div className="border border-primary-200/50 p-3">
-                  <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">跳过重复</p>
-                  <p className="text-sm font-heading text-text">{importResult.skipped} 笔</p>
-                </div>
-                <div className="border border-primary-200/50 p-3">
-                  <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">过滤无效</p>
-                  <p className="text-sm font-heading text-text">{importResult.filtered} 笔</p>
-                </div>
-              </div>
-
-              {/* AI 分类统计 */}
-              {(cr.llmUsedCount > 0 || cr.cacheHitCount > 0 || cr.llmFailedCount > 0) && (
-                <div>
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium mb-3">AI 分类统计</p>
-                  <div className="flex gap-4 text-xs">
-                    {cr.llmUsedCount > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 bg-primary-500 rounded-full" />
-                        <span className="text-text-secondary">AI 分类</span>
-                        <span className="font-heading text-text">{cr.llmUsedCount} 笔</span>
-                      </div>
-                    )}
-                    {cr.cacheHitCount > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 bg-success rounded-full" />
-                        <span className="text-text-secondary">缓存命中</span>
-                        <span className="font-heading text-text">{cr.cacheHitCount} 笔</span>
-                      </div>
-                    )}
-                    {cr.llmFailedCount > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 bg-danger rounded-full" />
-                        <span className="text-text-secondary">失败</span>
-                        <span className="font-heading text-text">{cr.llmFailedCount} 笔</span>
-                      </div>
-                    )}
-                  </div>
-                  {cr.llmErrorDetail && (
-                    <p className="text-[10px] text-danger mt-2">错误详情: {cr.llmErrorDetail}</p>
-                  )}
-                </div>
-              )}
-
-              {/* 分类分布 */}
-              {dist.length > 0 && (
-                <div>
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium mb-3">分类分布</p>
-                  <div className="space-y-2">
-                    {dist.map(d => (
-                      <div key={d.id} className="flex items-center gap-2">
-                        <span className="text-sm w-5 text-center">{d.icon}</span>
-                        <span className="text-xs text-text-secondary w-10">{d.name}</span>
-                        <div className="flex-1 h-1.5 bg-primary-100/50 overflow-hidden">
-                          <div
-                            className="h-full bg-primary-500 transition-all"
-                            style={{ width: `${d.pct}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-text-muted w-14 text-right">{d.count} ({d.pct}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <Button onClick={() => setImportResult(null)} className="w-full">关闭</Button>
-            </div>
-          )
-        })()}
-      </Dialog>
+      {/* 导入结果详情 */}
+      <ImportResultDialog
+        result={billImport.importResult}
+        onClose={billImport.clearResult}
+      />
 
       {/* 列映射确认对话框 */}
       <ColumnMappingDialog
-        open={learning.state.phase === 'confirming'}
-        context={learning.state.phase === 'confirming' ? learning.state.context : null}
-        onConfirm={handleLearningConfirm}
-        onCancel={handleLearningCancel}
+        open={billImport.learning.state.phase === 'confirming'}
+        context={billImport.learning.state.phase === 'confirming' ? billImport.learning.state.context : null}
+        onConfirm={billImport.learningConfirm}
+        onCancel={billImport.learningCancel}
       />
 
-      {/* 模板详情对话框 */}
-      <TemplateDetailDialog
-        open={!!selectedTemplate}
-        template={selectedTemplate}
-        onClose={() => setSelectedTemplate(null)}
-        onDelete={handleDeleteTemplate}
-      />
-
-      {/* 统一确认弹窗(恢复备份/清除数据/清除缓存) */}
+      {/* 统一确认弹窗(清除数据/清除缓存) */}
       <ConfirmDialog
         open={!!confirmAction}
         title={confirmAction?.title}
