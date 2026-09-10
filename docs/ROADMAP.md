@@ -76,6 +76,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 
 ## 体验增强(随行队列,按产品节奏插队)
 
+- [x] **桌面应用**（2026-09-11）—— Tauri 2 壳：双击即用（打包 dist，无需 dev server）、关窗即退出（覆盖 macOS 驻留默认）、单实例防重开；`desktop:build` 产出 .app/dmg，`desktop:install` 装入 /Applications
 - [x] **深色模式**（2026-09-11,PR #23）—— 跟随系统 + 手动三态;全量 CSS 变量重定义实现,组件零主题分支;见 `docs/specs/2026-09-11-dark-mode.md`
 - [ ] **流式输出** —— 审计 / 摘要走 SSE 流式,长任务体感提升(建议排在 C3 成本可观测之后)
 - [ ] **多币种** —— `Transaction` 加 `currency`,金额解析支持币种识别
