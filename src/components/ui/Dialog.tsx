@@ -29,8 +29,8 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
           >
             {title && (
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-heading text-base md:text-lg text-primary-700">{title}</h3>
-                <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-text-muted text-xl leading-none hover:text-primary-600">×</button>
+                <h3 className="font-heading text-base md:text-lg text-heading">{title}</h3>
+                <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-text-muted text-xl leading-none hover:text-accent">×</button>
               </div>
             )}
             {children}

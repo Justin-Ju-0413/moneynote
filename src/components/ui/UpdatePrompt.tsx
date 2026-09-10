@@ -25,7 +25,7 @@ export function UpdatePrompt() {
           立即刷新
         </button>
         <button
-          className="flex-1 px-3 py-2 text-[10px] tracking-widest uppercase font-medium border border-primary-300/50 text-text-muted transition-colors hover:text-primary-600"
+          className="flex-1 px-3 py-2 text-[10px] tracking-widest uppercase font-medium border border-primary-300/50 text-text-muted transition-colors hover:text-accent"
           onClick={() => setNeedRefresh(false)}
         >
           稍后

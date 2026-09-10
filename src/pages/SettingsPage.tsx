@@ -11,6 +11,7 @@ import { CategoryManager } from '@/components/settings/CategoryManager'
 import { LearningRulesManager } from '@/components/settings/LearningRulesManager'
 import { LLMSettingsCard } from '@/components/settings/LLMSettingsCard'
 import { BackupCard } from '@/components/settings/BackupCard'
+import { AppearanceCard } from '@/components/settings/AppearanceCard'
 import { TemplateListCard } from '@/components/settings/TemplateListCard'
 import { ImportResultDialog } from '@/components/settings/ImportResultDialog'
 import { db } from '@/db'
@@ -176,6 +177,9 @@ export function SettingsPage() {
         {/* AI 智能解析 */}
         <LLMSettingsCard llm={llm} />
 
+        {/* 外观 */}
+        <AppearanceCard />
+
         {/* 数据备份 */}
         <BackupCard />
 
@@ -201,7 +205,7 @@ export function SettingsPage() {
         {/* 关于 */}
         <Card>
           <div className="text-center py-3">
-            <p className="font-heading text-lg text-primary-700 mb-1">MoneyNote</p>
+            <p className="font-heading text-lg text-heading mb-1">MoneyNote</p>
             <p className="text-[10px] tracking-widest uppercase text-text-muted">AI 智能记账 · v{APP_VERSION}</p>
             <div className="h-px bg-primary-200/30 my-3" />
             <p className="text-[10px] text-text-placeholder">自然语言输入，轻松记一笔</p>

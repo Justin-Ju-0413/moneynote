@@ -50,7 +50,7 @@ export function TemplateDetailDialog({
           </div>
           <div className="border border-primary-200/50 p-3">
             <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">导入次数</p>
-            <p className="text-xs font-heading text-primary-600">{template.importCount} 次</p>
+            <p className="text-xs font-heading text-accent">{template.importCount} 次</p>
           </div>
           <div className="border border-primary-200/50 p-3">
             <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">列数</p>
@@ -75,7 +75,7 @@ export function TemplateDetailDialog({
                   <tr key={i} className="border-b border-primary-200/20">
                     <td className="px-2 py-1 text-text">{m.normalizedHeader || '(空)'}</td>
                     <td className="px-2 py-1">
-                      <span className={`px-1.5 py-0.5 ${m.role === 'skip' ? 'text-text-placeholder' : 'text-primary-600 bg-primary-50'}`}>
+                      <span className={`px-1.5 py-0.5 ${m.role === 'skip' ? 'text-text-placeholder' : 'text-accent bg-primary-50'}`}>
                         {getRoleLabel(m.role)}
                       </span>
                     </td>

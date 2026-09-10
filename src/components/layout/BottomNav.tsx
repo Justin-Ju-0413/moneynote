@@ -12,7 +12,7 @@ export function BottomNav() {
             className={({ isActive }) =>
               `flex items-center justify-center h-11 min-w-11 px-4 text-xs tracking-widest uppercase font-medium transition-colors ${
                 isActive
-                  ? 'text-primary-600 border-b-2 border-primary-600'
+                  ? 'text-accent border-b-2 border-primary-600'
                   : 'text-text-muted hover:text-primary-500'
               }`
             }

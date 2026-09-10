@@ -9,7 +9,7 @@ export function PageHeader({ title, subtitle }: PageHeaderProps) {
       <p className="text-[10px] tracking-[0.2em] uppercase text-text-muted mb-2 font-medium">
         MoneyNote
       </p>
-      <h1 className="font-heading text-2xl md:text-3xl lg:text-4xl text-primary-700">{title}</h1>
+      <h1 className="font-heading text-2xl md:text-3xl lg:text-4xl text-heading">{title}</h1>
       {subtitle && (
         <p className="text-text-muted text-sm md:text-base mt-1">{subtitle}</p>
       )}

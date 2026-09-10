@@ -13,7 +13,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* 桌面侧边栏 */}
       <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-56 lg:border-r lg:border-primary-200/30 lg:bg-bg lg:z-20">
         <div className="px-6 pt-10 pb-6">
-          <p className="font-heading text-sm tracking-widest text-primary-700">MoneyNote</p>
+          <p className="font-heading text-sm tracking-widest text-heading">MoneyNote</p>
           <p className="text-[10px] tracking-widest uppercase text-text-muted mt-1">智能记账</p>
         </div>
         <nav className="flex-1 px-3 space-y-0.5">
@@ -25,7 +25,7 @@ export function AppShell({ children }: AppShellProps) {
                 `flex items-center gap-3 px-4 py-3 text-xs tracking-widest uppercase font-medium transition-colors ${
                   isActive
                     ? 'bg-primary-600 text-bg'
-                    : 'text-text-muted hover:text-primary-600 hover:bg-primary-50/40'
+                    : 'text-text-muted hover:text-accent hover:bg-primary-50/40'
                 }`
               }
             >

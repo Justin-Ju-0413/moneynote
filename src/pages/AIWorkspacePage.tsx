@@ -117,7 +117,7 @@ export function AIWorkspacePage() {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">任务</h3>
+              <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">任务</h3>
               <p className="text-[10px] text-text-muted mt-1">
                 {hasApiKey ? `已连接 AI · 共 ${txCount} 笔流水` : '未配置 AI · 将使用本地规则回退'}
               </p>
@@ -162,7 +162,7 @@ export function AIWorkspacePage() {
           </div>
 
           {running && (
-            <p className="text-[10px] text-primary-600 mt-3 animate-pulse">
+            <p className="text-[10px] text-accent mt-3 animate-pulse">
               AI 分析中…{progress ? ` (${progress.current}/${progress.total})` : ''}
             </p>
           )}
@@ -190,12 +190,12 @@ export function AIWorkspacePage() {
         {/* 待审核建议 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">
+            <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">
               待审核建议 · {pendingSuggestions.length}
             </h3>
             {pendingSuggestions.length > 0 && (
               <div className="flex gap-3">
-                <button className="text-[10px] text-text-muted hover:text-primary-600" onClick={handleCleanupProcessed}>
+                <button className="text-[10px] text-text-muted hover:text-accent" onClick={handleCleanupProcessed}>
                   清除已处理
                 </button>
                 <button className="text-[10px] text-text-muted hover:text-danger" onClick={handleClear}>
@@ -270,14 +270,14 @@ function SuggestionCard({ suggestion, txMap, onApply, onDismiss }: SuggestionCar
 
       {/* 摘要类：突出展示结论 */}
       {isSummary && (
-        <p className="text-sm font-heading text-primary-700 mb-2">{suggestion.result}</p>
+        <p className="text-sm font-heading text-heading mb-2">{suggestion.result}</p>
       )}
 
       {/* 分类建议：展示建议分类 */}
       {suggestion.type === 'category' && (
         <p className="text-xs text-text mb-2">
           建议分类为
-          <span className="font-heading text-primary-600 mx-1">
+          <span className="font-heading text-accent mx-1">
             {getInfo(suggestion.result).name}
           </span>
         </p>

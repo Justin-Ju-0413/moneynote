@@ -28,7 +28,7 @@ export function TemplateListCard({ templates }: TemplateListCardProps) {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">账单模板</h3>
+          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">账单模板</h3>
           <p className="text-[10px] text-text-muted mt-1">已学习 {templates.length} 种格式，自动识别导入文件</p>
         </div>
       </div>

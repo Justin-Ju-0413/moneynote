@@ -76,7 +76,7 @@ export function BudgetPage() {
         {/* 总预算卡片 */}
         <Card className="cursor-pointer" onClick={() => openBudgetDialog('total')}>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">月度总预算</span>
+            <span className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">月度总预算</span>
             <span className="text-[10px] tracking-widest uppercase text-primary-500">编辑</span>
           </div>
           {totalBudgetAmount > 0 ? (
@@ -106,7 +106,7 @@ export function BudgetPage() {
         </Card>
 
         {/* 各分类预算 */}
-        <h2 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">分类预算</h2>
+        <h2 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">分类预算</h2>
         <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 lg:gap-5">
         {categories.map((c) => {
           const budget = budgetsList.find(b => b.category === c.id)

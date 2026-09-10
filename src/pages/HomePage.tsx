@@ -35,7 +35,7 @@ export function HomePage() {
           {messages.length > 0 && (
             <button
               onClick={() => setConfirmClear(true)}
-              className="text-[10px] tracking-widest uppercase text-text-muted hover:text-primary-600 transition-colors shrink-0"
+              className="text-[10px] tracking-widest uppercase text-text-muted hover:text-accent transition-colors shrink-0"
             >
               清空
             </button>

@@ -74,7 +74,7 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
               <button
                 key={t}
                 className={`flex-1 px-3 py-2 text-[10px] tracking-widest uppercase font-medium transition-colors ${
-                  type === t ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-primary-600'
+                  type === t ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-accent'
                 }`}
                 onClick={() => handleTypeChange(t)}
               >
