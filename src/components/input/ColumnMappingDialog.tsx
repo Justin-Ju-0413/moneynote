@@ -151,7 +151,7 @@ export function ColumnMappingDialog({
             <div className="space-y-1.5">
               {preview.slice(0, 3).map((row, i) => (
                 <div key={i} className="text-[10px] text-text-secondary border border-primary-200/30 px-2 py-1.5">
-                  <span className="font-heading text-primary-600">{row.fields['交易时间']}</span>
+                  <span className="font-heading text-accent">{row.fields['交易时间']}</span>
                   {' '}
                   <span>{row.fields['收/支'] === '收入' ? '+' : '-'}{row.fields['金额']}</span>
                   {' '}

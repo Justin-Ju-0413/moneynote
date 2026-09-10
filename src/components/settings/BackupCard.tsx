@@ -56,7 +56,7 @@ export function BackupCard() {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">数据备份</h3>
+          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">数据备份</h3>
           <p className="text-[10px] text-text-muted mt-1">自动快照防止数据意外丢失，保留最近 10 份自动备份</p>
         </div>
         <Toggle
@@ -83,7 +83,7 @@ export function BackupCard() {
                 <span className="text-[9px] text-text-muted uppercase">{b.kind === 'auto' ? '自动' : '手动'}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <button className="text-[10px] text-primary-600 hover:underline" onClick={() => setRestoreTarget(b)}>恢复</button>
+                <button className="text-[10px] text-accent hover:underline" onClick={() => setRestoreTarget(b)}>恢复</button>
                 <button className="text-[10px] text-danger hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
               </div>
             </div>

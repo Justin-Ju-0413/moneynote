@@ -52,7 +52,7 @@ export function ImportResultDialog({ result, onClose }: ImportResultDialogProps)
               </div>
               <div className="border border-primary-200/50 p-3">
                 <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">新增</p>
-                <p className="text-sm font-heading text-primary-600">{result.imported} 笔</p>
+                <p className="text-sm font-heading text-accent">{result.imported} 笔</p>
               </div>
               <div className="border border-primary-200/50 p-3">
                 <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">跳过重复</p>
@@ -67,7 +67,7 @@ export function ImportResultDialog({ result, onClose }: ImportResultDialogProps)
             {/* AI 分类统计 */}
             {(cr.llmUsedCount > 0 || cr.cacheHitCount > 0 || cr.llmFailedCount > 0) && (
               <div>
-                <p className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium mb-3">AI 分类统计</p>
+                <p className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium mb-3">AI 分类统计</p>
                 <div className="flex gap-4 text-xs">
                   {cr.llmUsedCount > 0 && (
                     <div className="flex items-center gap-1.5">
@@ -100,7 +100,7 @@ export function ImportResultDialog({ result, onClose }: ImportResultDialogProps)
             {/* 分类分布 */}
             {dist.length > 0 && (
               <div>
-                <p className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium mb-3">分类分布</p>
+                <p className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium mb-3">分类分布</p>
                 <div className="space-y-2">
                   {dist.map(d => (
                     <div key={d.id} className="flex items-center gap-2">

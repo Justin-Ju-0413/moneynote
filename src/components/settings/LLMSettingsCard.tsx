@@ -32,7 +32,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">AI 智能解析</h3>
+          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">AI 智能解析</h3>
           <p className="text-[10px] text-text-muted mt-1">低置信度时使用大模型增强解析</p>
         </div>
         <Toggle
@@ -84,7 +84,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
                 className="flex-1 px-3 py-2 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
               />
               <button
-                className="px-3 text-[10px] tracking-widest uppercase text-text-muted hover:text-primary-600"
+                className="px-3 text-[10px] tracking-widest uppercase text-text-muted hover:text-accent"
                 onClick={() => setShowApiKey(!showApiKey)}
               >
                 {showApiKey ? '隐藏' : '显示'}

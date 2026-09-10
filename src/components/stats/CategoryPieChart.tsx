@@ -26,7 +26,7 @@ export function CategoryPieChart({ data, total }: CategoryPieChartProps) {
 
   return (
     <Card>
-      <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium mb-3">分类占比</h3>
+      <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium mb-3">分类占比</h3>
       <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
         <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
           <ResponsiveContainer width="100%" height="100%">
@@ -38,7 +38,7 @@ export function CategoryPieChart({ data, total }: CategoryPieChartProps) {
               </Pie>
               <Tooltip
                 formatter={(value) => [`¥${Number(value).toFixed(2)}`, '']}
-                contentStyle={{ borderRadius: 2, border: '1px solid rgba(14,84,166,0.2)', background: '#f0f4f8', fontSize: 11 }}
+                contentStyle={{ borderRadius: 2, border: '1px solid var(--color-border-blue)', background: 'var(--color-bg)', color: 'var(--color-text)', fontSize: 11 }}
               />
             </PieChart>
           </ResponsiveContainer>

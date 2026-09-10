@@ -79,7 +79,7 @@ export function CategoryManager() {
         {c.isBuiltIn && <span className="text-[9px] text-text-muted uppercase shrink-0">内置</span>}
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <button className="text-[10px] text-primary-600 hover:underline" onClick={() => openEdit(c)}>编辑</button>
+        <button className="text-[10px] text-accent hover:underline" onClick={() => openEdit(c)}>编辑</button>
         <button
           className="text-[10px] text-danger hover:underline disabled:opacity-30 disabled:no-underline"
           disabled={c.isBuiltIn}
@@ -93,7 +93,7 @@ export function CategoryManager() {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-primary-600 font-medium">分类管理</h3>
+          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">分类管理</h3>
           <p className="text-[10px] text-text-muted mt-1">管理支出与收入分类，关键词用于本地识别</p>
         </div>
       </div>
@@ -101,7 +101,7 @@ export function CategoryManager() {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] tracking-widest uppercase text-text-muted">支出分类</span>
-          <button className="text-[10px] text-primary-600 hover:underline" onClick={() => openAdd('expense')}>+ 新增</button>
+          <button className="text-[10px] text-accent hover:underline" onClick={() => openAdd('expense')}>+ 新增</button>
         </div>
         <div className="space-y-1.5">{expenseCategories.map(renderRow)}</div>
       </div>
@@ -109,7 +109,7 @@ export function CategoryManager() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] tracking-widest uppercase text-text-muted">收入分类</span>
-          <button className="text-[10px] text-primary-600 hover:underline" onClick={() => openAdd('income')}>+ 新增</button>
+          <button className="text-[10px] text-accent hover:underline" onClick={() => openAdd('income')}>+ 新增</button>
         </div>
         <div className="space-y-1.5">{incomeCategories.map(renderRow)}</div>
       </div>

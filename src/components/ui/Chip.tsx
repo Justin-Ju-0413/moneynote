@@ -24,7 +24,7 @@ export function Chip({ active, onClick, children, size = 'sm', className = '' }:
       className={`${sizes[size]} text-[10px] tracking-widest uppercase font-medium whitespace-nowrap transition-colors ${
         active
           ? 'bg-primary-600 text-bg'
-          : 'border border-primary-300/50 text-text-muted hover:text-primary-600 hover:bg-primary-50/40'
+          : 'border border-primary-300/50 text-text-muted hover:text-accent hover:bg-primary-50/40'
       } ${className}`}
     >
       {children}

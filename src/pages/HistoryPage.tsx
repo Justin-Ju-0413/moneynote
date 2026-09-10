@@ -173,7 +173,7 @@ export function HistoryPage() {
         <div className="flex justify-end -mt-1">
           <button
             onClick={() => setShowDedup(true)}
-            className="px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium border border-primary-300/50 text-text-muted hover:text-primary-600 transition-colors"
+            className="px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium border border-primary-300/50 text-text-muted hover:text-accent transition-colors"
           >
             查重审核 {pendingRecords.length > 0 ? `· ${pendingRecords.length}` : ''}
           </button>

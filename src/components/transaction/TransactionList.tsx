@@ -30,7 +30,7 @@ export function TransactionList({ transactions, onItemClick, showDate = true }: 
         <div key={date}>
           {showDate && (
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-[10px] tracking-[0.1em] uppercase font-medium text-primary-600">{formatDate(date)}</span>
+              <span className="text-[10px] tracking-[0.1em] uppercase font-medium text-accent">{formatDate(date)}</span>
               <div className="flex-1 h-px bg-primary-200/30" />
               <span className="text-[10px] font-mono text-text-muted">
                 ¥{grouped[date].reduce((s, t) => s + (t.type === 'expense' ? t.amount : 0), 0).toFixed(0)}
