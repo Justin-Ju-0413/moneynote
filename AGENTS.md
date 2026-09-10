@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-React 19 · Vite 8 · TypeScript · Tailwind v4 · Dexie (IndexedDB) · recharts · framer-motion · vite-plugin-pwa · vitest · Playwright
+React 19 · Vite 8 · TypeScript · Tailwind v4 · Dexie (IndexedDB) · recharts · framer-motion · vite-plugin-pwa · Tauri 2（桌面端） · vitest · Playwright
 
 ## 常用命令
 
@@ -15,6 +15,8 @@ npm run lint         # ESLint
 npm test             # vitest 单测（使用 fake-indexeddb）
 npm run test:e2e     # build + Playwright E2E（会 mock LLM）
 npm run test:e2e:ui  # Playwright UI 模式
+npm run desktop:build   # Tauri 桌面端打包（.app + dmg，需 Rust 工具链）
+npm run desktop:install # 把构建好的 MoneyNote.app 安装到 /Applications
 ```
 
 提交前必须保证 `npm run lint` + `npm test` + `npm run build` + `npm run test:e2e` 通过（CI `quality` + `e2e` 双 job：node 20 + npm ci + lint + test + build + Playwright chromium，mock LLM 无 secret）。
@@ -39,6 +41,7 @@ npm run test:e2e:ui  # Playwright UI 模式
 - `src/nlp/` 本地解析管线（amountExtractor / dateParser / noteCleaner / categoryMatcher）
 - `src/bill-analyzer/` 模板自适应解析
 - `src/llm/` LLM 客户端（API Key AES-GCM 本地加密，请求脱敏）
+- `src-tauri/` Tauri 2 桌面壳（关窗即退出 + 单实例；`tauri.conf.json` 的 `version` 需与 package.json 同步）
 - `docs/specs/` 设计文档与实现计划
 
 ## Hard rules（真实失败教训）

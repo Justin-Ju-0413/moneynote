@@ -63,6 +63,17 @@ ChatGPT 式对话记账 · AI 工作台 · 账单导入 · 模糊去重
 - 可安装到桌面，离线可用
 - 路由级懒加载，首屏 ~150kB gzip
 
+### 🖥 桌面应用（Tauri，macOS）
+把同一套代码包成原生桌面应用：双击图标直接打开（无需起服务器），**关闭窗口即退出**，单实例防重复打开，数据仍存在本机 IndexedDB。
+
+```bash
+npm run desktop:build    # 产出 .app + dmg（首次需 Rust 工具链）
+npm run desktop:install  # 把 .app 安装到 /Applications
+npm run desktop:dev      # 带热重载开发桌面端
+```
+
+产物位于 `src-tauri/target/release/bundle/`（`macos/MoneyNote.app` 与 `dmg/`）。桌面端与浏览器 PWA 是两个独立存储，已有数据可在设置页用「备份/导出」迁移。
+
 ## 🚀 快速开始
 
 ```bash
@@ -96,6 +107,7 @@ npm test
 | 数据库 | Dexie (IndexedDB) |
 | 图表 | recharts |
 | PWA | vite-plugin-pwa |
+| 桌面端 | Tauri 2 |
 | 测试 | vitest |
 
 ## 💾 数据层

@@ -6,6 +6,7 @@
 
 ### Added
 
+- **桌面应用（Tauri 2）**：`npm run desktop:build` 把同一套前端打包成 macOS 原生应用（.app + dmg），双击直接使用（无需 dev server），**关闭窗口即退出**，单实例防重复打开；`desktop:install` 一键装入 /Applications；`desktop:dev` 带热重载开发
 - **深色模式**（PR #23）：跟随系统 + 手动三态切换（浅色/深色/跟随系统，设置页「外观」卡）；`index.html` 内联脚本首帧前设主题防闪烁；recharts 图表自动跟随；实现说明见 `docs/specs/2026-09-11-dark-mode.md`
 - **内置 OpenCode Go 服务商预设**（PR #19）：`opencode.ai/zen/go/v1`
 
