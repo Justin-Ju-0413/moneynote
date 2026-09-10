@@ -76,6 +76,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 
 ## 体验增强(随行队列,按产品节奏插队)
 
+- [x] **深色模式**（2026-09-11,PR #23）—— 跟随系统 + 手动三态;全量 CSS 变量重定义实现,组件零主题分支;见 `docs/specs/2026-09-11-dark-mode.md`
 - [ ] **流式输出** —— 审计 / 摘要走 SSE 流式,长任务体感提升(建议排在 C3 成本可观测之后)
 - [ ] **多币种** —— `Transaction` 加 `currency`,金额解析支持币种识别
 - [ ] **日期解析增强** —— `universalParser.normalizeDate` 支持 `dateFormat` transform,多格式容错

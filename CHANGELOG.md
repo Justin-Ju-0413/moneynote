@@ -2,6 +2,18 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 规范,版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- **深色模式**（PR #23）：跟随系统 + 手动三态切换（浅色/深色/跟随系统，设置页「外观」卡）；`index.html` 内联脚本首帧前设主题防闪烁；recharts 图表自动跟随；实现说明见 `docs/specs/2026-09-11-dark-mode.md`
+- **内置 OpenCode Go 服务商预设**（PR #19）：`opencode.ai/zen/go/v1`
+
+### Changed
+
+- **UI 一致性重构**（PR #21）：新增 `ui/Toggle`、`ui/Chip` 组件收敛重复样式；主题补 `danger`/`success` 语义色替换硬编码色值；`formatAmountSigned` 统一带符号金额；AI 工作台流水改为按需加载；Button/Card/输入框微交互精修
+- **设置页拆分**（PR #22）：797 行单体拆为 `useLLMForm` / `useBillImport` hook + 4 个自包含区块组件（AI 解析 / 备份 / 模板 / 导入结果），页面瘦身为组装层；模板匹配改实时查询
+
 ## [1.4.0] - 2026-08-12
 
 ### Added
