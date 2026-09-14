@@ -54,7 +54,7 @@ function SettingRow({ title, desc, danger, disabled, onClick }: {
       <div className="flex items-center justify-between">
         <div>
           <p className={`text-xs font-medium ${danger ? 'text-danger' : 'text-text'}`}>{title}</p>
-          <p className="text-[10px] text-text-muted mt-0.5">{desc}</p>
+          <p className="text-[11px] text-text-muted mt-0.5">{desc}</p>
         </div>
         <span className="text-text-placeholder text-sm">›</span>
       </div>
@@ -206,9 +206,9 @@ export function SettingsPage() {
         <Card>
           <div className="text-center py-3">
             <p className="font-heading text-lg text-heading mb-1">MoneyNote</p>
-            <p className="text-[10px] tracking-widest uppercase text-text-muted">AI 智能记账 · v{APP_VERSION}</p>
+            <p className="text-[11px] text-text-muted">AI 智能记账 · v{APP_VERSION}</p>
             <div className="h-px bg-primary-200/30 my-3" />
-            <p className="text-[10px] text-text-placeholder">自然语言输入，轻松记一笔</p>
+            <p className="text-[11px] text-text-placeholder">自然语言输入，轻松记一笔</p>
           </div>
         </Card>
       </div>

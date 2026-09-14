@@ -34,7 +34,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
-              className={`${colors[toast.type]} px-5 py-2.5 text-xs tracking-widest uppercase font-medium flex items-center gap-3`}
+              className={`${colors[toast.type]} rounded-button shadow-elevated px-5 py-2.5 text-xs font-medium flex items-center gap-3`}
               initial={{ opacity: 0, y: -20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}

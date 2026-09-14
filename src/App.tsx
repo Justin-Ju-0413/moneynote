@@ -22,7 +22,7 @@ const pageVariants = {
 
 const PageFallback = (
   <div className="flex items-center justify-center min-h-[60vh]">
-    <span className="text-xs tracking-widest uppercase text-text-muted">加载中…</span>
+    <span className="text-xs text-text-muted">加载中…</span>
   </div>
 )
 

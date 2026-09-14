@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Chip } from '@/components/ui/Chip'
 import { Dialog } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/components/ui/toast-context'
 import type { Category } from '@/db/types'
@@ -18,7 +19,7 @@ export function CategoryManager() {
   const [confirmDelete, setConfirmDelete] = useState<Category | null>(null)
   const [formId, setFormId] = useState('')
   const [formName, setFormName] = useState('')
-  const [formIcon, setFormIcon] = useState('📦')
+  const [formIcon, setFormIcon] = useState('other')
   const [formColor, setFormColor] = useState('#6b7b8d')
   const [formType, setFormType] = useState<'expense' | 'income'>('expense')
   const [formKeywords, setFormKeywords] = useState('')
@@ -27,7 +28,7 @@ export function CategoryManager() {
     setEdit({ mode: 'add' })
     setFormId('')
     setFormName('')
-    setFormIcon('📦')
+    setFormIcon('other')
     setFormColor(type === 'income' ? '#22c55e' : '#6b7b8d')
     setFormType(type)
     setFormKeywords('')
@@ -72,16 +73,16 @@ export function CategoryManager() {
   }
 
   const renderRow = (c: Category) => (
-    <div key={c.id} className="flex items-center justify-between px-3 py-2 border border-primary-200/30">
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sm w-5 text-center shrink-0">{c.icon}</span>
+    <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-button border border-primary-200/30">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <CategoryIcon category={c.id} size="sm" />
         <span className="text-xs text-text truncate">{c.name}</span>
-        {c.isBuiltIn && <span className="text-[9px] text-text-muted uppercase shrink-0">内置</span>}
+        {c.isBuiltIn && <span className="text-[10px] text-text-muted shrink-0">内置</span>}
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <button className="text-[10px] text-accent hover:underline" onClick={() => openEdit(c)}>编辑</button>
+        <button className="text-[11px] text-accent hover:underline" onClick={() => openEdit(c)}>编辑</button>
         <button
-          className="text-[10px] text-danger hover:underline disabled:opacity-30 disabled:no-underline"
+          className="text-[11px] text-danger hover:underline disabled:opacity-30 disabled:no-underline"
           disabled={c.isBuiltIn}
           onClick={() => handleDelete(c)}
         >删除</button>
@@ -93,23 +94,23 @@ export function CategoryManager() {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">分类管理</h3>
-          <p className="text-[10px] text-text-muted mt-1">管理支出与收入分类，关键词用于本地识别</p>
+          <h3 className="text-xs text-accent font-medium">分类管理</h3>
+          <p className="text-[11px] text-text-muted mt-1">管理支出与收入分类，关键词用于本地识别</p>
         </div>
       </div>
 
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] tracking-widest uppercase text-text-muted">支出分类</span>
-          <button className="text-[10px] text-accent hover:underline" onClick={() => openAdd('expense')}>+ 新增</button>
+          <span className="text-[11px] font-medium text-text-muted">支出分类</span>
+          <button className="text-[11px] text-accent hover:underline" onClick={() => openAdd('expense')}>+ 新增</button>
         </div>
         <div className="space-y-1.5">{expenseCategories.map(renderRow)}</div>
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] tracking-widest uppercase text-text-muted">收入分类</span>
-          <button className="text-[10px] text-accent hover:underline" onClick={() => openAdd('income')}>+ 新增</button>
+          <span className="text-[11px] font-medium text-text-muted">收入分类</span>
+          <button className="text-[11px] text-accent hover:underline" onClick={() => openAdd('income')}>+ 新增</button>
         </div>
         <div className="space-y-1.5">{incomeCategories.map(renderRow)}</div>
       </div>
@@ -118,25 +119,25 @@ export function CategoryManager() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">名称</label>
-              <input value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text" />
+              <label className="text-[11px] text-text-muted mb-1.5 block">名称</label>
+              <input value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text" />
             </div>
             <div>
-              <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">图标</label>
-              <input value={formIcon} onChange={(e) => setFormIcon(e.target.value)} className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text" />
+              <label className="text-[11px] text-text-muted mb-1.5 block">图标</label>
+              <input value={formIcon} onChange={(e) => setFormIcon(e.target.value)} className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">颜色</label>
-              <div className="flex items-center gap-2 border border-primary-300/50 px-3 py-2">
+              <label className="text-[11px] text-text-muted mb-1.5 block">颜色</label>
+              <div className="flex items-center gap-2 rounded-input border border-primary-300/50 bg-bg px-3 py-2">
                 <input type="color" value={formColor} onChange={(e) => setFormColor(e.target.value)} className="w-5 h-5 bg-transparent border-0 p-0" />
                 <span className="text-[10px] font-mono text-text-muted">{formColor}</span>
               </div>
             </div>
             {edit?.mode === 'add' && (
               <div>
-                <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">类型</label>
+                <label className="text-[11px] text-text-muted mb-1.5 block">类型</label>
                 <div className="flex gap-1.5">
                   <Chip active={formType === 'expense'} onClick={() => setFormType('expense')}>支出</Chip>
                   <Chip active={formType === 'income'} onClick={() => setFormType('income')}>收入</Chip>
@@ -146,13 +147,13 @@ export function CategoryManager() {
           </div>
           {edit?.mode === 'add' && (
             <div>
-              <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">分类 ID（可选，缺省用名称）</label>
-              <input value={formId} onChange={(e) => setFormId(e.target.value)} placeholder="如 coffee" className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text" />
+              <label className="text-[11px] text-text-muted mb-1.5 block">分类 ID（可选，缺省用名称）</label>
+              <input value={formId} onChange={(e) => setFormId(e.target.value)} placeholder="如 coffee" className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text" />
             </div>
           )}
           <div>
-            <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">关键词（顿号/逗号分隔，用于本地识别）</label>
-            <input value={formKeywords} onChange={(e) => setFormKeywords(e.target.value)} placeholder="咖啡、coffee" className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text" />
+            <label className="text-[11px] text-text-muted mb-1.5 block">关键词（顿号/逗号分隔，用于本地识别）</label>
+            <input value={formKeywords} onChange={(e) => setFormKeywords(e.target.value)} placeholder="咖啡、coffee" className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text" />
           </div>
           <div className="flex gap-2 pt-1">
             <Button variant="ghost" onClick={() => setEdit(null)} className="flex-1">取消</Button>

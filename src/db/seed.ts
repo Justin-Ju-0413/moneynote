@@ -9,7 +9,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'food',
     name: '餐饮',
-    icon: '🍜',
+    icon: 'food',
     color: '#f97316',
     keywords: ['早餐', '午餐', '午饭', '晚餐', '晚饭', '吃饭', '外卖', '咖啡', 'coffee', '奶茶', '火锅', '烧烤', '快餐', '水果', '零食', '饮料', '茶', '买菜', '做饭', '麦当劳', '肯德基', '星巴克', 'starbucks', 'kfc', '早餐', '宵夜', '火锅', '面条', '米饭', '汉堡', '披萨'],
     sortOrder: 1,
@@ -19,7 +19,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'transport',
     name: '交通',
-    icon: '🚗',
+    icon: 'transport',
     color: '#3b82f6',
     keywords: ['打车', '地铁', '公交', '加油', '停车', '滴滴', 'taxi', 'uber', '高铁', '火车', '机票', '飞机', '自行车', '共享单车', '过路费', '充电', '高速', '油费', '出行'],
     sortOrder: 2,
@@ -29,7 +29,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'shopping',
     name: '购物',
-    icon: '🛍️',
+    icon: 'shopping',
     color: '#ec4899',
     keywords: ['衣服', '裤子', '鞋', '包', '淘宝', '京东', '拼多多', '超市', '购物', '数码', '手机', '电脑', '护肤', '化妆', '日用', '洗护'],
     sortOrder: 3,
@@ -39,7 +39,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'entertainment',
     name: '娱乐',
-    icon: '🎮',
+    icon: 'entertainment',
     color: '#8b5cf6',
     keywords: ['电影', '游戏', 'ktv', '唱歌', '演出', '门票', '游乐', '旅游', '景点', '酒店', '民宿', '健身', '游泳', 'spa', '足浴', '按摩'],
     sortOrder: 4,
@@ -49,7 +49,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'housing',
     name: '住房',
-    icon: '🏠',
+    icon: 'housing',
     color: '#14b8a6',
     keywords: ['房租', '租金', '水费', '电费', '水电气', '物业', '物业费', '装修', '家具', '家电', '维修', '宽带', '网费'],
     sortOrder: 5,
@@ -59,7 +59,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'medical',
     name: '医疗',
-    icon: '💊',
+    icon: 'medical',
     color: '#ef4444',
     keywords: ['看病', '医院', '药', '药店', '体检', '牙科', '眼科', '门诊', '住院', '挂号', '检查'],
     sortOrder: 6,
@@ -69,7 +69,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'education',
     name: '教育',
-    icon: '📚',
+    icon: 'education',
     color: '#f59e0b',
     keywords: ['书', '书籍', '课程', '培训', '学费', '文具', '考试', '报名', '学习', '网课'],
     sortOrder: 7,
@@ -79,7 +79,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'other',
     name: '其他',
-    icon: '📦',
+    icon: 'other',
     color: '#6b7280',
     keywords: [],
     sortOrder: 8,
@@ -90,7 +90,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'salary',
     name: '工资',
-    icon: '💰',
+    icon: 'salary',
     color: '#22c55e',
     keywords: ['工资', '薪水', '薪资', '发薪', '工资入账'],
     sortOrder: 1,
@@ -100,7 +100,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'parttime',
     name: '兼职',
-    icon: '🛠️',
+    icon: 'parttime',
     color: '#84cc16',
     keywords: ['兼职', '外快', '副业', '酬劳', '报酬', '稿费', '佣金'],
     sortOrder: 2,
@@ -110,7 +110,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'investment',
     name: '投资收益',
-    icon: '📈',
+    icon: 'investment',
     color: '#10b981',
     keywords: ['分红', '利息', '收益', '理财', '股息', '股票', '基金收益'],
     sortOrder: 3,
@@ -120,7 +120,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'refund',
     name: '退款',
-    icon: '↩️',
+    icon: 'refund',
     color: '#06b6d4',
     keywords: ['退款', '退货', '退回', '返还'],
     sortOrder: 4,
@@ -130,7 +130,7 @@ export const defaultCategories: Category[] = [
   {
     id: 'income_other',
     name: '其他收入',
-    icon: '💵',
+    icon: 'income_other',
     color: '#6b7280',
     keywords: ['红包', '奖金', '中奖', '报销', '津贴', '补贴', '收款'],
     sortOrder: 5,

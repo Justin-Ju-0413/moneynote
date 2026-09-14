@@ -140,7 +140,7 @@ export function HistoryPage() {
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="搜索备注、分类、金额..."
-          className="w-full px-4 py-2.5 md:py-3 border border-primary-300/50 text-sm outline-none bg-transparent text-text placeholder:text-text-placeholder"
+          className="w-full px-4 py-2.5 md:py-3 rounded-input border border-primary-300/60 bg-bg text-sm outline-none text-text placeholder:text-text-placeholder transition-shadow"
         />
 
         {/* 分类筛选:支出/收入分组,避免 14 个 chip 收支混排 */}
@@ -173,7 +173,7 @@ export function HistoryPage() {
         <div className="flex justify-end -mt-1">
           <button
             onClick={() => setShowDedup(true)}
-            className="px-3 py-1.5 text-[10px] tracking-widest uppercase font-medium border border-primary-300/50 text-text-muted hover:text-accent transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-[11px] font-medium border border-primary-300/50 text-text-muted hover:text-accent hover:border-primary-400/60 transition-colors"
           >
             查重审核 {pendingRecords.length > 0 ? `· ${pendingRecords.length}` : ''}
           </button>
@@ -209,18 +209,18 @@ export function HistoryPage() {
               const b = txMap.get(r.entryBId)
               if (!a || !b) return null
               return (
-                <div key={r.id} className="border border-primary-200/40 p-3 space-y-2">
-                  <p className="text-[10px] text-text-muted">相似度 {Math.round(r.similarity * 100)}%</p>
+                <div key={r.id} className="rounded-card border border-primary-200/40 p-3 space-y-2">
+                  <p className="text-[11px] text-text-muted">相似度 {Math.round(r.similarity * 100)}%</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="border border-primary-200/30 p-2">
-                      <p className="text-[10px] text-text-muted">{a.date}</p>
+                    <div className="rounded-button border border-primary-200/30 p-2">
+                      <p className="text-[10px] text-text-muted font-mono">{a.date}</p>
                       <p className="text-[11px] text-text truncate">{a.note || '(无备注)'}</p>
-                      <p className="text-xs font-heading text-text mt-0.5">{formatAmountSigned(a.amount, a.type)}</p>
+                      <p className="text-xs font-heading tabular-nums text-text mt-0.5">{formatAmountSigned(a.amount, a.type)}</p>
                     </div>
-                    <div className="border border-primary-200/30 p-2">
-                      <p className="text-[10px] text-text-muted">{b.date}</p>
+                    <div className="rounded-button border border-primary-200/30 p-2">
+                      <p className="text-[10px] text-text-muted font-mono">{b.date}</p>
                       <p className="text-[11px] text-text truncate">{b.note || '(无备注)'}</p>
-                      <p className="text-xs font-heading text-text mt-0.5">{formatAmountSigned(b.amount, b.type)}</p>
+                      <p className="text-xs font-heading tabular-nums text-text mt-0.5">{formatAmountSigned(b.amount, b.type)}</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5">

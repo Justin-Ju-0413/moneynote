@@ -89,7 +89,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 
 四批次按依赖推进,每批次独立分支 + PR + 四门禁(lint/test/build/e2e),批末对应一个 minor 版本。
 
-- [ ] **R0 1.5.0 基线收口** —— 发布桌面应用/深色模式等 5 个 PR 积压;iCloud 冲突副本防再犯(.gitignore);README/ROADMAP 文档同步
+- [x] **R0 1.5.0 基线收口** —— 发布桌面应用/深色模式等 5 个 PR 积压;iCloud 冲突副本防再犯(.gitignore);README/ROADMAP 文档同步(2026-09-15,v1.5.0 已发布)
 - [ ] **R1 视觉与交互焕新(v1.6.0)** —— 现代亲和风:token 重塑(圆角 2px→12px 档/柔和阴影/字阶);lucide SVG 图标系统替换 emoji(分类/导航/AI 任务);首页/统计/明细/预算核心页精修;Dialog 键盘交互补课(Esc/焦点归还)
 - [ ] **R2 体验功能升级(v1.7.0)** —— 流式输出(SSE,体验队列队首);明细页规模化(DB v14 note/category 索引下推 + 日期/金额筛选 + 虚拟滚动);统计深度(月环比/同比/完整排行);设置页信息架构重组(分组子导航);预算建议与接近超支提醒
 - [ ] **R3 质量基建加固(v1.8.0)** —— 组件/hook 测试层(testing-library + jsdom,优先 useChat/useDedup/useBillImport);vitest coverage + 阈值;E2E 扩面(统计/预算/备份恢复/深色模式/移动视口);CI 补强(concurrency/coverage);release.mjs 版本四处同步收口;备份异地化一键导出(D4 前半)

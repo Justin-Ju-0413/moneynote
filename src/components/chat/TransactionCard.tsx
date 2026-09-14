@@ -77,14 +77,14 @@ export function TransactionCard({ card, onConfirm, onCancel }: Props) {
 
   return (
     <motion.div
-      className="blue-border bg-bg p-3 mt-2"
+      className="rounded-card shadow-card blue-border bg-bg p-3.5 mt-2"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
       <div className="flex items-center gap-1.5 mb-2">
         <span className="w-1.5 h-1.5 bg-primary-500 rounded-full" />
-        <span className="text-[10px] tracking-[0.15em] uppercase text-primary-500 font-medium">{statusText}</span>
+        <span className="text-[11px] text-primary-500 font-medium">{statusText}</span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -94,7 +94,7 @@ export function TransactionCard({ card, onConfirm, onCancel }: Props) {
             {beforeAmount !== undefined && (
               <span className="text-xs text-text-muted line-through">¥{beforeAmount.toFixed(2)}</span>
             )}
-            <span className={`text-xl font-heading ${income ? 'text-success' : 'text-expense'}`}>
+            <span className={`text-2xl font-heading tabular-nums ${income ? 'text-success' : 'text-expense'}`}>
               {formatAmountSigned(display.amount, display.type)}
             </span>
           </div>
@@ -107,11 +107,11 @@ export function TransactionCard({ card, onConfirm, onCancel }: Props) {
       </div>
 
       {display.note && (
-        <p className="text-xs text-text-secondary mt-2 border-l-2 border-primary-300 pl-3">{display.note}</p>
+        <p className="text-xs text-text-secondary mt-2.5 border-l-2 border-primary-300/60 pl-3">{display.note}</p>
       )}
 
       {pending && (
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2.5 mt-3.5">
           <Button
             onClick={onConfirm}
             variant={card.kind === 'delete' ? 'danger' : 'primary'}

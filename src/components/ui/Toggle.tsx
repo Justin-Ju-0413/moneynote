@@ -16,7 +16,7 @@ export function Toggle({ checked, onChange, label, title }: ToggleProps) {
       aria-label={label}
       title={title}
       onClick={onChange}
-      className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${checked ? 'bg-primary-600' : 'bg-primary-200/50'}`}
+      className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${checked ? 'bg-primary-600' : 'bg-primary-200/60'}`}
     >
       <span
         className={`absolute left-0 top-0.5 w-4 h-4 rounded-full bg-bg shadow-sm transition-transform ${

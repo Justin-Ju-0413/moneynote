@@ -40,14 +40,20 @@
   --color-cat-education: #f59e0b;
   --color-cat-other: #6b7b8d;
 
-  /* 圆角 - 更方正 */
-  --radius-card: 2px;
-  --radius-button: 2px;
-  --radius-input: 2px;
+  /* AI 工作台建议类型语义色（暗色在下方 dark 块提亮） */
+  --color-task-category: #3b82f6;
+  --color-task-duplicate: #f97316;
+  --color-task-anomaly: #ef4444;
+  --color-task-summary: #8b5cf6;
 
-  /* 阴影 - 更克制 */
-  --shadow-card: none;
-  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.06);
+  /* 圆角 - 现代亲和风：卡片大圆角、按钮/输入框中圆角 */
+  --radius-card: 12px;
+  --radius-button: 10px;
+  --radius-input: 10px;
+
+  /* 阴影 - 柔和双层 */
+  --shadow-card: 0 1px 2px rgba(15, 52, 104, 0.05), 0 4px 12px rgba(15, 52, 104, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(15, 52, 104, 0.12);
   --shadow-input-focus: 0 0 0 2px rgba(14, 84, 166, 0.15);
 
   /* 字体 */
@@ -95,15 +101,22 @@
   --color-text-muted: #64798c;
   --color-text-placeholder: #46586a;
 
-  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.4);
+  /* AI 工作台建议类型语义色：暗色提亮镜像 */
+  --color-task-category: #60a5fa;
+  --color-task-duplicate: #fb923c;
+  --color-task-anomaly: #f87171;
+  --color-task-summary: #a78bfa;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-input-focus: 0 0 0 2px rgba(123, 170, 218, 0.25);
 
   /* 点阵纹理：暗色用更暗的点 */
-  --bg-pattern: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%233a4a5c' fill-opacity='0.16'%3E%3Cpath d='M0 0h1v1H0zM20 0h1v1h-1zM0 20h1v1H0zM20 20h1v1H0z'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-pattern: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%233a4a5c' fill-opacity='0.10'%3E%3Cpath d='M0 0h1v1H0zM20 0h1v1h-1zM0 20h1v1H0zM20 20h1v1H0z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 :root {
-  --bg-pattern: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2394a3b8' fill-opacity='0.08'%3E%3Cpath d='M0 0h1v1H0zM20 0h1v1h-1zM0 20h1v1H0zM20 20h1v1H0z'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-pattern: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2394a3b8' fill-opacity='0.04'%3E%3Cpath d='M0 0h1v1H0zM20 0h1v1h-1zM0 20h1v1H0zM20 20h1v1H0z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 @keyframes slide-up {
@@ -129,12 +142,11 @@ body {
   background-image: var(--bg-pattern);
 }
 
-/* 衬线标题 */
+/* 标题：现代亲和风（无衬线 semibold，常规字距；等宽数字仍由 font-mono 提供） */
 .font-heading {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 /* 等宽字体代码块 */
@@ -147,7 +159,7 @@ body {
   background-color: var(--color-code-bg);
   color: var(--color-code-text);
   font-family: var(--font-mono);
-  border-radius: 2px;
+  border-radius: var(--radius-input);
   padding: 12px 16px;
   font-size: 13px;
 }

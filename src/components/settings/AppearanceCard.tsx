@@ -22,8 +22,8 @@ export function AppearanceCard() {
     <Card>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">外观</h3>
-          <p className="text-[10px] text-text-muted mt-1">选择浅色、深色或跟随系统自动切换</p>
+          <h3 className="text-xs text-accent font-medium">外观</h3>
+          <p className="text-[11px] text-text-muted mt-1">选择浅色、深色或跟随系统自动切换</p>
         </div>
         <div className="flex gap-1.5 shrink-0">
           {OPTIONS.map((o) => (

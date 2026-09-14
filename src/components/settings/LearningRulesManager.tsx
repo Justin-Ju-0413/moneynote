@@ -63,46 +63,46 @@ export function LearningRulesManager() {
   return (
     <Card>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">学习规则</h3>
+        <h3 className="text-xs text-accent font-medium">学习规则</h3>
         <div className="flex gap-2 shrink-0">
-          <button className="text-[10px] text-accent hover:underline" onClick={handleExport}>导出</button>
-          <button className="text-[10px] text-accent hover:underline" onClick={handleImportClick}>导入</button>
+          <button className="text-[11px] text-accent hover:underline" onClick={handleExport}>导出</button>
+          <button className="text-[11px] text-accent hover:underline" onClick={handleImportClick}>导入</button>
         </div>
       </div>
       <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
-      <p className="text-[10px] text-text-muted mt-1">
+      <p className="text-[11px] text-text-muted mt-1">
         AI 根据你的确认和修正自动学习，识别会越来越准
         {rules.length > 0 && (
           <span className="text-primary-500"> · {rules.length} 条规则 · 累计命中 {totalHits} 次 · 约节省 {totalHits} 次 LLM 调用</span>
         )}
       </p>
-      <p className="text-[10px] text-text-muted mt-1">规则含消费习惯，导出文件请妥善保管</p>
+      <p className="text-[11px] text-text-muted mt-1">规则含消费习惯，导出文件请妥善保管</p>
       {rules.length === 0 && (
-        <p className="text-[10px] text-text-muted mt-1">暂无已学规则。</p>
+        <p className="text-[11px] text-text-muted mt-1">暂无已学规则。</p>
       )}
       {rules.length > 0 && (
         <>
           <div className="mt-3 space-y-1.5">
             {rules.map((r) => (
-              <div key={r.id} className="flex items-center justify-between px-3 py-2 border border-primary-200/30">
+              <div key={r.id} className="flex items-center justify-between px-3 py-2 rounded-button border border-primary-200/30">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xs text-text truncate">{r.merchant}</span>
-                  <span className="text-[10px] text-text-muted">→ {getInfo(r.category).name}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded ${r.source === 'manual' ? 'bg-primary-100/40 text-heading' : 'bg-primary-50/40 text-text-muted'}`}>
+                  <span className="text-[11px] text-text-muted">→ {getInfo(r.category).name}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${r.source === 'manual' ? 'bg-primary-100/40 text-heading' : 'bg-primary-50/40 text-text-muted'}`}>
                     {r.source === 'manual' ? '手动' : 'LLM'}
                   </span>
-                  <span className="text-[9px] text-text-muted">{r.hitCount} 次</span>
-                  <span className="text-[9px] text-text-muted">命中 {(r.matchCount ?? 0)} 次</span>
-                  <span className="text-[9px] text-text-muted">
+                  <span className="text-[10px] tabular-nums text-text-muted">{r.hitCount} 次</span>
+                  <span className="text-[10px] tabular-nums text-text-muted">命中 {(r.matchCount ?? 0)} 次</span>
+                  <span className="text-[10px] font-mono text-text-muted">
                     {new Date(r.lastHitAt ?? r.updatedAt).toLocaleString()}
                   </span>
                 </div>
-                <button className="text-[10px] text-danger hover:underline shrink-0" onClick={() => handleDelete(r.id!)}>删除</button>
+                <button className="text-[11px] text-danger hover:underline shrink-0" onClick={() => handleDelete(r.id!)}>删除</button>
               </div>
             ))}
           </div>
           <div className="mt-3 flex justify-end">
-            <button className="text-[10px] text-text-muted hover:text-accent" onClick={() => setConfirmCleanup(true)}>
+            <button className="text-[11px] text-text-muted hover:text-accent" onClick={() => setConfirmCleanup(true)}>
               清理 180 天未命中规则
             </button>
           </div>

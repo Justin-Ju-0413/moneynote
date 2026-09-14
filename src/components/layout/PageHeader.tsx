@@ -6,7 +6,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle }: PageHeaderProps) {
   return (
     <header className="px-5 pt-12 pb-6 md:px-8 md:pt-14 md:pb-8 lg:px-10 lg:pt-10 safe-area-top">
-      <p className="text-[10px] tracking-[0.2em] uppercase text-text-muted mb-2 font-medium">
+      <p className="text-[11px] text-text-muted mb-2 font-medium">
         MoneyNote
       </p>
       <h1 className="font-heading text-2xl md:text-3xl lg:text-4xl text-heading">{title}</h1>

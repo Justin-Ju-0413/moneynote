@@ -15,31 +15,29 @@ export function HomePage() {
     <div className="flex flex-col h-[calc(100dvh-5rem)] lg:h-[calc(100dvh-2rem)]">
       {/* 精简头部 + 收支摘要 */}
       <div className="px-5 pt-5 pb-3 md:px-8 lg:px-10">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="font-heading text-lg text-text">记账</h1>
-            <div className="flex items-center gap-3 mt-1 text-xs text-text-muted">
-              <span>
-                今日 <span className="text-expense font-medium">{formatAmountShort(todayExpense)}</span>
-              </span>
-              <span className="text-primary-300">·</span>
-              <span>
-                本月支 <span className="text-expense font-medium">{formatAmountShort(monthExpense)}</span>
-              </span>
-              <span className="text-primary-300">·</span>
-              <span>
-                收 <span className="text-income font-medium">{formatAmountShort(monthIncome)}</span>
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center justify-between">
+          <h1 className="font-heading text-lg text-text">记账</h1>
           {messages.length > 0 && (
             <button
               onClick={() => setConfirmClear(true)}
-              className="text-[10px] tracking-widest uppercase text-text-muted hover:text-accent transition-colors shrink-0"
+              className="text-[11px] text-text-muted hover:text-accent transition-colors shrink-0"
             >
               清空
             </button>
           )}
+        </div>
+        <div className="rounded-card shadow-card blue-border bg-bg mt-3 px-4 py-3 flex items-center gap-3 text-xs text-text-muted">
+          <span>
+            今日 <span className="text-expense font-medium tabular-nums">{formatAmountShort(todayExpense)}</span>
+          </span>
+          <span className="text-primary-300">·</span>
+          <span>
+            本月支 <span className="text-expense font-medium tabular-nums">{formatAmountShort(monthExpense)}</span>
+          </span>
+          <span className="text-primary-300">·</span>
+          <span>
+            收 <span className="text-income font-medium tabular-nums">{formatAmountShort(monthIncome)}</span>
+          </span>
         </div>
       </div>
 

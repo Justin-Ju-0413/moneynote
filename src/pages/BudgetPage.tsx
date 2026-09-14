@@ -76,27 +76,31 @@ export function BudgetPage() {
         {/* 总预算卡片 */}
         <Card className="cursor-pointer" onClick={() => openBudgetDialog('total')}>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">月度总预算</span>
-            <span className="text-[10px] tracking-widest uppercase text-primary-500">编辑</span>
+            <span className="text-xs text-accent font-medium">月度总预算</span>
+            <span className="text-[11px] text-primary-500 hover:text-primary-400 transition-colors">编辑</span>
           </div>
           {totalBudgetAmount > 0 ? (
             <>
               <div className="flex items-baseline gap-1 mb-3">
-                <span className="text-2xl font-heading text-text">¥{totalSpent.toFixed(0)}</span>
-                <span className="text-xs text-text-muted">/ ¥{totalBudgetAmount.toFixed(0)}</span>
+                <span className="text-2xl font-heading tabular-nums text-text">¥{totalSpent.toFixed(0)}</span>
+                <span className="text-xs text-text-muted tabular-nums">/ ¥{totalBudgetAmount.toFixed(0)}</span>
               </div>
-              <div className="h-1 bg-primary-100 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-primary-100 overflow-hidden">
                 <div
-                  className="h-full transition-all duration-500"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min((totalSpent / totalBudgetAmount) * 100, 100)}%`,
                     backgroundColor: totalSpent > totalBudgetAmount ? 'var(--color-danger)' : 'var(--color-expense)',
                   }}
                 />
               </div>
-              <p className={`text-[10px] font-mono mt-2 ${totalSpent > totalBudgetAmount ? 'text-danger' : 'text-text-muted'}`}>
+              <p
+                className={`text-[11px] tabular-nums mt-2.5 inline-flex items-center rounded-full px-2.5 py-1 ${
+                  totalSpent > totalBudgetAmount ? 'bg-danger/10 text-danger' : 'text-text-muted'
+                }`}
+              >
                 {totalSpent > totalBudgetAmount
-                  ? `⚠ 已超出 ¥${(totalSpent - totalBudgetAmount).toFixed(0)}`
+                  ? `已超出 ¥${(totalSpent - totalBudgetAmount).toFixed(0)}`
                   : `剩余 ¥${(totalBudgetAmount - totalSpent).toFixed(0)}`}
               </p>
             </>
@@ -106,7 +110,7 @@ export function BudgetPage() {
         </Card>
 
         {/* 各分类预算 */}
-        <h2 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">分类预算</h2>
+        <h2 className="text-xs text-accent font-medium">分类预算</h2>
         <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 lg:gap-5">
         {categories.map((c) => {
           const budget = budgetsList.find(b => b.category === c.id)
@@ -121,15 +125,15 @@ export function BudgetPage() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs text-text">{c.name}</span>
                     {budgetAmount > 0 && (
-                      <span className="text-[10px] font-mono text-text-muted">
+                      <span className="text-[10px] font-mono tabular-nums text-text-muted">
                         ¥{spent.toFixed(0)} / ¥{budgetAmount.toFixed(0)}
                       </span>
                     )}
                   </div>
                   {budgetAmount > 0 ? (
-                    <div className="h-1 bg-primary-100 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-primary-100 overflow-hidden">
                       <div
-                        className="h-full transition-all duration-500"
+                        className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${Math.min((spent / budgetAmount) * 100, 100)}%`,
                           backgroundColor: spent > budgetAmount ? 'var(--color-danger)' : c.color,
@@ -137,7 +141,7 @@ export function BudgetPage() {
                       />
                     </div>
                   ) : (
-                    <p className="text-[10px] text-text-placeholder">未设置预算</p>
+                    <p className="text-[11px] text-text-placeholder">未设置预算</p>
                   )}
                 </div>
               </div>
@@ -151,10 +155,10 @@ export function BudgetPage() {
       <Dialog open={showDialog} onClose={() => setShowDialog(false)} title="设置预算">
         <div className="space-y-5">
           <div>
-            <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">
+            <label className="text-[11px] text-text-muted mb-1.5 block">
               {editBudget?.category === 'total' ? '月度总预算' : `${getInfo(editBudget?.category || 'other').name} 预算`}
             </label>
-            <div className="flex items-center gap-2 border border-primary-300 px-3 py-2.5">
+            <div className="flex items-center gap-2 rounded-input border border-primary-300/70 bg-bg px-3 py-2.5">
               <span className="text-text-muted text-sm">¥</span>
               <input
                 type="number"

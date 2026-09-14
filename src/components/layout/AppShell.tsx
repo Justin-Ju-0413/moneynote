@@ -13,22 +13,23 @@ export function AppShell({ children }: AppShellProps) {
       {/* 桌面侧边栏 */}
       <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-56 lg:border-r lg:border-primary-200/30 lg:bg-bg lg:z-20">
         <div className="px-6 pt-10 pb-6">
-          <p className="font-heading text-sm tracking-widest text-heading">MoneyNote</p>
-          <p className="text-[10px] tracking-widest uppercase text-text-muted mt-1">智能记账</p>
+          <p className="font-heading text-sm text-heading">MoneyNote</p>
+          <p className="text-[10px] text-text-muted mt-1">智能记账</p>
         </div>
-        <nav className="flex-1 px-3 space-y-0.5">
+        <nav className="flex-1 px-3 space-y-1">
           {NAV_TABS.map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 text-xs tracking-widest uppercase font-medium transition-colors ${
+                `flex items-center gap-3 px-4 py-2.5 rounded-[10px] text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-primary-600 text-bg'
                     : 'text-text-muted hover:text-accent hover:bg-primary-50/40'
                 }`
               }
             >
+              <tab.icon size={18} aria-hidden="true" />
               {tab.label}
             </NavLink>
           ))}
