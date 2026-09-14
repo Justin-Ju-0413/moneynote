@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-15
+
 ### Added
 
 - **桌面应用（Tauri 2）**：`npm run desktop:build` 把同一套前端打包成 macOS 原生应用（.app + dmg），双击直接使用（无需 dev server），**关闭窗口即退出**，单实例防重复打开；`desktop:install` 一键装入 /Applications；`desktop:dev` 带热重载开发

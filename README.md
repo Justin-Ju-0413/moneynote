@@ -112,7 +112,7 @@ npm test
 
 ## 💾 数据层
 
-Dexie schema 演进至 **v12**，升级自动迁移：
+Dexie schema 演进至 **v13**，升级自动迁移：
 
 | 版本 | 内容 |
 |---|---|
@@ -124,6 +124,7 @@ Dexie schema 演进至 **v12**，升级自动迁移：
 | v10 | `billTemplates` 增加 `importCount` 索引（修复设置页 orderBy 白屏） |
 | v11 | `chatMessages`（首页对话历史持久化） |
 | v12 | `learningRules`（AI 学习规则：商户→分类映射，本地识别进化） |
+| v13 | `llmUsage`（LLM 用量记录，成本可观测） |
 
 ## Verification / 验证
 
@@ -139,17 +140,18 @@ npm run test:e2e
 
 ## Current status / 当前状态
 
-- 当前稳定 Release：`v1.4.0`。
+- 当前稳定 Release：`v1.5.0`。
 - 定位：local-first AI personal finance product，基础记账不依赖账号或 API Key。
-- 维护优先级：稳定性、账单导入兼容、AI 记账体验、数据安全、双语文档、Demo 与 Release 质量。
+- 当前进行中：[全面焕新计划](docs/superpowers/plans/2026-09-15-renewal.md)——视觉与交互、体验功能、质量基建、深水区攻坚四个批次（详见 [docs/ROADMAP.md](docs/ROADMAP.md)）。
 - 不以无限增加功能作为路线图目标。
 
 ## Roadmap / 路线图
 
-1. 提升支付宝、微信支付和银行账单导入兼容性及错误诊断。
-2. 加固备份、恢复、数据库迁移和异常回退。
-3. 改进 AI 建议的可解释性、确认流程与离线回退。
-4. 维持可复现 Demo、截图、Changelog 和 SemVer Release。
+详见 [docs/ROADMAP.md](docs/ROADMAP.md)。要点：
+
+1. **全面焕新计划**（进行中，[计划文档](docs/superpowers/plans/2026-09-15-renewal.md)）：现代亲和风视觉焕新 · 流式输出/明细规模化等体验升级 · 测试与基建加固 · C4 结构化输出与 C7 泛化导入攻坚。
+2. 短期收尾：账单导入兼容性与错误诊断、备份加固与异地化、AI 建议可解释性。
+3. 长期北极星：可选的端到端加密多设备同步（自托管，隐私不妥协）。
 
 ## Limitations / 限制
 
