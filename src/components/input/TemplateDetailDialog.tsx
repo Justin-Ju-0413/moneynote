@@ -38,30 +38,30 @@ export function TemplateDetailDialog({
       <div className="space-y-4">
         {/* 基本信息 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="border border-primary-200/50 p-3">
-            <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">来源</p>
+          <div className="rounded-button border border-primary-200/50 p-3">
+            <p className="text-[11px] text-text-muted mb-1">来源</p>
             <p className="text-xs font-heading text-text">{template.source}</p>
           </div>
-          <div className="border border-primary-200/50 p-3">
-            <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">类型</p>
+          <div className="rounded-button border border-primary-200/50 p-3">
+            <p className="text-[11px] text-text-muted mb-1">类型</p>
             <p className="text-xs font-heading text-text">
               {template.isBuiltIn ? '内置' : '已学习'} · {template.fileType.toUpperCase()}
             </p>
           </div>
-          <div className="border border-primary-200/50 p-3">
-            <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">导入次数</p>
+          <div className="rounded-button border border-primary-200/50 p-3">
+            <p className="text-[11px] text-text-muted mb-1">导入次数</p>
             <p className="text-xs font-heading text-accent">{template.importCount} 次</p>
           </div>
-          <div className="border border-primary-200/50 p-3">
-            <p className="text-[10px] tracking-widest uppercase text-text-muted mb-1">列数</p>
+          <div className="rounded-button border border-primary-200/50 p-3">
+            <p className="text-[11px] text-text-muted mb-1">列数</p>
             <p className="text-xs font-heading text-text">{template.columnMappings.length} 列</p>
           </div>
         </div>
 
         {/* 列映射 */}
         <div>
-          <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">列映射</p>
-          <div className="border border-primary-200/50 overflow-x-auto">
+          <p className="text-[11px] font-medium text-text-muted mb-2">列映射</p>
+          <div className="rounded-card border border-primary-200/50 overflow-x-auto">
             <table className="w-full text-[10px]">
               <thead>
                 <tr className="bg-primary-50/30 border-b border-primary-200/50">
@@ -90,10 +90,10 @@ export function TemplateDetailDialog({
         {/* 过滤规则 */}
         {template.filterRules.length > 0 && (
           <div>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">过滤规则</p>
+            <p className="text-[11px] font-medium text-text-muted mb-2">过滤规则</p>
             <div className="space-y-1">
               {template.filterRules.map((r, i) => (
-                <div key={i} className="text-[10px] text-text-secondary border border-primary-200/30 px-2 py-1">
+                <div key={i} className="text-[10px] text-text-secondary rounded-button border border-primary-200/30 px-2 py-1">
                   列 {r.columnIndex}: {r.type} {r.value ? `"${r.value}"` : ''} → {r.reason}
                 </div>
               ))}

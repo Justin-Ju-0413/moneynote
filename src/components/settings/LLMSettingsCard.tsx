@@ -32,8 +32,8 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">AI 智能解析</h3>
-          <p className="text-[10px] text-text-muted mt-1">低置信度时使用大模型增强解析</p>
+          <h3 className="text-xs text-accent font-medium">AI 智能解析</h3>
+          <p className="text-[11px] text-text-muted mt-1">低置信度时使用大模型增强解析</p>
         </div>
         <Toggle
           checked={form.enabled}
@@ -46,7 +46,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
         <div className={`space-y-4 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
           {/* 服务商快捷选择 */}
           <div>
-            <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2 block">服务商</label>
+            <label className="text-[11px] text-text-muted mb-2 block">服务商</label>
             <div className="flex gap-1.5 flex-wrap">
               {LLM_PRESETS.map(preset => (
                 <Chip
@@ -62,20 +62,20 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
 
           {/* API 地址 */}
           <div>
-            <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">API 地址</label>
+            <label className="text-[11px] text-text-muted mb-1.5 block">API 地址</label>
             <input
               type="text"
               value={form.endpoint}
               onChange={(e) => patchForm({ endpoint: e.target.value })}
               placeholder="https://api.example.com"
-              className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
+              className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text placeholder:text-text-placeholder"
             />
           </div>
 
           {/* API Key */}
           <div>
-            <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">API Key</label>
-            <div className="flex border border-primary-300/50">
+            <label className="text-[11px] text-text-muted mb-1.5 block">API Key</label>
+            <div className="flex rounded-input border border-primary-300/50 bg-bg">
               <input
                 type={showApiKey ? 'text' : 'password'}
                 value={form.apiKey}
@@ -84,7 +84,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
                 className="flex-1 px-3 py-2 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
               />
               <button
-                className="px-3 text-[10px] tracking-widest uppercase text-text-muted hover:text-accent"
+                className="px-3 text-[11px] text-text-muted hover:text-accent"
                 onClick={() => setShowApiKey(!showApiKey)}
               >
                 {showApiKey ? '隐藏' : '显示'}
@@ -94,7 +94,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
 
           {/* 模型选择 */}
           <div>
-            <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">模型</label>
+            <label className="text-[11px] text-text-muted mb-1.5 block">模型</label>
             {availableModels.length > 0 ? (
               <div className="space-y-2">
                 <div className="flex gap-1.5 flex-wrap">
@@ -113,7 +113,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
                     value={form.model}
                     onChange={(e) => patchForm({ model: e.target.value })}
                     placeholder="输入自定义模型名称"
-                    className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
+                    className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text placeholder:text-text-placeholder"
                   />
                 )}
               </div>
@@ -123,7 +123,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
                 value={form.model}
                 onChange={(e) => patchForm({ model: e.target.value })}
                 placeholder="deepseek-v4-flash / gpt-4.1-nano"
-                className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
+                className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text placeholder:text-text-placeholder"
               />
             )}
           </div>
@@ -143,7 +143,7 @@ export function LLMSettingsCard({ llm }: { llm: LLMForm }) {
             </Button>
           </div>
 
-          <p className="text-[10px] text-text-placeholder leading-relaxed">
+          <p className="text-[11px] text-text-placeholder leading-relaxed">
             API Key 仅存储在本地浏览器中，不会上传至任何服务器。
           </p>
         </div>

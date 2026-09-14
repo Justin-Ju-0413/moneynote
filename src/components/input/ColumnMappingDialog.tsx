@@ -85,7 +85,7 @@ export function ColumnMappingDialog({
       <div className="space-y-4">
         {/* 格式名称 */}
         <div>
-          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">
+          <label className="text-[11px] text-text-muted mb-1.5 block">
             格式名称
           </label>
           <input
@@ -93,14 +93,14 @@ export function ColumnMappingDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="例如：招商银行信用卡"
-            className="w-full px-3 py-2 border border-primary-300/50 text-xs outline-none bg-transparent text-text placeholder:text-text-placeholder"
+            className="w-full px-3 py-2 rounded-input border border-primary-300/50 bg-bg text-xs outline-none text-text placeholder:text-text-placeholder"
           />
         </div>
 
         {/* 列映射表格 */}
         <div>
-          <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">列映射</p>
-          <div className="border border-primary-200/50 overflow-x-auto">
+          <p className="text-[11px] font-medium text-text-muted mb-2">列映射</p>
+          <div className="rounded-card border border-primary-200/50 overflow-x-auto">
             <table className="w-full text-[10px]">
               <thead>
                 <tr className="bg-primary-50/30 border-b border-primary-200/50">
@@ -138,19 +138,19 @@ export function ColumnMappingDialog({
 
         {/* 必需列检查 */}
         {!hasDate && (
-          <p className="text-[10px] text-danger">请指定一个「日期」列</p>
+          <p className="text-[11px] text-danger">请指定一个「日期」列</p>
         )}
         {!hasAmount && (
-          <p className="text-[10px] text-danger">请指定一个「金额」列</p>
+          <p className="text-[11px] text-danger">请指定一个「金额」列</p>
         )}
 
         {/* 预览解析结果 */}
         {preview.length > 0 && (
           <div>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2">解析预览</p>
+            <p className="text-[11px] font-medium text-text-muted mb-2">解析预览</p>
             <div className="space-y-1.5">
               {preview.slice(0, 3).map((row, i) => (
-                <div key={i} className="text-[10px] text-text-secondary border border-primary-200/30 px-2 py-1.5">
+                <div key={i} className="text-[10px] text-text-secondary rounded-button border border-primary-200/30 px-2 py-1.5">
                   <span className="font-heading text-accent">{row.fields['交易时间']}</span>
                   {' '}
                   <span>{row.fields['收/支'] === '收入' ? '+' : '-'}{row.fields['金额']}</span>
@@ -164,7 +164,7 @@ export function ColumnMappingDialog({
 
         {/* 警告信息 */}
         {warnings.length > 0 && (
-          <div className="text-[10px] text-danger space-y-0.5">
+          <div className="text-[11px] text-danger space-y-0.5">
             {warnings.map((w, i) => (
               <p key={i}>{w}</p>
             ))}

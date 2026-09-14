@@ -29,7 +29,7 @@ export function useCategories() {
     const c = byId.get(id)
     if (c) return { name: c.name, icon: c.icon, color: c.color }
     const fallback = CATEGORY_MAP[id]
-    return fallback ?? { name: id, icon: '📦', color: '#6b7b8d' }
+    return fallback ?? { name: id, icon: 'other', color: '#6b7b8d' }
   }, [byId])
 
   const expenseCategories = useMemo(

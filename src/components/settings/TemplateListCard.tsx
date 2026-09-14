@@ -28,8 +28,8 @@ export function TemplateListCard({ templates }: TemplateListCardProps) {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">账单模板</h3>
-          <p className="text-[10px] text-text-muted mt-1">已学习 {templates.length} 种格式，自动识别导入文件</p>
+          <h3 className="text-xs text-accent font-medium">账单模板</h3>
+          <p className="text-[11px] text-text-muted mt-1">已学习 {templates.length} 种格式，自动识别导入文件</p>
         </div>
       </div>
       {templates.length > 0 ? (
@@ -37,7 +37,7 @@ export function TemplateListCard({ templates }: TemplateListCardProps) {
           {templates.map(tmpl => (
             <div
               key={tmpl.id || tmpl.fingerprint}
-              className="flex items-center justify-between px-3 py-2 border border-primary-200/30 hover:bg-primary-50/20 cursor-pointer transition-colors"
+              className="flex items-center justify-between px-3 py-2 rounded-button border border-primary-200/30 hover:bg-primary-50/20 cursor-pointer transition-colors"
               onClick={() => setSelectedTemplate(tmpl)}
             >
               <div className="flex items-center gap-2">
@@ -45,14 +45,14 @@ export function TemplateListCard({ templates }: TemplateListCardProps) {
                 <span className="text-xs text-text">{tmpl.name}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] text-text-muted">{tmpl.importCount} 次</span>
+                <span className="text-[11px] tabular-nums text-text-muted">{tmpl.importCount} 次</span>
                 <span className="text-text-placeholder text-sm">›</span>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[10px] text-text-placeholder">导入新格式账单时将自动学习</p>
+        <p className="text-[11px] text-text-placeholder">导入新格式账单时将自动学习</p>
       )}
 
       <TemplateDetailDialog

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { Sparkles } from 'lucide-react'
 import type { ChatMessage } from '@/db/types'
 import { TransactionCard } from './TransactionCard'
 
@@ -21,11 +22,14 @@ export function ChatMessageList({ messages, sending, onConfirm, onCancel, aiEnab
   if (messages.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center px-6">
-        <p className="text-sm text-text-secondary mb-2">👋 你好,我是记账助手</p>
+        <div className="w-14 h-14 rounded-card bg-primary-50 flex items-center justify-center text-primary-400 mb-4">
+          <Sparkles size={26} strokeWidth={1.75} />
+        </div>
+        <p className="text-sm text-text-secondary mb-2">你好，我是记账助手</p>
         <p className="text-xs text-text-muted leading-relaxed max-w-xs">
           {aiEnabled
-            ? '直接说就行,比如"午餐35"、"本月花了多少"、"把刚才那笔改成20"。'
-            : 'AI 未启用,可本地解析记账。在设置里配置 AI 后支持查询、修改、删除。'}
+            ? '直接说就行，比如「午餐35」「本月花了多少」「把刚才那笔改成20」。'
+            : 'AI 未启用，可本地解析记账。在设置里配置 AI 后支持查询、修改、删除。'}
         </p>
       </div>
     )
@@ -40,7 +44,7 @@ export function ChatMessageList({ messages, sending, onConfirm, onCancel, aiEnab
       )}
       {sending && (
         <div className="flex justify-start">
-          <div className="bg-primary-50/50 border border-primary-200/40 px-3 py-2 text-xs text-text-muted">
+          <div className="rounded-full bg-primary-50/70 border border-primary-200/40 px-4 py-2 text-xs text-text-muted">
             <span className="inline-block w-1.5 h-1.5 bg-primary-500 rounded-full mr-1.5 animate-pulse" />
             思考中…
           </div>
@@ -66,8 +70,10 @@ function MessageBubble({
       <div className={isUser ? 'max-w-[85%]' : 'w-full max-w-[90%]'}>
         {message.content && (
           <motion.div
-            className={`px-3 py-2 text-sm whitespace-pre-wrap break-words ${
-              isUser ? 'bg-primary-600 text-bg' : 'bg-primary-50/50 border border-primary-200/40 text-text'
+            className={`px-3.5 py-2.5 text-sm whitespace-pre-wrap break-words ${
+              isUser
+                ? 'bg-primary-600 text-bg rounded-2xl rounded-br-md'
+                : 'bg-primary-50/70 border border-primary-200/40 text-text rounded-2xl rounded-bl-md'
             }`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}

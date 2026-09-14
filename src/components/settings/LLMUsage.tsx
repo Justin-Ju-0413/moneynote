@@ -27,17 +27,17 @@ export function LLMUsage() {
 
   if (!usage || usage.calls === 0) {
     return (
-      <p className="text-[10px] text-text-placeholder mt-3">本月暂无 LLM 调用记录（用量仅记录在本地）</p>
+      <p className="text-[11px] text-text-placeholder mt-3">本月暂无 LLM 调用记录（用量仅记录在本地）</p>
     )
   }
 
   return (
     <div className="mt-3 space-y-1 border-t border-primary-200/30 pt-3">
-      <p className="text-[10px] tracking-[0.15em] uppercase text-text-muted">本月 LLM 用量</p>
-      <p className="text-[10px] text-text">
+      <p className="text-[11px] font-medium text-text-muted">本月 LLM 用量</p>
+      <p className="text-[10px] tabular-nums text-text">
         {usage.calls} 次调用 · 输入 {usage.promptTokens.toLocaleString()} tokens · 输出 {usage.completionTokens.toLocaleString()} tokens · 合计 {usage.totalTokens.toLocaleString()}
       </p>
-      <p className="text-[10px] text-text-placeholder">用量仅存储在本地浏览器</p>
+      <p className="text-[11px] text-text-placeholder">用量仅存储在本地浏览器</p>
     </div>
   )
 }

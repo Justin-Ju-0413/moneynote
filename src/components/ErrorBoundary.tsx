@@ -25,9 +25,9 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
           <p className="text-sm text-danger mb-2">页面出错了</p>
-          <p className="text-[10px] text-text-muted mb-4 break-all">{this.state.message}</p>
+          <p className="text-[11px] text-text-muted mb-4 break-all">{this.state.message}</p>
           <button
-            className="px-4 py-2 text-xs border border-primary-300 hover:bg-primary-50"
+            className="px-4 py-2 text-xs rounded-button border border-primary-300 hover:bg-primary-50"
             onClick={() => this.setState({ hasError: false, message: undefined })}
           >
             重试

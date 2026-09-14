@@ -11,14 +11,15 @@ interface PeriodSwitcherProps {
 
 export function PeriodSwitcher({ period, onChange, label, onPrev, onNext }: PeriodSwitcherProps) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex border border-primary-300/50">
+    <div className="flex items-center justify-between gap-3">
+      {/* 胶囊分段器：外圈 44px+ 触摸高度 */}
+      <div className="flex rounded-full border border-primary-300/50 bg-bg p-1">
         {PERIODS.map((p) => (
           <button
             key={p.value}
-            className={`px-4 py-2.5 min-h-11 text-[10px] tracking-widest uppercase font-medium transition-colors ${
+            className={`px-4 py-2 min-h-9 rounded-full text-xs font-medium transition-colors ${
               period === p.value
-                ? 'bg-primary-600 text-bg'
+                ? 'bg-primary-600 text-bg shadow-sm'
                 : 'text-text-muted hover:text-accent'
             }`}
             onClick={() => onChange(p.value)}
@@ -27,12 +28,20 @@ export function PeriodSwitcher({ period, onChange, label, onPrev, onNext }: Peri
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2">
-        <button onClick={onPrev} className="w-9 h-9 min-w-11 min-h-11 flex items-center justify-center text-text-muted hover:text-accent text-lg">
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onPrev}
+          aria-label="上一期"
+          className="w-11 h-11 rounded-full flex items-center justify-center text-text-muted hover:text-accent hover:bg-primary-50/50 text-lg transition-colors"
+        >
           ‹
         </button>
-        <span className="text-[10px] tracking-widest uppercase font-medium text-accent min-w-[70px] text-center">{label}</span>
-        <button onClick={onNext} className="w-9 h-9 min-w-11 min-h-11 flex items-center justify-center text-text-muted hover:text-accent text-lg">
+        <span className="text-xs font-medium text-accent min-w-[70px] text-center">{label}</span>
+        <button
+          onClick={onNext}
+          aria-label="下一期"
+          className="w-11 h-11 rounded-full flex items-center justify-center text-text-muted hover:text-accent hover:bg-primary-50/50 text-lg transition-colors"
+        >
           ›
         </button>
       </div>

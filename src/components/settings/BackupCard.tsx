@@ -56,8 +56,8 @@ export function BackupCard() {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">数据备份</h3>
-          <p className="text-[10px] text-text-muted mt-1">自动快照防止数据意外丢失，保留最近 10 份自动备份</p>
+          <h3 className="text-xs text-accent font-medium">数据备份</h3>
+          <p className="text-[11px] text-text-muted mt-1">自动快照防止数据意外丢失，保留最近 10 份自动备份</p>
         </div>
         <Toggle
           checked={autoBackupOn}
@@ -76,21 +76,21 @@ export function BackupCard() {
       {backups.length > 0 ? (
         <div className="space-y-1.5">
           {backups.slice(0, 12).map((b) => (
-            <div key={b.id} className="flex items-center justify-between px-3 py-2 border border-primary-200/30">
+            <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-button border border-primary-200/30">
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`w-1.5 h-1.5 rounded-full ${b.kind === 'auto' ? 'bg-primary-400' : 'bg-success'}`} />
-                <span className="text-[10px] text-text truncate">{new Date(b.createdAt).toLocaleString()}</span>
-                <span className="text-[9px] text-text-muted uppercase">{b.kind === 'auto' ? '自动' : '手动'}</span>
+                <span className="text-[10px] font-mono text-text truncate">{new Date(b.createdAt).toLocaleString()}</span>
+                <span className="text-[10px] text-text-muted">{b.kind === 'auto' ? '自动' : '手动'}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <button className="text-[10px] text-accent hover:underline" onClick={() => setRestoreTarget(b)}>恢复</button>
-                <button className="text-[10px] text-danger hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
+                <button className="text-[11px] text-accent hover:underline" onClick={() => setRestoreTarget(b)}>恢复</button>
+                <button className="text-[11px] text-danger hover:underline" onClick={() => handleDeleteBackup(b.id as number)}>删除</button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-[10px] text-text-placeholder">暂无备份，点击「立即备份」创建第一份</p>
+        <p className="text-[11px] text-text-placeholder">暂无备份，点击「立即备份」创建第一份</p>
       )}
 
       <ConfirmDialog

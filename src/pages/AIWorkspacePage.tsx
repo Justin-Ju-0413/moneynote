@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import { ShieldCheck, Tags, CopyX, CalendarRange } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
@@ -19,19 +21,23 @@ import type { AuditTask, AiSuggestion, SuggestionType } from '@/llm/types'
 
 const EMPTY_TX_MAP: Map<number, Transaction> = new Map()
 
-const TASKS: { task: AuditTask; label: string; desc: string; icon: string }[] = [
-  { task: 'audit', label: '综合审计', desc: '异常 + 重复 + 分类', icon: '🛡' },
-  { task: 'categorize', label: '自动归类', desc: '批量分类建议', icon: '🏷' },
-  { task: 'dedupe', label: '智能查重', desc: 'AI 找重复流水', icon: '⧉' },
-  { task: 'analyzeMonth', label: '月度摘要', desc: '本月消费总结', icon: '☰' },
+// 任务图标用 lucide；色值走语义 token（index.css --color-task-*，暗色自动提亮）
+const TASKS: { task: AuditTask; label: string; desc: string; icon: LucideIcon; color: string }[] = [
+  { task: 'audit', label: '综合审计', desc: '异常 + 重复 + 分类', icon: ShieldCheck, color: 'var(--color-task-anomaly)' },
+  { task: 'categorize', label: '自动归类', desc: '批量分类建议', icon: Tags, color: 'var(--color-task-category)' },
+  { task: 'dedupe', label: '智能查重', desc: 'AI 找重复流水', icon: CopyX, color: 'var(--color-task-duplicate)' },
+  { task: 'analyzeMonth', label: '月度摘要', desc: '本月消费总结', icon: CalendarRange, color: 'var(--color-task-summary)' },
 ]
 
 const TYPE_META: Record<SuggestionType, { label: string; color: string }> = {
-  category: { label: '分类建议', color: '#3b82f6' },
-  duplicate: { label: '疑似重复', color: '#f97316' },
-  anomaly: { label: '异常提醒', color: '#ef4444' },
-  summary: { label: '月度摘要', color: '#8b5cf6' },
+  category: { label: '分类建议', color: 'var(--color-task-category)' },
+  duplicate: { label: '疑似重复', color: 'var(--color-task-duplicate)' },
+  anomaly: { label: '异常提醒', color: 'var(--color-task-anomaly)' },
+  summary: { label: '月度摘要', color: 'var(--color-task-summary)' },
 }
+
+// CSS 变量色值转半透明 tint 底（hex+alpha 拼接对 var() 无效，统一走 color-mix）
+const tint = (color: string) => `color-mix(in srgb, ${color} 10%, transparent)`
 
 export function AIWorkspacePage() {
   const { showToast } = useToast()
@@ -117,7 +123,7 @@ export function AIWorkspacePage() {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">任务</h3>
+              <h3 className="text-xs font-medium text-accent">任务</h3>
               <p className="text-[10px] text-text-muted mt-1">
                 {hasApiKey ? `已连接 AI · 共 ${txCount} 笔流水` : '未配置 AI · 将使用本地规则回退'}
               </p>
@@ -136,13 +142,20 @@ export function AIWorkspacePage() {
                 key={t.task}
                 disabled={running || txCount === 0}
                 onClick={() => handleRun(t.task)}
-                className={`flex flex-col items-start gap-1 p-3 border text-left transition-colors ${
+                aria-label={t.label}
+                className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-colors ${
                   running
                     ? 'border-primary-200/30 opacity-50'
                     : 'border-primary-300/50 hover:bg-primary-50/40 hover:border-primary-400'
                 }`}
               >
-                <span className="text-base">{t.icon}</span>
+                <span
+                  aria-hidden="true"
+                  className="flex items-center justify-center w-8 h-8 rounded-lg"
+                  style={{ backgroundColor: tint(t.color), color: t.color }}
+                >
+                  <t.icon size={18} />
+                </span>
                 <span className="text-xs font-medium text-text">{t.label}</span>
                 <span className="text-[10px] text-text-muted">{t.desc}</span>
               </button>
@@ -151,7 +164,7 @@ export function AIWorkspacePage() {
 
           {/* 月度摘要的月份选择 */}
           <div className="flex items-center gap-2 mt-3">
-            <label className="text-[10px] tracking-widest uppercase text-text-muted">摘要月份</label>
+            <label className="text-[11px] text-text-muted">摘要月份</label>
             <input
               type="month"
               value={selectedMonth}
@@ -190,7 +203,7 @@ export function AIWorkspacePage() {
         {/* 待审核建议 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[10px] tracking-[0.15em] uppercase text-accent font-medium">
+            <h3 className="text-xs font-medium text-accent">
               待审核建议 · {pendingSuggestions.length}
             </h3>
             {pendingSuggestions.length > 0 && (
@@ -208,7 +221,6 @@ export function AIWorkspacePage() {
           {pendingSuggestions.length === 0 ? (
             <Card>
               <EmptyState
-                icon="✦"
                 title="暂无待审核建议"
                 description="运行上方任务后，AI 建议会出现在这里供你逐条确认"
               />

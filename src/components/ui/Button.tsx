@@ -14,9 +14,9 @@ const variants = {
 }
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-[11px] tracking-widest uppercase min-h-9',
-  md: 'px-5 py-2.5 text-xs tracking-widest uppercase min-h-11',
-  lg: 'px-6 py-3 text-sm tracking-widest uppercase min-h-12',
+  sm: 'px-3.5 py-1.5 text-xs min-h-9',
+  md: 'px-5 py-2.5 text-sm min-h-11',
+  lg: 'px-6 py-3 text-sm min-h-12',
 }
 
 export function Button({
@@ -28,7 +28,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`font-medium transition-colors active:translate-y-px disabled:pointer-events-none disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`rounded-button font-medium transition-colors active:translate-y-px disabled:pointer-events-none disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}

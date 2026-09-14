@@ -68,13 +68,13 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
       <div className="space-y-5">
         {/* 收支类型(可切换,切类型时分类集跟着切换) */}
         <div>
-          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">类型</label>
-          <div className="flex gap-1.5">
+          <label className="text-[11px] text-text-muted mb-1.5 block">类型</label>
+          <div className="flex gap-1.5 rounded-button bg-primary-50/60 p-1">
             {(['expense', 'income'] as const).map((t) => (
               <button
                 key={t}
-                className={`flex-1 px-3 py-2 text-[10px] tracking-widest uppercase font-medium transition-colors ${
-                  type === t ? 'bg-primary-600 text-bg' : 'border border-primary-300/50 text-text-muted hover:text-accent'
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                  type === t ? 'bg-primary-600 text-bg shadow-sm' : 'text-text-muted hover:text-accent'
                 }`}
                 onClick={() => handleTypeChange(t)}
               >
@@ -85,42 +85,42 @@ export function EditDialog({ transaction, open, onClose, onSave, onDelete }: Edi
         </div>
 
         <div>
-          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">金额</label>
+          <label className="text-[11px] text-text-muted mb-1.5 block">金额</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full px-3 py-2.5 border border-primary-300 text-sm outline-none bg-transparent text-text"
+            className="w-full px-3 py-2.5 rounded-input border border-primary-300/70 bg-bg text-sm outline-none text-text"
           />
         </div>
 
         <div>
-          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">备注</label>
+          <label className="text-[11px] text-text-muted mb-1.5 block">备注</label>
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="w-full px-3 py-2.5 border border-primary-300 text-sm outline-none bg-transparent text-text"
+            className="w-full px-3 py-2.5 rounded-input border border-primary-300/70 bg-bg text-sm outline-none text-text"
           />
         </div>
 
         <div>
-          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-1.5 block">日期</label>
+          <label className="text-[11px] text-text-muted mb-1.5 block">日期</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-3 py-2.5 border border-primary-300 text-sm outline-none bg-transparent text-text"
+            className="w-full px-3 py-2.5 rounded-input border border-primary-300/70 bg-bg text-sm outline-none text-text"
           />
         </div>
 
         <div>
-          <label className="text-[10px] tracking-[0.15em] uppercase text-text-muted mb-2 block">分类</label>
+          <label className="text-[11px] text-text-muted mb-2 block">分类</label>
           <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
             {cats.map((c) => (
               <button
                 key={c.id}
-                className={`flex flex-col items-center gap-1 p-2 min-h-11 min-w-11 transition-colors ${
+                className={`flex flex-col items-center gap-1 p-2 min-h-11 min-w-11 rounded-button transition-colors ${
                   category === c.id ? 'bg-primary-100/50 border border-primary-400' : 'border border-transparent hover:bg-primary-50/30'
                 }`}
                 onClick={() => setCategory(c.id)}
