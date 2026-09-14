@@ -1,6 +1,6 @@
 # MoneyNote 长期进化计划
 
-> 状态:执行中 · 起草于 2026-07-15 · **v2 刷新于 2026-08-11**(基于代码级审计 + AI 学习规则迭代完成 + v1.3.0 发布)
+> 状态:执行中 · 起草于 2026-07-15 · v2 刷新于 2026-08-11 · **v3 刷新于 2026-09-15**(1.5.0 收口积压 + 全面焕新计划 R 层启动)
 > 依据:AI 层 / 数据骨架 / 账单解析与 NLP 三子系统审计;v2 对全部条目做了代码级核验(非仅文档),并纳入学习规则新资产
 
 ## 定位与进化主轴
@@ -56,7 +56,7 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 目标:支撑大数据量 + 多用户场景,补完剩余架构债。
 
 - [x] **C1 P1-5 Repository / 状态层** —— 引 repository 解耦 `useLiveQuery` 与业务,派生统计收敛(为同步层铺路)
-- [x] **C2 性能规模化**(原 P2 项，本批：LLM 并发池；去重分桶/搜索分页记档后续批) —— 三个全量 `toArray()` 热点:AI 工作台分批改 Promise 池+限流(现顺序循环,`useAIWorkspace.ts:94`);去重改按 amount/日期分桶(现 O(n²) 内存比较);明细搜索加 note/category 索引;统计可演进为 Dexie 聚合/物化视图;大文件流式分块导入
+- [x] **C2 性能规模化**(C2-a LLM 并发池 + C2-b 去重时间窗分桶 + 明细筛选态分页/搜索防抖) —— 三个全量 `toArray()` 热点:AI 工作台分批改 Promise 池+限流;去重改按 amount/日期分桶;明细搜索分页;剩余明细搜索 note/category 索引下推 + 虚拟滚动转入焕新批 R2
 - [x] **C3 成本可观测**(原 P2 项) —— `llmChat` 返回补 usage → `aiUsage` 表(任务/模型/token/时间)→ 设置页月度消耗。流式 + 成本控制的前提
 - [ ] **C4 P1-8 结构化输出** —— batch/audit 已用 `json_object`,升级 `json_schema`(DeepSeek/OpenAI 均支持)消灭 `prompt.ts` 三层 fallback 解析损耗
 - [x] **C5 P1-9 加密审计** —— 明确威胁模型:现 passphrase 硬编码 + 盐存 localStorage,防明文泄露够用、防本机读取不足。规划用户密码派生迁移(`decryptApiKey` 兼容分支可复用,渐进重加密)
@@ -78,10 +78,24 @@ MoneyNote 是**本地优先、隐私不妥协的 AI 记账 PWA**。四条进化�
 
 - [x] **桌面应用**（2026-09-11）—— Tauri 2 壳：双击即用（打包 dist，无需 dev server）、关窗即退出（覆盖 macOS 驻留默认）、单实例防重开；`desktop:build` 产出 .app/dmg，`desktop:install` 装入 /Applications
 - [x] **深色模式**（2026-09-11,PR #23）—— 跟随系统 + 手动三态;全量 CSS 变量重定义实现,组件零主题分支;见 `docs/specs/2026-09-11-dark-mode.md`
-- [ ] **流式输出** —— 审计 / 摘要走 SSE 流式,长任务体感提升(建议排在 C3 成本可观测之后)
+- [ ] **流式输出** —— 审计 / 摘要走 SSE 流式,长任务体感提升(建议排在 C3 成本可观测之后)(纳入 R2)
 - [ ] **多币种** —— `Transaction` 加 `currency`,金额解析支持币种识别
 - [ ] **日期解析增强** —— `universalParser.normalizeDate` 支持 `dateFormat` transform,多格式容错
-- [ ] **虚拟滚动** —— 明细页大数据量滚动体验
+- [ ] **虚拟滚动** —— 明细页大数据量滚动体验(纳入 R2)
+
+---
+
+## R 层 · 全面焕新计划(2026-09-15 启动,详见 `docs/superpowers/plans/2026-09-15-renewal.md`)
+
+四批次按依赖推进,每批次独立分支 + PR + 四门禁(lint/test/build/e2e),批末对应一个 minor 版本。
+
+- [ ] **R0 1.5.0 基线收口** —— 发布桌面应用/深色模式等 5 个 PR 积压;iCloud 冲突副本防再犯(.gitignore);README/ROADMAP 文档同步
+- [ ] **R1 视觉与交互焕新(v1.6.0)** —— 现代亲和风:token 重塑(圆角 2px→12px 档/柔和阴影/字阶);lucide SVG 图标系统替换 emoji(分类/导航/AI 任务);首页/统计/明细/预算核心页精修;Dialog 键盘交互补课(Esc/焦点归还)
+- [ ] **R2 体验功能升级(v1.7.0)** —— 流式输出(SSE,体验队列队首);明细页规模化(DB v14 note/category 索引下推 + 日期/金额筛选 + 虚拟滚动);统计深度(月环比/同比/完整排行);设置页信息架构重组(分组子导航);预算建议与接近超支提醒
+- [ ] **R3 质量基建加固(v1.8.0)** —— 组件/hook 测试层(testing-library + jsdom,优先 useChat/useDedup/useBillImport);vitest coverage + 阈值;E2E 扩面(统计/预算/备份恢复/深色模式/移动视口);CI 补强(concurrency/coverage);release.mjs 版本四处同步收口;备份异地化一键导出(D4 前半)
+- [ ] **R4 深水区攻坚(v1.9.0)** —— C4 json_schema 结构化输出(provider 能力开关 + 降级链);C7 泛化账单来源(BillSource string + 模板数据驱动 + 截图导入走 LLM 视觉);D 层版本向量与同步协议设计文档(补齐 D 层最后一项前置)
+
+R 批次收官后 C 层 7/7,D 层解封。
 
 ---
 
