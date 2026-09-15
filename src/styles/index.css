@@ -20,6 +20,7 @@
   --color-income: #059669;
   --color-danger: #c94040;
   --color-success: #059669;
+  --color-warning: #b45309;
 
   /* 语义灰阶 */
   --color-bg: #f0f4f8;
@@ -94,6 +95,7 @@
   --color-income: #10b981;
   --color-danger: #e07070;
   --color-success: #10b981;
+  --color-warning: #fbbf24;
 
   --color-bg: #0e1721;
   --color-text: #d8e4ee;

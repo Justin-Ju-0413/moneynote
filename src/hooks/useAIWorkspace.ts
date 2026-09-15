@@ -5,6 +5,7 @@ import { recordLearning } from '@/nlp/learningRules'
 import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import { runLLMAudit } from '@/llm/service'
+import { partialJsonStringField } from '@/llm/sse'
 import { promptVersionKey } from '@/llm/promptVersion'
 import { runPool, LLM_CONCURRENCY } from '@/utils/pool'
 import { getAllTransactions } from '@/db/repos/transactions'
@@ -24,6 +25,8 @@ export function useAIWorkspace() {
   const [lastCount, setLastCount] = useState(0)
   const [cachedHit, setCachedHit] = useState(false)
   const [progress, setProgress] = useState<Progress | null>(null)
+  // 月度摘要流式预览:null=非 analyzeMonth/未运行;''=已开始尚未有增量;有值=渐进文本
+  const [streamingSummary, setStreamingSummary] = useState<string | null>(null)
   const [forceRefresh, setForceRefresh] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date()
@@ -101,11 +104,24 @@ export function useAIWorkspace() {
       setProgress({ current: 0, total: chunks.length })
 
       // C2-a：并发池并行调 LLM（结果按下标回写，输出与串行一致；并发 2 避免限流风暴）
+      // analyzeMonth 结果为长文本摘要:走流式,从累积 JSON 增量提取 result/reason 渐进呈现;其余任务维持现状
+      const summarizeStream = task === 'analyzeMonth'
+      setStreamingSummary(summarizeStream ? '' : null)
       const all: AiSuggestion[][] = []
       let lastErr: string | undefined
       let done = 0
       await runPool(chunks, LLM_CONCURRENCY, async (chunk, i) => {
-        const { suggestions, error: err } = await runLLMAudit(config, chunk, task)
+        let acc = ''
+        const { suggestions, error: err } = await runLLMAudit(config, chunk, task, {
+          onProgress: summarizeStream
+            ? (delta) => {
+                acc += delta
+                const result = partialJsonStringField(acc, 'result')
+                const reason = partialJsonStringField(acc, 'reason')
+                setStreamingSummary([result, reason].filter(Boolean).join('\n'))
+              }
+            : undefined,
+        })
         all[i] = suggestions
         if (err) lastErr = err
         done++
@@ -134,6 +150,7 @@ export function useAIWorkspace() {
     }
     setRunning(false)
     setProgress(null)
+    setStreamingSummary(null)
   }, [config, forceRefresh, selectedMonth])
 
   // 应用建议：category 改分类；duplicate 保留首笔删除其余；anomaly/summary 仅标记已处理
@@ -179,6 +196,7 @@ export function useAIWorkspace() {
     lastCount,
     cachedHit,
     progress,
+    streamingSummary,
     forceRefresh,
     setForceRefresh,
     selectedMonth,

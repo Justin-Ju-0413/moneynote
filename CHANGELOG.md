@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-15
+
+### Added
+
+- **LLM 流式输出**：`llmChat` 支持 SSE 流式（`stream.onDelta` 增量回调，返回值与非流式一致）；provider 忽略 stream 参数时自动降级整包解析；首页 AI 回复打字机式渐进渲染；AI 工作台月度摘要流式呈现；E2E mock 支持 SSE 假流（跨 chunk 粘包覆盖）（+32 单测：SSE 解析器 18 / client 流式与降级 12 / task 穿透 2）
+- **明细页规模化**：Dexie schema v13 → v14（transactions 新增 `note` 索引，零数据迁移）；筛选查询索引下推（search > category > 日期 > type 主索引优先 + 候选集交集）替换全量内存加载；新增日期范围 + 金额区间筛选（联动防抖 + 一键清除）；`@tanstack/react-virtual` 虚拟滚动（按日分组头扁平化 + 36/64px 定行高）；修复筛选态哨兵不渲染导致结果截断 50 条的存量问题（+11 单测）
+- **统计深度**：月环比/同比柱状图 `MonthCompareChart`（本月/上月/去年同月三柱，去年同月有数据即显示；涨跌语义色 pill）；分类完整排行榜（「展开全部 N 个」+ 较上期环比箭头，上期口径随日/月/年周期自动切换）（+8 单测）
+- **预算增强**：预算弹窗显示近 3 个完整月分类均值建议（剔除当月）；预警分档 ≥80% amber / ≥100% danger（新增 `--color-warning` 亮暗 token）；总预算卡日均可用余额（除零防御）
+- **设置页信息架构重组**：AI 智能（默认）/ 数据 / 外观 / 危险区四组 tab 子导航（胶囊分段器 + aria tab 语义，仅渲染当前组）；危险操作隔离区（danger 边框 + 实时缓存条数 + 后果明示，ConfirmDialog 流不变）；常驻「关于」卡
+
+### Changed
+
+- 备注搜索语义从全表子串内存扫描收窄为索引前缀匹配（`startsWithIgnoreCase`，中文无大小写影响）；`filterTransactions` 纯函数保留兜底
+
 ## [1.6.0] - 2026-09-15
 
 ### Changed

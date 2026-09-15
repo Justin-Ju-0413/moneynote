@@ -194,3 +194,168 @@ describe('llmChat usage（C3）', () => {
     expect(r.usage?.totalTokens).toBe(15)
   })
 })
+
+// ── 流式(stream:true + SSE):聚合/usage 捕获/自动降级 ──
+
+function sseEvent(payload: unknown): string {
+  return `data: ${JSON.stringify(payload)}\n\n`
+}
+
+/** 构造 SSE 流式 Response mock:events 为原始网络分段(每段一个 ReadableStream chunk) */
+function sseFetch(parts: string[], contentType = 'text/event-stream'): FetchLike {
+  const enc = new TextEncoder()
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const p of parts) controller.enqueue(enc.encode(p))
+      controller.close()
+    },
+  })
+  return (async () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers({ 'content-type': contentType }),
+    body: stream,
+  })) as unknown as FetchLike
+}
+
+function jsonFetch(body: unknown, contentType = 'application/json'): FetchLike {
+  return (async () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers({ 'content-type': contentType }),
+    json: async () => body,
+  })) as unknown as FetchLike
+}
+
+describe('llmChat stream（SSE 流式）', () => {
+  let reset: (() => void) | undefined
+  afterEach(() => { if (reset) { reset(); reset = undefined } })
+
+  it('带 stream 时请求体加 stream:true;不带时无 stream 字段', async () => {
+    const bodies: Record<string, unknown>[] = []
+    reset = __setLLMTransport((async (_url: unknown, init: RequestInit) => {
+      bodies.push(JSON.parse(init.body as string))
+      return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'x' } }] }) }
+    }) as unknown as FetchLike)
+    await llmChat(config, { messages: [], stream: { onDelta: undefined } })
+    await llmChat(config, { messages: [] })
+    expect(bodies[0].stream).toBe(true)
+    expect('stream' in bodies[1]).toBe(false)
+  })
+
+  it('SSE delta 聚合为完整文本,onDelta 按序逐段回调', async () => {
+    reset = __setLLMTransport(sseFetch([
+      sseEvent({ choices: [{ delta: { content: '{"int' } }] }),
+      sseEvent({ choices: [{ delta: { content: 'ent":"chat",' } }] }),
+      sseEvent({ choices: [{ delta: { content: '"reply":"你好"}' } }] }),
+      'data: [DONE]\n\n',
+    ]))
+    const deltas: string[] = []
+    const r = await llmChat(config, { messages: [], stream: { onDelta: (t) => deltas.push(t) } })
+    expect(r.content).toBe('{"intent":"chat","reply":"你好"}')
+    expect(r.errorKind).toBeUndefined()
+    expect(deltas).toEqual(['{"int', 'ent":"chat",', '"reply":"你好"}'])
+  })
+
+  it('事件行跨网络分段断开(粘包/半包)仍正确聚合', async () => {
+    const whole = sseEvent({ choices: [{ delta: { content: '记账助手' } }] }) + 'data: [DONE]\n\n'
+    const mid = Math.floor(whole.length / 2)
+    reset = __setLLMTransport(sseFetch([whole.slice(0, mid), whole.slice(mid)]))
+    const deltas: string[] = []
+    const r = await llmChat(config, { messages: [], stream: { onDelta: (t) => deltas.push(t) } })
+    expect(r.content).toBe('记账助手')
+    expect(deltas).toEqual(['记账助手'])
+  })
+
+  it('末 data chunk 携带 usage 时捕获(OpenAI 兼容流式形态)', async () => {
+    reset = __setLLMTransport(sseFetch([
+      sseEvent({ choices: [{ delta: { content: 'hi' } }] }),
+      sseEvent({ choices: [{ delta: {} }], usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 } }),
+      'data: [DONE]\n\n',
+    ]))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBe('hi')
+    expect(r.usage).toEqual({ promptTokens: 11, completionTokens: 7, totalTokens: 18 })
+  })
+
+  it('SSE 无 usage 时为 undefined(usage 缺失零影响)', async () => {
+    reset = __setLLMTransport(sseFetch([
+      sseEvent({ choices: [{ delta: { content: 'x' } }] }),
+      'data: [DONE]\n\n',
+    ]))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBe('x')
+    expect(r.usage).toBeUndefined()
+  })
+
+  it('坏 data 行(非 JSON)被忽略,其余事件正常聚合', async () => {
+    reset = __setLLMTransport(sseFetch([
+      'data: not-json\n\n',
+      sseEvent({ choices: [{ delta: { content: 'ok' } }] }),
+      'data: [DONE]\n\n',
+    ]))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBe('ok')
+  })
+
+  it('[DONE] 后停止消费:后续多余事件不进聚合', async () => {
+    reset = __setLLMTransport(sseFetch([
+      sseEvent({ choices: [{ delta: { content: 'a' } }] }),
+      'data: [DONE]\n\n',
+      sseEvent({ choices: [{ delta: { content: 'b' } }] }),
+    ]))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBe('a')
+  })
+
+  it('流结束无 [DONE] 时冲刷缓冲尾行,聚合不丢尾部', async () => {
+    reset = __setLLMTransport(sseFetch([
+      sseEvent({ choices: [{ delta: { content: 'a' } }] }),
+      `data: ${JSON.stringify({ choices: [{ delta: { content: 'tail' } }] })}`, // 无尾换行
+    ]))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBe('atail')
+  })
+
+  it('自动降级:provider 忽略 stream 参数回整包 JSON 时按非流式解析,onDelta 不触发', async () => {
+    reset = __setLLMTransport(jsonFetch(
+      { choices: [{ message: { content: '整包响应' } }], usage: { prompt_tokens: 3, completion_tokens: 4, total_tokens: 7 } },
+    ))
+    const deltas: string[] = []
+    const r = await llmChat(config, { messages: [], stream: { onDelta: (t) => deltas.push(t) } })
+    expect(r.content).toBe('整包响应')
+    expect(r.usage?.totalTokens).toBe(7)
+    expect(deltas).toEqual([])
+  })
+
+  it('流式响应 content-type 大小写/带 charset 仍识别', async () => {
+    reset = __setLLMTransport(sseFetch([sseEvent({ choices: [{ delta: { content: 'z' } }] }), 'data: [DONE]\n\n'], 'text/event-stream; charset=utf-8'))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBe('z')
+  })
+
+  it('流读取中途抛错映射为 network(沿用现有错误路径)', async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(sseEvent({ choices: [{ delta: { content: 'partial' } }] })))
+        controller.error(new Error('connection reset'))
+      },
+    })
+    reset = __setLLMTransport((async () => ({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
+      body: stream,
+    })) as unknown as FetchLike)
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBeNull()
+    expect(r.errorKind).toBe('network')
+  })
+
+  it('空流(零 delta)返回 content null 且不带 errorKind,与非流式空 content 语义一致', async () => {
+    reset = __setLLMTransport(sseFetch(['data: [DONE]\n\n']))
+    const r = await llmChat(config, { messages: [], stream: {} })
+    expect(r.content).toBeNull()
+    expect(r.errorKind).toBeUndefined()
+  })
+})

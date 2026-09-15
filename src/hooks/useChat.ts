@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useSyncExternalStore } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import dayjs from 'dayjs'
 import { db } from '@/db'
 import { runChat } from '@/llm/service'
+import { partialJsonStringField } from '@/llm/sse'
 import type { ChatContext, ChatIntentResult } from '@/llm/chatPrompt'
 import { parseInput } from '@/nlp'
 import { recordLearning } from '@/nlp/learningRules'
@@ -12,6 +13,31 @@ import * as log from '@/utils/log'
 import { useLLMSettings } from './useLLMSettings'
 import type { ChatMessage, ChatCard, ParsedTransaction } from '@/db/types'
 import type { LLMParseResult } from '@/llm/types'
+
+// ── 流式预览 store:useChat 写入 AI 回复增量,ChatMessageList 订阅渲染打字机气泡 ──
+// 模块级订阅源(useSyncExternalStore):流式文本是纯瞬态 UI 状态,不值得入库,
+// 也不为此改 HomePage 的 props 传递链(并行子代理边界约束)。
+let streamSnapshot = ''
+const streamListeners = new Set<() => void>()
+
+function publishStreamText(text: string): void {
+  streamSnapshot = text
+  for (const notify of streamListeners) notify()
+}
+
+function subscribeStream(notify: () => void): () => void {
+  streamListeners.add(notify)
+  return () => { streamListeners.delete(notify) }
+}
+
+/** 当前 AI 回复的流式预览文本;非流式/未开始/已结束时为 ''(消费方回退到「思考中…」气泡) */
+export function useChatStreamText(): string {
+  return useSyncExternalStore(
+    subscribeStream,
+    () => streamSnapshot,
+    () => '',
+  )
+}
 
 // ── 上下文构建:每次发送时拉最新数据,供 LLM 答查询/解析"刚才那笔" ──
 // 走 [type+date] 复合索引的范围查询,避免 db.transactions.toArray() 全量加载
@@ -111,7 +137,14 @@ export function useChat() {
       let errorMsg: string | undefined
 
       if (config?.enabled && config.apiKey && config.endpoint && config.model) {
-        const r = await runChat(config, history, context)
+        // 流式:增量到达时从累积 JSON 中提取 reply 字段做打字机预览;
+        // 最终消息(含确认卡片)仍由完整文本解析后定稿入库,意图/卡片逻辑零改动
+        publishStreamText('')
+        let acc = ''
+        const r = await runChat(config, history, context, (delta) => {
+          acc += delta
+          publishStreamText(partialJsonStringField(acc, 'reply'))
+        })
         intentResult = r.result
         errorMsg = r.error
       } else {
@@ -129,6 +162,7 @@ export function useChat() {
       })
     } finally {
       setSending(false)
+      publishStreamText('')
     }
   }, [config, sending])
 

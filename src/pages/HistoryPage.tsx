@@ -12,15 +12,31 @@ import { useCategories } from '@/hooks/useCategories'
 import { useToast } from '@/components/ui/toast-context'
 import { db } from '@/db'
 import { recordLearning } from '@/nlp/learningRules'
-import { filterTransactions } from '@/utils/transactionFilter'
 import { formatAmountSigned } from '@/utils/format'
-import { getAllTransactions, getRecentTransactions } from '@/db/repos/transactions'
+import { queryTransactions } from '@/db/repos/transactions'
 import * as log from '@/utils/log'
 import type { Transaction, DedupRecord } from '@/db/types'
 
 const EMPTY_TRANSACTIONS: Transaction[] = []
 const PAGE_SIZE = 50
 const SEARCH_DEBOUNCE_MS = 300
+
+/** 高级筛选（日期范围 + 金额区间）：输入即时渲染，防抖后提交触发查询 */
+interface AdvFilters {
+  dateStart: string
+  dateEnd: string
+  amountMin: string
+  amountMax: string
+}
+
+const EMPTY_ADV: AdvFilters = { dateStart: '', dateEnd: '', amountMin: '', amountMax: '' }
+
+/** 金额输入 → 查询数值：空/非法返回 undefined（不参与过滤） */
+function parseAmount(v: string): number | undefined {
+  if (!v.trim()) return undefined
+  const n = Number(v)
+  return Number.isFinite(n) ? n : undefined
+}
 
 export function HistoryPage() {
   const [search, setSearch] = useState('')
@@ -32,15 +48,21 @@ export function HistoryPage() {
   const [dedupBusy, setDedupBusy] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [categoryTab, setCategoryTab] = useState<'expense' | 'income'>('expense')
+  // 高级筛选：advInput 即时值 / adv 防抖后生效值
+  const [advInput, setAdvInput] = useState<AdvFilters>(EMPTY_ADV)
+  const [adv, setAdv] = useState<AdvFilters>(EMPTY_ADV)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const advTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const advPendingRef = useRef<AdvFilters>(EMPTY_ADV)
   const { updateTransaction, deleteTransaction } = useTransactions()
   const { showToast } = useToast()
   const { pendingRecords, txMap, detect, handleDuplicate } = useDedup()
-  const { getInfo, expenseCategories, incomeCategories } = useCategories()
+  const { expenseCategories, incomeCategories } = useCategories()
   const tabCategories = categoryTab === 'expense' ? expenseCategories : incomeCategories
 
-  const isFiltering = !!search || !!filterCategory
+  const hasAdvFilter =
+    !!adv.dateStart || !!adv.dateEnd || !!adv.amountMin.trim() || !!adv.amountMax.trim()
 
   const handleDetect = async () => {
     setDedupBusy(true)
@@ -58,20 +80,20 @@ export function HistoryPage() {
     )
   }
 
-  // 无筛选时分页加载（limit visibleCount），有筛选时全量加载后纯函数过滤 + 分页（C2-b-2）
+  // R2 筛选下推：条件全部交给 queryTransactions 走索引（note/category/date/[type+date]），
+  // 不再 getAllTransactions() 全量加载；visibleCount 递增累积分页（offset 恒 0）
   const transactions = useLiveQuery(
-    async () => {
-      if (isFiltering) {
-        const all = await getAllTransactions()
-        return filterTransactions(all, {
-          search,
-          category: filterCategory,
-          getCategoryName: (id) => getInfo(id).name,
-        }).slice(0, visibleCount)
-      }
-      return getRecentTransactions(visibleCount)
-    },
-    [isFiltering, search, filterCategory, visibleCount, getInfo],
+    () =>
+      queryTransactions({
+        search: search || undefined,
+        category: filterCategory || undefined,
+        dateStart: adv.dateStart || undefined,
+        dateEnd: adv.dateEnd || undefined,
+        amountMin: parseAmount(adv.amountMin),
+        amountMax: parseAmount(adv.amountMax),
+        limit: visibleCount,
+      }),
+    [search, filterCategory, adv, visibleCount],
   ) ?? EMPTY_TRANSACTIONS
 
   // 搜索防抖：输入即时渲染，300ms 后生效并重置分页（事件回调 setState，避免 effect 级联渲染）
@@ -92,8 +114,26 @@ export function HistoryPage() {
     setFilterCategory('')
     setVisibleCount(PAGE_SIZE)
   }
+  // 高级筛选防抖提交（日期/金额与搜索词、分类 chip 联动，任一变更重置分页）
+  const handleAdvChange = (patch: Partial<AdvFilters>) => {
+    const next = { ...advPendingRef.current, ...patch }
+    advPendingRef.current = next
+    setAdvInput(next)
+    if (advTimerRef.current) clearTimeout(advTimerRef.current)
+    advTimerRef.current = setTimeout(() => {
+      setAdv(advPendingRef.current)
+      setVisibleCount(PAGE_SIZE)
+    }, SEARCH_DEBOUNCE_MS)
+  }
+  const handleClearAdv = () => {
+    if (advTimerRef.current) clearTimeout(advTimerRef.current)
+    advPendingRef.current = EMPTY_ADV
+    setAdvInput(EMPTY_ADV)
+    setAdv(EMPTY_ADV)
+    setVisibleCount(PAGE_SIZE)
+  }
 
-  // 滚动到底加载更多（筛选态同样生效，分页渲染）；transactions.length < visibleCount 表示已无更多
+  // 滚动到底加载更多（哨兵在 TransactionList 滚动容器内；transactions.length < visibleCount 表示已无更多）
   useEffect(() => {
     const el = sentinelRef.current
     if (!el) return
@@ -104,7 +144,7 @@ export function HistoryPage() {
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [isFiltering, transactions.length, visibleCount])
+  }, [transactions.length, visibleCount])
 
   const handleSave = async (id: number, data: Partial<Transaction>) => {
     const old = editTransaction
@@ -139,7 +179,7 @@ export function HistoryPage() {
           type="text"
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="搜索备注、分类、金额..."
+          placeholder="搜索备注..."
           className="w-full px-4 py-2.5 md:py-3 rounded-input border border-primary-300/60 bg-bg text-sm outline-none text-text placeholder:text-text-placeholder transition-shadow"
         />
 
@@ -169,8 +209,54 @@ export function HistoryPage() {
           </div>
         </div>
 
-        {/* 查重审核入口 */}
-        <div className="flex justify-end -mt-1">
+        {/* 高级筛选：日期范围 + 金额区间（与搜索词/分类联动，防抖提交） */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <input
+            type="date"
+            aria-label="起始日期"
+            value={advInput.dateStart}
+            onChange={(e) => handleAdvChange({ dateStart: e.target.value })}
+            className="w-full px-3 py-2 rounded-input border border-primary-300/60 bg-bg text-sm outline-none text-text transition-shadow"
+          />
+          <input
+            type="date"
+            aria-label="结束日期"
+            value={advInput.dateEnd}
+            onChange={(e) => handleAdvChange({ dateEnd: e.target.value })}
+            className="w-full px-3 py-2 rounded-input border border-primary-300/60 bg-bg text-sm outline-none text-text transition-shadow"
+          />
+          <input
+            type="number"
+            inputMode="decimal"
+            aria-label="最小金额"
+            placeholder="金额 ≥"
+            value={advInput.amountMin}
+            onChange={(e) => handleAdvChange({ amountMin: e.target.value })}
+            className="w-full px-3 py-2 rounded-input border border-primary-300/60 bg-bg text-sm outline-none text-text placeholder:text-text-placeholder transition-shadow"
+          />
+          <input
+            type="number"
+            inputMode="decimal"
+            aria-label="最大金额"
+            placeholder="金额 ≤"
+            value={advInput.amountMax}
+            onChange={(e) => handleAdvChange({ amountMax: e.target.value })}
+            className="w-full px-3 py-2 rounded-input border border-primary-300/60 bg-bg text-sm outline-none text-text placeholder:text-text-placeholder transition-shadow"
+          />
+        </div>
+
+        {/* 查重审核入口 / 高级筛选清除 */}
+        <div className="flex items-center justify-between -mt-1">
+          {hasAdvFilter ? (
+            <button
+              onClick={handleClearAdv}
+              className="px-3.5 py-1.5 rounded-full text-[11px] font-medium border border-primary-300/50 text-text-muted hover:text-accent hover:border-primary-400/60 transition-colors"
+            >
+              清除筛选
+            </button>
+          ) : (
+            <span />
+          )}
           <button
             onClick={() => setShowDedup(true)}
             className="px-3.5 py-1.5 rounded-full text-[11px] font-medium border border-primary-300/50 text-text-muted hover:text-accent hover:border-primary-400/60 transition-colors"
@@ -179,13 +265,12 @@ export function HistoryPage() {
           </button>
         </div>
 
-        {/* 交易列表 */}
+        {/* 交易列表（虚拟滚动）+ 触底加载哨兵 */}
         <TransactionList
           transactions={transactions}
           onItemClick={(t) => setEditTransaction(t)}
+          footer={<div ref={sentinelRef} className="h-4" />}
         />
-        {/* 无筛选时的滚动哨兵，触底加载下一页 */}
-        {!isFiltering && <div ref={sentinelRef} className="h-4" />}
       </div>
 
       <EditDialog

@@ -45,10 +45,13 @@ export async function runTask<I, O>(
   task: TaskDescriptor<I, O>,
   input: I,
   ctx: TaskContext,
+  /** 可选流式增量回调:提供时 llmChat 以 stream 模式请求(SSE),聚合结果与非流式完全一致 */
+  onProgress?: (delta: string) => void,
 ): Promise<TaskRunResult<O>> {
   const { content, errorKind, errorMessage, usage } = await llmChat(ctx.config, {
     messages: task.buildMessages(input, ctx),
     ...task.chatOptions,
+    ...(onProgress ? { stream: { onDelta: onProgress } } : {}),
   })
 
   // C3 成本可观测：统一咽喉记录 token 用量（usage 为空 / 失败均内部隔离，零影响）

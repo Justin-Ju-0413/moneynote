@@ -91,8 +91,14 @@ export class AppDB extends Dexie {
       llmUsage: '++id, createdAt',
     })
 
+    // v14: transactions 增加 note 索引（R2 明细页备注搜索索引下推，startsWithIgnoreCase 前缀查询）
+    // category 索引自 v1 即存在，此处不重复添加；纯加索引无数据迁移
+    this.version(14).stores({
+      transactions: '++id, date, category, type, note, [type+date], [date+amount+note]',
+    })
+
     // ── 迁移框架说明 ──
-    // 当前 12 个版本均为加表/加索引(纯 schema 变更,Dexie 自动处理,无需 upgrade)。
+    // 当前 14 个版本均为加表/加索引(纯 schema 变更,Dexie 自动处理,无需 upgrade)。
     // 未来若需字段重命名/类型变更/数据回填,新增 version 并链式 .upgrade():
     //   this.version(13).stores({ transactions: '++,date,category,type,[type+date],newField' })
     //     .upgrade(async (tx) => {

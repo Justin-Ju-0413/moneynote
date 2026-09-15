@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
 import type { ChatMessage } from '@/db/types'
+import { useChatStreamText } from '@/hooks/useChat'
 import { TransactionCard } from './TransactionCard'
 
 interface Props {
@@ -14,10 +15,12 @@ interface Props {
 
 export function ChatMessageList({ messages, sending, onConfirm, onCancel, aiEnabled }: Props) {
   const endRef = useRef<HTMLDivElement>(null)
+  // AI 回复流式预览(useChat 模块级订阅源);有增量时打字机气泡顶替「思考中…」
+  const streamingText = useChatStreamText()
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, sending])
+  }, [messages, sending, streamingText])
 
   if (messages.length === 0) {
     return (
@@ -42,14 +45,25 @@ export function ChatMessageList({ messages, sending, onConfirm, onCancel, aiEnab
           <MessageBubble key={m.id} message={m} onConfirm={onConfirm} onCancel={onCancel} />
         ),
       )}
-      {sending && (
-        <div className="flex justify-start">
-          <div className="rounded-full bg-primary-50/70 border border-primary-200/40 px-4 py-2 text-xs text-text-muted">
-            <span className="inline-block w-1.5 h-1.5 bg-primary-500 rounded-full mr-1.5 animate-pulse" />
-            思考中…
+      {sending &&
+        (streamingText ? (
+          <div className="flex justify-start">
+            <div className="w-full max-w-[90%] px-3.5 py-2.5 text-sm whitespace-pre-wrap break-words bg-primary-50/70 border border-primary-200/40 text-text rounded-2xl rounded-bl-md">
+              {streamingText}
+              <span
+                aria-hidden="true"
+                className="inline-block w-1.5 h-3.5 ml-0.5 align-text-bottom bg-primary-500/70 rounded-sm animate-pulse"
+              />
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex justify-start">
+            <div className="rounded-full bg-primary-50/70 border border-primary-200/40 px-4 py-2 text-xs text-text-muted">
+              <span className="inline-block w-1.5 h-1.5 bg-primary-500 rounded-full mr-1.5 animate-pulse" />
+              思考中…
+            </div>
+          </div>
+        ))}
       <div ref={endRef} />
     </div>
   )

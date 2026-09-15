@@ -49,6 +49,7 @@ export function AIWorkspacePage() {
     lastCount,
     cachedHit,
     progress,
+    streamingSummary,
     forceRefresh,
     setForceRefresh,
     selectedMonth,
@@ -178,6 +179,16 @@ export function AIWorkspacePage() {
             <p className="text-[10px] text-accent mt-3 animate-pulse">
               AI 分析中…{progress ? ` (${progress.current}/${progress.total})` : ''}
             </p>
+          )}
+          {/* 月度摘要流式呈现:AI 增量输出渐进显示,完成后定稿为下方摘要建议卡 */}
+          {running && streamingSummary !== null && (
+            <div className="mt-3 rounded-2xl border border-primary-200/40 bg-primary-50/40 px-3.5 py-2.5 text-xs text-text leading-relaxed whitespace-pre-wrap break-words">
+              {streamingSummary || 'AI 正在生成月度摘要…'}
+              <span
+                aria-hidden="true"
+                className="inline-block w-1.5 h-3 ml-0.5 align-text-bottom bg-primary-500/70 rounded-sm animate-pulse"
+              />
+            </div>
           )}
           {error && (
             <p className="text-[10px] text-danger mt-3">提示：{error}</p>

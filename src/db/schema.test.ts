@@ -107,4 +107,28 @@ describe('schema 契约', () => {
     await db.learningRules.delete(id)
     expect(await db.learningRules.count()).toBe(0)
   })
+
+  it('v14 契约：transactions 含 note 索引（category 自 v1 已有，不重复），索引可前缀查询', async () => {
+    // 索引声明断言（Dexie 由 version 链解析，不依赖真实 IDB 实现）
+    const indexNames = db.transactions.schema.indexes.map((idx) => idx.name)
+    expect(indexNames).toContain('date')
+    expect(indexNames).toContain('category')
+    expect(indexNames).toContain('note')
+    expect(indexNames).toContain('[type+date]')
+    expect(indexNames).toContain('[date+amount+note]')
+
+    // note 索引功能验证：前缀查询（大小写不敏感）+ 无 note 记录不进索引
+    await db.transactions.bulkAdd([
+      { amount: 1, category: 'food', date: '2026-09-01', type: 'expense', note: 'Starbucks', createdAt: 1, updatedAt: 1 },
+      { amount: 2, category: 'food', date: '2026-09-02', type: 'expense', note: 'star 咖啡', createdAt: 2, updatedAt: 2 },
+      { amount: 3, category: 'food', date: '2026-09-03', type: 'expense', note: '瑞幸咖啡', createdAt: 3, updatedAt: 3 },
+      { amount: 4, category: 'food', date: '2026-09-04', type: 'expense', createdAt: 4, updatedAt: 4 },
+    ])
+    const star = await db.transactions.where('note').startsWithIgnoreCase('star').toArray()
+    expect(star.map((t) => t.amount).sort()).toEqual([1, 2])
+
+    const zh = await db.transactions.where('note').startsWithIgnoreCase('瑞幸').toArray()
+    expect(zh).toHaveLength(1)
+    expect(zh[0].amount).toBe(3)
+  })
 })
