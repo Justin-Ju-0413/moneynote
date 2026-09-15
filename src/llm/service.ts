@@ -127,14 +127,15 @@ const auditTask: TaskDescriptor<AuditInput, AiSuggestion[]> = {
 }
 
 // 运行 AI 审计任务：audit / categorize / dedupe / analyzeMonth
+// options.onProgress 提供时走流式(SSE),增量回调原始 delta(analyzeMonth 用于长文本渐进呈现)
 export async function runLLMAudit(
   config: LLMConfig,
   transactions: Transaction[],
   task: AuditTask,
-  options: { privacyMode?: boolean; batchSize?: number } = {},
+  options: { privacyMode?: boolean; batchSize?: number; onProgress?: (delta: string) => void } = {},
 ): Promise<AuditResult> {
   const ctx: TaskContext = { config, privacyMode: options.privacyMode ?? config.privacyMode ?? true }
-  const r = await runTask(auditTask, { transactions, task, options }, ctx)
+  const r = await runTask(auditTask, { transactions, task, options }, ctx, options.onProgress)
   return { suggestions: r.result ?? heuristicSuggestions(transactions, task), error: r.error }
 }
 
@@ -159,12 +160,14 @@ export interface ChatRunResult {
 }
 
 // 运行聊天意图识别:history 含当前用户消息(作为最后一条),context 为数据上下文
+// onProgress 提供时走流式(SSE),增量回调原始 delta(首页对话打字机渲染)
 export async function runChat(
   config: LLMConfig,
   history: { role: 'user' | 'assistant'; content: string }[],
   context: ChatContext,
+  onProgress?: (delta: string) => void,
 ): Promise<ChatRunResult> {
-  const r = await runTask(chatTask, { history, context }, { config, privacyMode: false })
+  const r = await runTask(chatTask, { history, context }, { config, privacyMode: false }, onProgress)
   return { result: r.result, error: r.error }
 }
 

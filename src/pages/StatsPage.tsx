@@ -2,11 +2,12 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { PeriodSwitcher } from '@/components/stats/PeriodSwitcher'
 import { CategoryPieChart } from '@/components/stats/CategoryPieChart'
 import { TrendLineChart } from '@/components/stats/TrendLineChart'
+import { MonthCompareChart } from '@/components/stats/MonthCompareChart'
 import { Card } from '@/components/ui/Card'
 import { useStats } from '@/hooks/useStats'
 
 export function StatsPage() {
-  const { period, setPeriod, periodLabel, navigateDate, stats, dateRange } = useStats()
+  const { period, setPeriod, periodLabel, navigateDate, stats, dateRange, currentDate, previousByCategory, monthCompare } = useStats()
 
   return (
     <div>
@@ -38,8 +39,12 @@ export function StatsPage() {
           <p className="text-[11px] font-mono text-text-muted mt-3 text-center">{stats.count} 笔支出 · {stats.incomeCount} 笔收入</p>
         </Card>
 
+        {period === 'month' && (
+          <MonthCompareChart data={monthCompare} monthKey={currentDate.format('YYYY-MM')} />
+        )}
+
         <div className="md:grid md:grid-cols-2 md:gap-5 lg:gap-6">
-          <CategoryPieChart data={stats.byCategory} total={stats.totalExpense} />
+          <CategoryPieChart data={stats.byCategory} total={stats.totalExpense} previous={previousByCategory} />
           <TrendLineChart data={stats.byDate} dateRange={dateRange} />
         </div>
       </div>

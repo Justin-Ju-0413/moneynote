@@ -144,6 +144,44 @@ describe('runTask', () => {
     await runTask(task, 'hi', { config, privacyMode: false })
     expect(seenPrivacy).toBe(false)
   })
+
+  it('onProgress 提供时走流式:请求体带 stream:true 且增量透传,结果与非流式一致', async () => {
+    let capturedBody: Record<string, unknown> = {}
+    const enc = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: 'he' } }] })}\n\n`))
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: 'llo' } }] })}\n\n`))
+        controller.enqueue(enc.encode('data: [DONE]\n\n'))
+        controller.close()
+      },
+    })
+    reset = __setLLMTransport((async (_u: unknown, init: RequestInit) => {
+      capturedBody = JSON.parse(init.body as string)
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'text/event-stream' }),
+        body: stream,
+      }
+    }) as unknown as FetchLike)
+    const deltas: string[] = []
+    const r = await runTask(echoTask, 'hi', ctx, (d) => deltas.push(d))
+    expect(capturedBody.stream).toBe(true)
+    expect(deltas).toEqual(['he', 'llo'])
+    expect(r.result).toBe('hello')
+    expect(r.error).toBeUndefined()
+  })
+
+  it('onProgress 缺省时请求非流式(无 stream 字段)', async () => {
+    let capturedBody: Record<string, unknown> = {}
+    reset = __setLLMTransport((async (_u: unknown, init: RequestInit) => {
+      capturedBody = JSON.parse(init.body as string)
+      return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'x' } }] }) }
+    }) as unknown as FetchLike)
+    await runTask(echoTask, 'hi', ctx)
+    expect('stream' in capturedBody).toBe(false)
+  })
 })
 
 // ── C3 成本可观测：usage 透出 + 用量落表 ──

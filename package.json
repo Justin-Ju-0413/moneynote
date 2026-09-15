@@ -1,7 +1,7 @@
 {
   "name": "moneynote",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,7 @@
     "desktop:install": "node scripts/install-desktop.mjs"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.14.13",
     "dayjs": "^1.11.21",
     "dexie": "^4.4.3",
     "dexie-react-hooks": "^4.4.0",

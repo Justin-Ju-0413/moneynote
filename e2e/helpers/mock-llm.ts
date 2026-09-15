@@ -34,7 +34,10 @@ function auditTaskFromSystem(system: string): 'audit' | 'categorize' | 'dedupe' 
 export async function mockLLM(page: Page): Promise<MockLLMHandle> {
   const calls: LLMCall[] = []
   await page.route('**/chat/completions', async (route: Route) => {
-    const body = JSON.parse(route.request().postData() ?? '{}') as { messages: { role: string; content: string }[] }
+    const body = JSON.parse(route.request().postData() ?? '{}') as {
+      stream?: boolean
+      messages: { role: string; content: string }[]
+    }
     const messages = body.messages ?? []
     const system = messages.find((m) => m.role === 'system')?.content ?? ''
     const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? ''
@@ -65,6 +68,17 @@ export async function mockLLM(page: Page): Promise<MockLLMHandle> {
       content = JSON.stringify(parseResponse())
     }
 
+    // 带 stream:true 的请求按 SSE 假流下发:完整文本切成 4 段 delta(边界任意,天然制造跨 chunk 断行/粘包),
+    // 末 data chunk 携带 usage,最后 [DONE];非流式请求维持整包 JSON
+    if (body.stream === true) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sseBody(content),
+      })
+      return
+    }
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -72,4 +86,21 @@ export async function mockLLM(page: Page): Promise<MockLLMHandle> {
     })
   })
   return { calls, count: () => calls.length }
+}
+
+// 完整文本 -> SSE 事件流:4 段 delta + usage 尾 chunk + [DONE]
+function sseBody(content: string): string {
+  const size = Math.max(1, Math.ceil(content.length / 4))
+  const events: string[] = []
+  for (let i = 0; i < content.length; i += size) {
+    const delta = content.slice(i, i + size)
+    events.push(`data: ${JSON.stringify({ choices: [{ delta: { content: delta } }] })}\n\n`)
+  }
+  // usage 在末 data chunk 出现(OpenAI 兼容流式形态之一),验证客户端捕获
+  events.push(`data: ${JSON.stringify({
+    choices: [{ delta: {} }],
+    usage: { prompt_tokens: 111, completion_tokens: 22, total_tokens: 133 },
+  })}\n\n`)
+  events.push('data: [DONE]\n\n')
+  return events.join('')
 }
