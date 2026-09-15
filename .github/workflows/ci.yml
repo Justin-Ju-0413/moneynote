@@ -2,6 +2,11 @@ name: CI
 
 on: [push, pull_request]
 
+# 同分支/PR 新推送取消旧跑，省额度
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -14,7 +19,15 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      - run: npm run test:coverage   # 带阈值门（@vitest/coverage-v8）
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # E2E：build + Playwright（mock LLM 拦截，零真实 API 调用，无需 secret）
   e2e:
