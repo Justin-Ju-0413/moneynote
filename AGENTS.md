@@ -19,7 +19,7 @@ npm run desktop:build   # Tauri 桌面端打包（.app + dmg，需 Rust 工具�
 npm run desktop:install # 把构建好的 MoneyNote.app 安装到 /Applications
 ```
 
-提交前必须保证 `npm run lint` + `npm test` + `npm run build` + `npm run test:e2e` 通过（CI `quality` + `e2e` 双 job：node 20 + npm ci + lint + test + build + Playwright chromium，mock LLM 无 secret）。
+提交前必须保证 `npm run lint` + `npm test` + `npm run build` + `npm run test:e2e` 通过（CI `quality` + `e2e` 双 job：node 22 + npm ci + lint + test + build + Playwright chromium，mock LLM 无 secret）。
 
 ## Git 工作流
 
