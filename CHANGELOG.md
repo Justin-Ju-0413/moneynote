@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-15
+
+### Added
+
+- **测试金字塔中层**：vitest jsdom 全局环境 + @testing-library（react/user-event/jest-dom）；**+77 用例**（组件 45：Button/Dialog/CategoryIcon/TransactionCard/EmptyState/Chip——含 Dialog 的 Esc/Tab 焦点圈定/焦点归还键盘行为；hooks 32：useChat 16 含流式预览与学习规则沉淀、useDedup 7、useBillImport 9）；单测总量 319 → **403**
+- **覆盖率门**：`npm run test:coverage`（@vitest/coverage-v8），实测 55% lines / 54.7% statements / 47.4% branches，阈值定在现状略降安全线（35/35/30/25）；CI quality job 接入 coverage 阈值 + 报告 artifact 上传
+- **E2E 扩面**：6 → **12 测试**——统计（列映射学习弹窗 + 排行榜展开）、预算（80%/91% 双档预警）、备份恢复（手动备份→恢复→导出下载）、深色模式（三态 + 跟随系统）；新增 **mobile project**（iPhone 13 视口，底栏导航 + 输入区遮挡专项）；CI 增加 concurrency 自动取消同分支旧跑
+- **备份异地化（D4 前半）**：备份卡「导出最新备份」+ 行内导出（File System Access API 写盘，Safari/Firefox/Tauri 自动降级为下载）；30 天未导出柔和提醒（settings 表存储，可忽略 30 天）；备份不再与数据困在同一 IndexedDB（+7 单测）
+- **版本同步收口**：`release.mjs` 从 2 处扩到 5 处自动同步（新增 tauri.conf.json / Cargo.toml / Cargo.lock），`--publish` 校验同步加严
+
+### Fixed
+
+- 明细筛选态触底翻页（R2 顺带修复项的回归覆盖确认）
+- `tsc -b` 两处类型错误：deferred Promise 泛型误写、e2e tsconfig 缺 DOM lib
+
 ## [1.7.0] - 2026-09-15
 
 ### Added

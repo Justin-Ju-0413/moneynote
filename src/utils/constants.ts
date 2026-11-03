@@ -44,4 +44,4 @@ export const NAV_TABS: NavTab[] = [
 ]
 
 // 应用版本号：package.json 与设置页「关于」均引用此常量，保持单一来源
-export const APP_VERSION = '1.7.0'
+export const APP_VERSION = '1.8.0'

@@ -74,25 +74,60 @@ console.log(
 )
 
 // ── 3. 同步版本号（仅全流程模式；--publish 假定 bump 已合入）──
+//    五处同步：package.json / src/utils/constants.ts / src-tauri/tauri.conf.json / src-tauri/Cargo.toml / src-tauri/Cargo.lock
 
 const constantsPath = join(ROOT, 'src/utils/constants.ts')
-const constants = readFileSync(constantsPath, 'utf8')
+const tauriConfPath = join(ROOT, 'src-tauri/tauri.conf.json')
+const cargoTomlPath = join(ROOT, 'src-tauri/Cargo.toml')
+const cargoLockPath = join(ROOT, 'src-tauri/Cargo.lock')
+
+const replaceOrThrow = (path, content, pattern, replacement, what) => {
+  const updated = content.replace(pattern, replacement)
+  if (updated === content) throw new Error(`${path} 未找到 ${what}，请检查格式`)
+  return updated
+}
+
 if (!publishOnly) {
-  const updatedConstants = constants.replace(
-    /(APP_VERSION = ')\d+\.\d+\.\d+(')/,
-    `$1${target}$2`,
+  const constants = readFileSync(constantsPath, 'utf8')
+  const tauriConf = readFileSync(tauriConfPath, 'utf8')
+  const cargoToml = readFileSync(cargoTomlPath, 'utf8')
+  const cargoLock = readFileSync(cargoLockPath, 'utf8')
+
+  const updatedConstants = replaceOrThrow(
+    constantsPath, constants,
+    /(APP_VERSION = ')\d+\.\d+\.\d+(')/, `$1${target}$2`, 'APP_VERSION',
   )
-  if (updatedConstants === constants) {
-    throw new Error('src/utils/constants.ts 未找到 APP_VERSION，请检查格式')
-  }
+  const updatedTauriConf = replaceOrThrow(
+    tauriConfPath, tauriConf,
+    /("version": ")\d+\.\d+\.\d+(")/, `$1${target}$2`, 'version 字段',
+  )
+  const updatedCargoToml = replaceOrThrow(
+    cargoTomlPath, cargoToml,
+    /(name = "moneynote"\nversion = ")\d+\.\d+\.\d+(")/, `$1${target}$2`, 'Cargo.toml moneynote version',
+  )
+  const updatedCargoLock = replaceOrThrow(
+    cargoLockPath, cargoLock,
+    /(\[\[package\]\]\nname = "moneynote"\nversion = ")\d+\.\d+\.\d+(")/, `$1${target}$2`, 'Cargo.lock moneynote version',
+  )
+
   if (!dryRun) {
     pkg.version = target
     writeFileSync(join(ROOT, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`)
     writeFileSync(constantsPath, updatedConstants)
-    console.log('✓ 已同步版本号 package.json + constants.ts')
+    writeFileSync(tauriConfPath, updatedTauriConf)
+    writeFileSync(cargoTomlPath, updatedCargoToml)
+    writeFileSync(cargoLockPath, updatedCargoLock)
+    console.log('✓ 已同步版本号 5 处：package.json / constants.ts / tauri.conf.json / Cargo.toml / Cargo.lock')
   }
-} else if (!new RegExp(`APP_VERSION = '${target}'`).test(constants)) {
-  throw new Error(`src/utils/constants.ts 的 APP_VERSION 与 package.json（${target}）不一致，请先合入 bump 提交`)
+} else {
+  const constants = readFileSync(constantsPath, 'utf8')
+  const tauriConf = readFileSync(tauriConfPath, 'utf8')
+  if (!new RegExp(`APP_VERSION = '${target}'`).test(constants)) {
+    throw new Error(`src/utils/constants.ts 的 APP_VERSION 与 package.json（${target}）不一致，请先合入 bump 提交`)
+  }
+  if (!new RegExp(`"version": "${target}"`).test(tauriConf)) {
+    throw new Error(`src-tauri/tauri.conf.json 的 version 与 package.json（${target}）不一致，请先合入 bump 提交`)
+  }
 }
 
 // ── 4. CHANGELOG 校验（版本段必须已存在）──
@@ -124,7 +159,7 @@ if (existingTag) {
 }
 
 if (!publishOnly) {
-  run('git add package.json src/utils/constants.ts')
+  run('git add package.json src/utils/constants.ts src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock')
   run(`git commit -m "chore: version bump ${current}→${target}"`)
   // 注：main 有分支保护时此 push 会被拒绝——此时改用「分支+PR」合入 bump，然后以 --publish 模式发布
   run('git push origin main')
