@@ -29,7 +29,7 @@ jobs:
       - run: npm run build          # webServer 是 vite preview，依赖 dist/
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
