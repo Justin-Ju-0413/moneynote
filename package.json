@@ -17,12 +17,12 @@
     "desktop:install": "node scripts/install-desktop.mjs"
   },
   "dependencies": {
-    "@tanstack/react-virtual": "^3.14.24",
+    "@tanstack/react-virtual": "^3.14.26",
     "dayjs": "^1.11.23",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
-    "framer-motion": "^14.9.0",
-    "lucide-react": "^1.66.0",
+    "framer-motion": "^14.10.1",
+    "lucide-react": "^1.70.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5",
@@ -31,24 +31,24 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.64.1",
-    "@tailwindcss/vite": "^4.3.3",
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/vite": "^4.3.5",
     "@tauri-apps/cli": "^2.12.4",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
+    "@vitejs/plugin-react": "^6.2.1",
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "fake-indexeddb": "^6.2.7",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
